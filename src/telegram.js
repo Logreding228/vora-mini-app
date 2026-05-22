@@ -1,22 +1,34 @@
 export function initTelegramApp() {
   const webApp = window.Telegram?.WebApp;
+  const initDataFromUrl = getInitDataFromUrl();
 
   if (!webApp) {
     return {
       webApp: null,
-      user: null,
-      initData: '',
+      user: getUserFromInitData(initDataFromUrl),
+      initData: initDataFromUrl,
     };
   }
 
   webApp.ready();
   webApp.expand();
 
+  const initData = webApp.initData || initDataFromUrl;
+
   return {
     webApp,
-    user: webApp.initDataUnsafe?.user || getUserFromInitData(webApp.initData) || null,
-    initData: webApp.initData || '',
+    user: webApp.initDataUnsafe?.user || getUserFromInitData(initData) || null,
+    initData,
   };
+}
+
+function getInitDataFromUrl() {
+  const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
+  const search = window.location.search.startsWith('?') ? window.location.search.slice(1) : window.location.search;
+  const hashParams = new URLSearchParams(hash);
+  const searchParams = new URLSearchParams(search);
+
+  return hashParams.get('tgWebAppData') || searchParams.get('tgWebAppData') || searchParams.get('initData') || '';
 }
 
 function getUserFromInitData(initData) {

@@ -142,9 +142,16 @@ const screens = [
   { id: 'tariff-plus', label: 'Тариф Plus', component: TariffPlus },
   { id: 'profile', label: 'Профиль', component: ProfileScreen },
 ];
+const screenIds = new Set(screens.map((item) => item.id));
+
+function getScreenFromHash() {
+  const hash = window.location.hash.slice(1);
+
+  return screenIds.has(hash) ? hash : 'home-active';
+}
 
 function App() {
-  const [activeScreen, setActiveScreen] = useState(() => window.location.hash.slice(1) || 'home-active');
+  const [activeScreen, setActiveScreen] = useState(getScreenFromHash);
   const [telegramUser, setTelegramUser] = useState(null);
   const [mainData, setMainData] = useState(() => normalizeMainData(emptyMainData));
   const [apiNotice, setApiNotice] = useState('');
@@ -153,7 +160,7 @@ function App() {
 
   useEffect(() => {
     const syncScreen = () => {
-      setActiveScreen(window.location.hash.slice(1) || 'home-active');
+      setActiveScreen(getScreenFromHash());
     };
 
     window.addEventListener('hashchange', syncScreen);
