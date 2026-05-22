@@ -2044,7 +2044,8 @@ button {
 
 .period-card h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: 34px;
+  line-height: 1;
 }
 
 .period-card p {
@@ -2066,7 +2067,7 @@ button {
 
 .period-card strong {
   display: block;
-  font-size: 17px;
+  font-size: 15px;
 }
 
 .period-card small {

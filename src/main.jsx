@@ -1282,9 +1282,9 @@ function TariffPlus({ navigate, activeScreen }) {
 
 function TariffScreen({ selected, navigate, activeScreen }) {
   const periods = [
-    { id: '1', title: '1 месяц' },
-    { id: '6', title: '6 месяцев' },
-    { id: '12', title: '12 месяцев' },
+    { id: '1', amount: '1', unit: 'месяц' },
+    { id: '6', amount: '6', unit: 'месяцев' },
+    { id: '12', amount: '12', unit: 'месяцев' },
   ];
   const [selectedPeriod, setSelectedPeriod] = useState('1');
   const [deviceCount, setDeviceCount] = useState(3);
@@ -1347,13 +1347,13 @@ function TariffScreen({ selected, navigate, activeScreen }) {
   );
 }
 
-function PeriodCard({ title, selected, onClick }) {
+function PeriodCard({ amount, unit, selected, onClick }) {
   return (
     <button className={selected ? 'period-card selected' : 'period-card'} onClick={onClick}>
-      <h3>{title}</h3>
+      <h3>{amount}</h3>
       <div className="thin-line" />
-      <strong>{title}</strong>
-      <b>Срок подписки</b>
+      <strong>{unit}</strong>
+      <b>Период оплаты</b>
     </button>
   );
 }
