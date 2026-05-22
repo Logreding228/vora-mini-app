@@ -25,10 +25,27 @@ export function initTelegramApp() {
 function getInitDataFromUrl() {
   const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
   const search = window.location.search.startsWith('?') ? window.location.search.slice(1) : window.location.search;
-  const hashParams = new URLSearchParams(hash);
-  const searchParams = new URLSearchParams(search);
 
-  return hashParams.get('tgWebAppData') || searchParams.get('tgWebAppData') || searchParams.get('initData') || '';
+  return getRawParam(hash, 'tgWebAppData') || getRawParam(search, 'tgWebAppData') || getRawParam(search, 'initData') || '';
+}
+
+function getRawParam(source, name) {
+  if (!source) {
+    return '';
+  }
+
+  const prefix = `${name}=`;
+  const part = source.split('&').find((item) => item.startsWith(prefix));
+
+  if (!part) {
+    return '';
+  }
+
+  try {
+    return decodeURIComponent(part.slice(prefix.length));
+  } catch {
+    return part.slice(prefix.length);
+  }
 }
 
 function getUserFromInitData(initData) {
