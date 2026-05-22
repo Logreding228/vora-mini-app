@@ -773,24 +773,44 @@ function PlatformIcon({ type }) {
   return <Monitor size={22} />;
 }
 
-function ChangePlan({ navigate, activeScreen }) {
+function ChangePlan({ navigate, activeScreen, mainData }) {
   const [upgradeAmount, setUpgradeAmount] = useState('0');
   const [changeError, setChangeError] = useState('');
+  const [upgradeUnavailable, setUpgradeUnavailable] = useState(false);
+  const currentPlan = mainData.plan || '';
+  const canUpgrade = currentPlan !== 'plus' && !upgradeUnavailable;
 
   useEffect(() => {
+    if (!canUpgrade) {
+      setUpgradeAmount('0');
+      setChangeError('');
+      return;
+    }
+
     const loadUpgradePrice = async () => {
       try {
+        setUpgradeUnavailable(false);
         const response = await api.upgradePrice();
         setUpgradeAmount(response?.amount || response || '0');
       } catch (error) {
-        setChangeError(error.message);
+        if (error.status === 422) {
+          setUpgradeUnavailable(true);
+          setChangeError('');
+          return;
+        }
+
+        setChangeError('Не удалось загрузить условия перехода');
       }
     };
 
     loadUpgradePrice();
-  }, []);
+  }, [currentPlan]);
 
   const upgradePlan = async () => {
+    if (!canUpgrade) {
+      return;
+    }
+
     try {
       setChangeError('');
       const url = await api.createUpgradeInvoice({ provider: 'platega' });
@@ -813,33 +833,37 @@ function ChangePlan({ navigate, activeScreen }) {
   return (
     <AppFrame className="change-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Смена тарифа" />
-      <PlansPair selected="plus" currentLite onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
+      <PlansPair selected={currentPlan === 'lite' ? 'lite' : 'plus'} currentLite={currentPlan === 'lite'} onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
       <SectionDivider>выберите действие</SectionDivider>
-      <Card className="change-card">
-        <span className="status-pill green">Апгрейд</span>
-        <h2>Вы переходите на <span>Plus</span></h2>
-        <div className="thin-line" />
-        <h3>Доплата за переход</h3>
-        <SummaryLine label="К оплате" value={money(upgradeAmount)} />
-      </Card>
-      <Card className="payment-balance">
-        <IconTile><Wallet size={25} /></IconTile>
-        <div>
-          <p>Баланс</p>
-          <strong>{money(upgradeAmount)}</strong>
-          <span>Выберите, чтобы списать с баланса</span>
-        </div>
-        <span className="radio checked" />
-      </Card>
-      <Card className="pay-today">
-        <div>
-          <h2>К оплате сегодня</h2>
-          <p>С учётом баланса</p>
-        </div>
-        <strong>{money(upgradeAmount)}</strong>
-        {changeError && <p className="inline-error">{changeError}</p>}
-        <PrimaryButton onClick={upgradePlan}>Перейти на Plus&nbsp; {money(upgradeAmount)}</PrimaryButton>
-      </Card>
+      {canUpgrade && (
+        <>
+          <Card className="change-card">
+            <span className="status-pill green">Апгрейд</span>
+            <h2>Вы переходите на <span>Plus</span></h2>
+            <div className="thin-line" />
+            <h3>Доплата за переход</h3>
+            <SummaryLine label="К оплате" value={money(upgradeAmount)} />
+          </Card>
+          <Card className="payment-balance">
+            <IconTile><Wallet size={25} /></IconTile>
+            <div>
+              <p>Баланс</p>
+              <strong>{money(upgradeAmount)}</strong>
+              <span>Выберите, чтобы списать с баланса</span>
+            </div>
+            <span className="radio checked" />
+          </Card>
+          <Card className="pay-today">
+            <div>
+              <h2>К оплате сегодня</h2>
+              <p>С учётом баланса</p>
+            </div>
+            <strong>{money(upgradeAmount)}</strong>
+            {changeError && <p className="inline-error">{changeError}</p>}
+            <PrimaryButton onClick={upgradePlan}>Перейти на Plus&nbsp; {money(upgradeAmount)}</PrimaryButton>
+          </Card>
+        </>
+      )}
       <Card className="change-card downgrade">
         <span className="status-pill purple">Даунгрейд</span>
         <h2>Вы переходите на <span>Lite</span></h2>

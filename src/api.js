@@ -2,6 +2,39 @@ const runtimeConfig = window.__VORA_CONFIG__ || {};
 const apiBaseUrl = (runtimeConfig.API_BASE_URL || import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
 const telegramAuthPath = runtimeConfig.TELEGRAM_AUTH_PATH || import.meta.env.VITE_TELEGRAM_AUTH_PATH || '/auth/auth/telegram';
 const tokenRefreshPath = runtimeConfig.TOKEN_REFRESH_PATH || import.meta.env.VITE_TOKEN_REFRESH_PATH || '/auth/refresh_accessToken';
+let telegramInitData = runtimeConfig.TELEGRAM_INIT_DATA || import.meta.env.VITE_TELEGRAM_INIT_DATA || '';
+let refreshPromise = null;
+const memoryStorage = new Map();
+
+function readStorage(key) {
+  try {
+    return typeof localStorage === 'undefined' ? memoryStorage.get(key) || '' : localStorage.getItem(key) || memoryStorage.get(key) || '';
+  } catch {
+    return memoryStorage.get(key) || '';
+  }
+}
+
+function writeStorage(key, value) {
+  memoryStorage.set(key, value);
+
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(key, value);
+    }
+  } catch {
+  }
+}
+
+function removeStorage(key) {
+  memoryStorage.delete(key);
+
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(key);
+    }
+  } catch {
+  }
+}
 
 export class ApiError extends Error {
   constructor(message, status, payload) {
@@ -18,13 +51,13 @@ function getTokenFromUrl() {
   const refreshToken = params.get('refresh_token') || params.get('refresh');
 
   if (token) {
-    localStorage.setItem('access_token', token);
+    writeStorage('access_token', token);
     params.delete('access_token');
     params.delete('token');
   }
 
   if (refreshToken) {
-    localStorage.setItem('refresh_token', refreshToken);
+    writeStorage('refresh_token', refreshToken);
     params.delete('refresh_token');
     params.delete('refresh');
   }
@@ -39,11 +72,11 @@ function getTokenFromUrl() {
 }
 
 export function getAccessToken() {
-  return getTokenFromUrl() || localStorage.getItem('access_token') || runtimeConfig.ACCESS_TOKEN || import.meta.env.VITE_ACCESS_TOKEN || '';
+  return getTokenFromUrl() || readStorage('access_token') || runtimeConfig.ACCESS_TOKEN || import.meta.env.VITE_ACCESS_TOKEN || '';
 }
 
 export function getRefreshToken() {
-  return localStorage.getItem('refresh_token') || runtimeConfig.REFRESH_TOKEN || import.meta.env.VITE_REFRESH_TOKEN || '';
+  return readStorage('refresh_token') || runtimeConfig.REFRESH_TOKEN || import.meta.env.VITE_REFRESH_TOKEN || '';
 }
 
 export function saveTokenPair(payload) {
@@ -51,14 +84,38 @@ export function saveTokenPair(payload) {
   const refreshToken = payload?.token_refresh || payload?.refresh_token || payload?.refresh;
 
   if (accessToken) {
-    localStorage.setItem('access_token', accessToken);
+    writeStorage('access_token', accessToken);
   }
 
   if (refreshToken) {
-    localStorage.setItem('refresh_token', refreshToken);
+    writeStorage('refresh_token', refreshToken);
   }
 
   return accessToken || '';
+}
+
+function clearTokenPair() {
+  removeStorage('access_token');
+  removeStorage('refresh_token');
+}
+
+function getJwtPayload(token) {
+  try {
+    const [, payload] = token.split('.');
+    return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+  } catch {
+    return null;
+  }
+}
+
+function isTokenExpiring(token, windowSeconds = 10) {
+  const payload = getJwtPayload(token);
+
+  if (!payload?.exp) {
+    return false;
+  }
+
+  return payload.exp * 1000 <= Date.now() + windowSeconds * 1000;
 }
 
 function buildUrl(path, query) {
@@ -85,6 +142,14 @@ async function parseResponse(response) {
   } catch {
     return text;
   }
+}
+
+function getErrorMessage(payload) {
+  if (Array.isArray(payload?.detail)) {
+    return payload.detail.map((item) => item.msg).filter(Boolean).join(', ') || 'API request failed';
+  }
+
+  return payload?.detail || payload?.message || (typeof payload === 'string' ? payload : 'API request failed');
 }
 
 async function rawRequest(path, { method = 'GET', query, body, token = getAccessToken(), initData } = {}) {
@@ -114,7 +179,7 @@ async function rawRequest(path, { method = 'GET', query, body, token = getAccess
   const payload = await parseResponse(response);
 
   if (!response.ok) {
-    throw new ApiError(payload?.detail || payload?.message || 'API request failed', response.status, payload);
+    throw new ApiError(getErrorMessage(payload), response.status, payload);
   }
 
   return payload;
@@ -127,26 +192,77 @@ async function refreshTokens() {
     return '';
   }
 
-  const payload = await rawRequest(tokenRefreshPath, {
-    method: 'POST',
-    token: refreshToken,
-  });
+  try {
+    const payload = await rawRequest(tokenRefreshPath, {
+      method: 'POST',
+      token: refreshToken,
+    });
 
-  const accessToken = payload?.access_token || payload?.token_access || payload?.access || payload?.token;
+    const accessToken = payload?.access_token || payload?.token_access || payload?.access || payload?.token;
 
-  if (accessToken) {
-    localStorage.setItem('access_token', accessToken);
+    if (accessToken) {
+      writeStorage('access_token', accessToken);
+    }
+
+    return accessToken || '';
+  } catch {
+    clearTokenPair();
+    return '';
+  }
+}
+
+async function runRefreshTokens() {
+  if (!refreshPromise) {
+    refreshPromise = refreshTokens().finally(() => {
+      refreshPromise = null;
+    });
   }
 
-  return accessToken || '';
+  return refreshPromise;
+}
+
+async function authenticateWithInitData() {
+  if (!apiBaseUrl || !telegramInitData) {
+    return '';
+  }
+
+  const payload = await rawRequest(telegramAuthPath, {
+    method: 'POST',
+    body: { initData: telegramInitData },
+    token: '',
+  });
+
+  if (typeof payload === 'string') {
+    writeStorage('access_token', payload);
+    return payload;
+  }
+
+  return saveTokenPair(payload);
+}
+
+async function ensureAccessToken() {
+  const token = getAccessToken();
+
+  if (token && !isTokenExpiring(token)) {
+    return token;
+  }
+
+  const refreshedToken = await runRefreshTokens();
+
+  if (refreshedToken) {
+    return refreshedToken;
+  }
+
+  return authenticateWithInitData();
 }
 
 async function request(path, options = {}) {
   try {
-    return await rawRequest(path, options);
+    const token = options.token === undefined ? await ensureAccessToken() : options.token;
+    return await rawRequest(path, { ...options, token });
   } catch (error) {
     if (error instanceof ApiError && error.status === 401 && options.retry !== false) {
-      const token = await refreshTokens();
+      const token = await runRefreshTokens() || await authenticateWithInitData();
 
       if (token) {
         return rawRequest(path, { ...options, token });
@@ -158,29 +274,13 @@ async function request(path, options = {}) {
 }
 
 export async function authenticateTelegram(initData) {
-  const telegramInitData = initData || runtimeConfig.TELEGRAM_INIT_DATA || import.meta.env.VITE_TELEGRAM_INIT_DATA || '';
+  telegramInitData = initData || telegramInitData;
 
-  if (!apiBaseUrl || !telegramInitData || getAccessToken()) {
+  if (!apiBaseUrl || !telegramInitData) {
     return null;
   }
 
-  const payload = await request(telegramAuthPath, {
-    method: 'POST',
-    body: { initData: telegramInitData },
-    token: '',
-    retry: false,
-  });
-  const token = typeof payload === 'string' ? payload : saveTokenPair(payload);
-
-  if (typeof token === 'string') {
-    if (!localStorage.getItem('access_token')) {
-      localStorage.setItem('access_token', token);
-    }
-
-    return token;
-  }
-
-  return null;
+  return authenticateWithInitData();
 }
 
 export const api = {
