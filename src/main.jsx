@@ -37,7 +37,7 @@ import {
   Wallet,
   X,
 } from 'lucide-react';
-import { api, apiConfig, ApiError, authenticateTelegram } from './api.js';
+import { api, ApiError, authenticateTelegram } from './api.js';
 import { getDisplayName, initTelegramApp } from './telegram.js';
 import './styles.css';
 
@@ -52,7 +52,7 @@ const dateRu = (value, fallback = '20.04.2026') => {
 };
 const formatDateTime = (value) => {
   if (!value) {
-    return '12 августа 2025, 14:30';
+    return '—';
   }
 
   return new Intl.DateTimeFormat('ru-RU', {
@@ -86,44 +86,40 @@ const normalizeDeviceKind = (value) => {
 
   return name || 'windows';
 };
-const mockMainData = {
+const emptyMainData = {
   status: 'active',
-  balance: '250.00',
-  ref_balance: '250.00',
-  expired_at: '2026-04-20',
+  balance: '0.00',
+  ref_balance: '0.00',
+  expired_at: '',
   plan: 'lite',
   subscription_month: 1,
   hwid: {
-    used: 1,
+    used: 0,
     limit: 2,
-    devices: [
-      { id: 'windows-1', kind: 'windows', title: 'Windows', model: 'Smoorf_x86_64', last_seen: '2026-02-14T04:06:07' },
-      { id: 'androidtv-1', kind: 'androidtv', title: 'Android TV', model: 'LivingRoom_TV', last_seen: '2026-02-14T04:06:07' },
-      { id: 'apple-1', kind: 'apple', title: 'MacOS', model: 'MacBook_Air', last_seen: '2026-02-14T04:06:07' },
-    ],
+    devices: [],
   },
 };
 
-function normalizeMainData(data = mockMainData) {
+function normalizeMainData(data = emptyMainData) {
   const hwid = data.hwid || {};
   const hwidResponse = hwid.response || {};
   const rawDevices = Array.isArray(hwid.devices) ? hwid.devices : Array.isArray(hwidResponse.devices) ? hwidResponse.devices : Array.isArray(hwid) ? hwid : [];
   const devices = rawDevices.length ? rawDevices.map((device, index) => ({
-    id: device.id || device.uuid || `device-${index}`,
+    id: device.hwid || device.id || device.uuid || `device-${index}`,
     kind: normalizeDeviceKind(device.kind || device.os || device.platform || device.type || 'windows'),
     title: device.title || device.name || device.os || device.platform || 'Устройство',
-    model: device.model || device.device_name || device.name || 'Unknown',
-    lastSeen: device.last_seen || device.updated_at || device.online_at || '2026-02-14T04:06:07',
-  })) : mockMainData.hwid.devices.map((device) => ({ ...device, lastSeen: device.last_seen }));
+    model: device.model || device.device_name || device.name || device.hwid || 'Unknown',
+    lastSeen: device.last_seen || device.updated_at || device.online_at || '',
+  })) : [];
 
   return {
     status: data.status || 'active',
-    balance: data.balance ?? mockMainData.balance,
-    refBalance: data.ref_balance ?? mockMainData.ref_balance,
-    expiredAt: data.expired_at || mockMainData.expired_at,
-    plan: String(data.plan || data.tariff || mockMainData.plan).toLowerCase(),
+    balance: data.balance ?? emptyMainData.balance,
+    refBalance: data.ref_balance ?? emptyMainData.ref_balance,
+    expiredAt: data.expired_at || emptyMainData.expired_at,
+    plan: String(data.plan || data.tariff || emptyMainData.plan).toLowerCase(),
     subscriptionMonth: data.subscription_month || data.last_subscription_month || 1,
-    usedDevices: Number(hwid.used ?? hwid.current ?? hwid.count ?? hwidResponse.total ?? devices.length ?? 1),
+    usedDevices: Number(hwid.used ?? hwid.current ?? hwid.count ?? hwidResponse.total ?? devices.length ?? 0),
     maxDevices: Number(hwid.limit ?? hwid.max ?? hwid.total ?? hwidResponse.limit ?? Math.max(2, devices.length)),
     devices,
   };
@@ -150,7 +146,7 @@ const screens = [
 function App() {
   const [activeScreen, setActiveScreen] = useState(() => window.location.hash.slice(1) || 'home-active');
   const [telegramUser, setTelegramUser] = useState(null);
-  const [mainData, setMainData] = useState(() => normalizeMainData());
+  const [mainData, setMainData] = useState(() => normalizeMainData(emptyMainData));
   const [apiNotice, setApiNotice] = useState('');
   const screen = useMemo(() => screens.find((item) => item.id === activeScreen) || screens[0], [activeScreen]);
   const Screen = screen.component;
@@ -175,9 +171,7 @@ function App() {
         setMainData(normalizeMainData(data));
         setApiNotice('');
       } catch (error) {
-        if (!apiConfig.mockMode) {
-          setApiNotice(error instanceof ApiError ? error.message : 'API недоступен');
-        }
+        setApiNotice(error instanceof ApiError ? error.message : 'Откройте приложение через Telegram');
       }
     };
 
@@ -428,10 +422,8 @@ function TrialStart({ navigate, activeScreen }) {
     try {
       const url = await api.createTrialInvoice({ provider: 'platega' });
       openPaymentUrl(url);
-    } catch {
-      if (apiConfig.mockMode) {
-        navigate('trial-active');
-      }
+    } catch (error) {
+      window.alert(error instanceof ApiError ? error.message : 'Не удалось создать платеж');
     }
   };
 
@@ -614,7 +606,7 @@ function DevicesCard({ mainData }) {
       await api.deleteDevice(id);
       setDevices((items) => items.filter((item) => item.id !== id));
     } catch (error) {
-      setDeviceError(apiConfig.mockMode ? 'Удаление включится после подключения API' : error.message);
+      setDeviceError(error.message);
     }
   };
 
@@ -673,10 +665,7 @@ function DeviceSheet({ navigate }) {
       const url = await api.subscriptionUrl(client);
       openPaymentUrl(url);
     } catch (error) {
-      setConnectError(apiConfig.mockMode ? 'API ещё не подключен, сейчас это демо-режим' : error.message);
-      if (apiConfig.mockMode) {
-        navigate('home-active');
-      }
+      setConnectError(error.message);
     }
   };
 
@@ -686,7 +675,7 @@ function DeviceSheet({ navigate }) {
       const url = await api.subscriptionQr(client);
       setQrImage(await QRCode.toDataURL(url));
     } catch (error) {
-      setConnectError(apiConfig.mockMode ? 'QR появится после подключения API' : error.message);
+      setConnectError(error.message);
     }
   };
 
@@ -792,18 +781,16 @@ function PlatformIcon({ type }) {
 }
 
 function ChangePlan({ navigate, activeScreen }) {
-  const [upgradeAmount, setUpgradeAmount] = useState('250');
+  const [upgradeAmount, setUpgradeAmount] = useState('0');
   const [changeError, setChangeError] = useState('');
 
   useEffect(() => {
     const loadUpgradePrice = async () => {
       try {
         const response = await api.upgradePrice();
-        setUpgradeAmount(response?.amount || response || '250');
-      } catch {
-        if (!apiConfig.mockMode) {
-          setChangeError('Не удалось загрузить стоимость апгрейда');
-        }
+        setUpgradeAmount(response?.amount || response || '0');
+      } catch (error) {
+        setChangeError(error.message);
       }
     };
 
@@ -816,10 +803,7 @@ function ChangePlan({ navigate, activeScreen }) {
       const url = await api.createUpgradeInvoice({ provider: 'platega' });
       openPaymentUrl(url);
     } catch (error) {
-      setChangeError(apiConfig.mockMode ? 'Апгрейд подключится после API' : error.message);
-      if (apiConfig.mockMode) {
-        navigate('home-active');
-      }
+      setChangeError(error.message);
     }
   };
 
@@ -829,10 +813,7 @@ function ChangePlan({ navigate, activeScreen }) {
       await api.downgradePlan();
       navigate('home-active');
     } catch (error) {
-      setChangeError(apiConfig.mockMode ? 'Даунгрейд подключится после API' : error.message);
-      if (apiConfig.mockMode) {
-        navigate('home-active');
-      }
+      setChangeError(error.message);
     }
   };
 
@@ -857,7 +838,7 @@ function ChangePlan({ navigate, activeScreen }) {
         <IconTile><Wallet size={25} /></IconTile>
         <div>
           <p>Баланс</p>
-          <strong>250 ₽</strong>
+          <strong>{money(upgradeAmount)}</strong>
           <span>Выберите, чтобы списать с баланса</span>
         </div>
         <span className="radio checked" />
@@ -911,7 +892,7 @@ function SummaryLine({ label, value }) {
   );
 }
 
-function BalanceTopup({ navigate, activeScreen }) {
+function BalanceTopup({ navigate, activeScreen, mainData }) {
   const [selectedPayment, setSelectedPayment] = useState('device');
   const [selectedMethod, setSelectedMethod] = useState('card');
   const [selectedCurrency, setSelectedCurrency] = useState('USDT');
@@ -939,10 +920,7 @@ function BalanceTopup({ navigate, activeScreen }) {
       const url = await api.createInvoice({ provider, type: paymentType, payload });
       openPaymentUrl(url);
     } catch (error) {
-      setPaymentError(apiConfig.mockMode ? 'Оплата будет работать после подключения API' : error.message);
-      if (apiConfig.mockMode) {
-        navigate('balance-history');
-      }
+      setPaymentError(error.message);
     }
   };
 
@@ -952,7 +930,7 @@ function BalanceTopup({ navigate, activeScreen }) {
       <Card className="balance-hero">
         <div>
           <p>Основной баланс</p>
-          <strong>300<span>₽</span></strong>
+          <strong>{Number(mainData.balance || 0).toLocaleString('ru-RU')}<span>₽</span></strong>
         </div>
         <img src={asset('wallet')} alt="" />
         <ChevronRight size={28} />
@@ -1022,23 +1000,20 @@ function MethodCard({ title, subtitle, checked, onClick }) {
 function BalanceHistory({ navigate, activeScreen }) {
   const [selectedType, setSelectedType] = useState('income');
   const [history, setHistory] = useState({
-    sum_pay: 4188,
-    sym_trac: 5,
-    payments: [
-      { data: '2025-08-12T14:30:00', amount: 550, status: 'paid' },
-      { data: '2025-08-12T14:30:00', amount: 550, status: 'paid' },
-    ],
+    sum_pay: 0,
+    sym_trac: 0,
+    payments: [],
   });
+  const [historyError, setHistoryError] = useState('');
 
   useEffect(() => {
     const loadHistory = async () => {
       try {
         const type = selectedType === 'income' ? 'replenishment' : 'payments';
         setHistory(await api.history(type));
-      } catch {
-        if (!apiConfig.mockMode) {
-          setHistory((value) => value);
-        }
+        setHistoryError('');
+      } catch (error) {
+        setHistoryError(error.message);
       }
     };
 
@@ -1061,6 +1036,7 @@ function BalanceHistory({ navigate, activeScreen }) {
         <button className={selectedType === 'income' ? 'active' : ''} onClick={() => setSelectedType('income')}><ArrowDown size={22} />Пополнения</button>
         <button className={selectedType === 'outcome' ? 'active' : ''} onClick={() => setSelectedType('outcome')}><ArrowUp size={22} />Списания</button>
       </div>
+      {historyError && <p className="inline-error">{historyError}</p>}
       {transactions.map(([title, date, amount, type, status, index]) => (
         <Card className="transaction-card" key={`${title}-${index}`}>
           <IconTile tone={type === 'wallet' ? 'soft-green' : 'feather'}>{type === 'wallet' ? <Wallet size={24} /> : <span className="feather-mark" />}</IconTile>
@@ -1074,6 +1050,7 @@ function BalanceHistory({ navigate, activeScreen }) {
           </div>
         </Card>
       ))}
+      {!transactions.length && !historyError && <p className="empty-state">Операций пока нет</p>}
       <h2 className="muted-heading">Сводка</h2>
       <Card className="stats-card">
         <Stat icon={Wallet} label="Всего потрачено" value={money(history.sum_pay)} />
@@ -1159,23 +1136,17 @@ function TopicRow({ icon: Icon, title, subtitle, tone, onClick }) {
 
 function TicketsScreen({ navigate, activeScreen }) {
   const [selectedTab, setSelectedTab] = useState('Все');
-  const tickets = [
-    ['Проблема с подключением', '#124567', 'Новый', 'Только что', 'orange'],
-    ['Вопрос по оплате', '#124542467', 'В работе', '2 часа назад', 'blue'],
-    ['Не работает приложение', '#124542467', 'Ждем вас', '7 дней назад', 'purple'],
-    ['Не работает приложение', '#124542467', 'Решен', '12 марта', 'green'],
-    ['Не работает приложение', '#124542467', 'Закрыт', '12.03.2025', 'gray'],
-  ];
+  const tickets = [];
 
   return (
     <AppFrame className="tickets-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Обращения" subtitle="Круглосуточно" />
       <div className="ticket-tabs">
         {[
-          ['Все', '12'],
-          ['Новый', '2'],
-          ['В работе', '3'],
-          ['Ждем вас', '1'],
+          ['Все', '0'],
+          ['Новый', '0'],
+          ['В работе', '0'],
+          ['Ждем вас', '0'],
         ].map(([label, count]) => (
           <button key={label} className={selectedTab === label ? 'active' : ''} onClick={() => setSelectedTab(label)}>{label} <span>{count}</span></button>
         ))}
@@ -1192,6 +1163,7 @@ function TicketsScreen({ navigate, activeScreen }) {
           </div>
         </button>
       ))}
+      <p className="empty-state">API обращений пока не описан на бэкенде</p>
       <PrimaryButton onClick={() => navigate('ticket-create')}>Новое обращение</PrimaryButton>
     </AppFrame>
   );
@@ -1200,7 +1172,7 @@ function TicketsScreen({ navigate, activeScreen }) {
 function CreateTicket({ navigate, activeScreen }) {
   return (
     <AppFrame className="create-ticket" navigate={navigate} activeScreen={activeScreen}>
-      <PageTitle title="Создать обращение" subtitle="Опишите вашу проблему, и мы поможем" />
+      <PageTitle title="Создать обращение" subtitle="На бэкенде пока нет API для создания обращений" />
       <Card className="field-card">
         <label>Тема обращения</label>
         <p>Кратко опишите проблему</p>
@@ -1222,7 +1194,7 @@ function CreateTicket({ navigate, activeScreen }) {
           </span>
         </div>
       </Card>
-      <PrimaryButton onClick={() => navigate('ticket-thread')}>Отправить</PrimaryButton>
+      <PrimaryButton onClick={() => navigate('tickets')}>Вернуться к обращениям</PrimaryButton>
     </AppFrame>
   );
 }
@@ -1230,23 +1202,17 @@ function CreateTicket({ navigate, activeScreen }) {
 function TicketThread({ navigate, activeScreen }) {
   return (
     <AppFrame className="thread-screen" navigate={navigate} activeScreen={activeScreen}>
-      <PageTitle title="Не работает приложение" subtitle={<><span>#3424</span><Copy size={12} /><span>Создан 12 марта 2025, 14:30</span></>} />
+      <PageTitle title="Обращение" subtitle={<><span>API тикетов не подключен</span><Copy size={12} /></>} />
       <Card className="ticket-info">
-        <InfoLine icon={Headphones} title="Статус" value="Решен" tone="green" />
-        <InfoLine icon={MoreVertical} title="Приоритет" value="Ожидает ответ" tone="orange" />
-        <InfoLine icon={CalendarDays} title="Обновлен" value="12 марта 2025, 16:20" />
+        <InfoLine icon={Headphones} title="Статус" value="Недоступно" />
+        <InfoLine icon={MoreVertical} title="Приоритет" value="Недоступно" />
+        <InfoLine icon={CalendarDays} title="Обновлен" value="Недоступно" />
       </Card>
-      <div className="date-pill">12 марта</div>
-      <ThreadMarker>Создано • 12 марта 2025, 16:20</ThreadMarker>
-      <MessageBubble author="Вы" time="14:30" attachment />
-      <ThreadMarker>В работе • 12 марта 2025, 16:20</ThreadMarker>
-      <MessageBubble author="Поддержка" time="15:10" support />
-      <MessageBubble author="Вы" time="14:30" attachment />
-      <MessageBubble author="Поддержка" time="15:10" support />
-      <ThreadMarker>Обращение было решено 12 марта 2025, 16:20</ThreadMarker>
+      <div className="date-pill">Нет данных</div>
+      <ThreadMarker>Эндпоинты обращений отсутствуют в OpenAPI</ThreadMarker>
       <div className="reopen-box">
         <Sparkles size={25} />
-        <div><strong>Остались вопросы?</strong><p>Возобновите переписку если проблема не решена</p></div>
+        <div><strong>Переписка недоступна</strong><p>Нужен backend endpoint для тикетов и сообщений</p></div>
       </div>
       <div className="message-input">
         <button onClick={() => navigate('ticket-create')} aria-label="Прикрепить файл"><Paperclip size={23} /></button>
@@ -1281,7 +1247,7 @@ function MessageBubble({ author, time, support, attachment }) {
   return (
     <div className={support ? 'message-bubble support' : 'message-bubble'}>
       <p><span>{author}</span> • {time}</p>
-      <div>Lorem Ipsum - это текст-"рыба", часто используемый в печати и вэб-дизайне. Lorem Ipsum является стандартной "рыбой" для текстов</div>
+      <div>Сообщение недоступно</div>
       {attachment && (
         <div className="attachment">
           <Paperclip size={24} />
@@ -1325,10 +1291,7 @@ function TariffScreen({ selected, price, discounts, navigate, activeScreen }) {
       });
       openPaymentUrl(url);
     } catch (error) {
-      setPaymentError(apiConfig.mockMode ? 'Оплата тарифа подключится после API' : error.message);
-      if (apiConfig.mockMode) {
-        navigate('home-active');
-      }
+      setPaymentError(error.message);
     }
   };
 
@@ -1395,7 +1358,7 @@ function ProfileScreen({ navigate, activeScreen, telegramUser }) {
         <div className="profile-avatar"><UserGlyph size={30} /></div>
         <div>
           <h2>{displayName}</h2>
-          <p>{telegramUser?.username ? `@${telegramUser.username}` : `VORA ID ${telegramUser?.id || '#124567'}`}</p>
+          <p>{telegramUser?.username ? `@${telegramUser.username}` : telegramUser?.id ? `VORA ID ${telegramUser.id}` : 'Откройте через Telegram'}</p>
         </div>
       </Card>
       <Card className="link-list">

@@ -2,12 +2,6 @@ const runtimeConfig = window.__VORA_CONFIG__ || {};
 const apiBaseUrl = (runtimeConfig.API_BASE_URL || import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
 const telegramAuthPath = runtimeConfig.TELEGRAM_AUTH_PATH || import.meta.env.VITE_TELEGRAM_AUTH_PATH || '/auth/auth/telegram';
 const tokenRefreshPath = runtimeConfig.TOKEN_REFRESH_PATH || import.meta.env.VITE_TOKEN_REFRESH_PATH || '/auth/refresh_accessToken';
-const mockMode = String(runtimeConfig.USE_MOCKS ?? import.meta.env.VITE_USE_MOCKS ?? 'true') !== 'false';
-
-export const apiConfig = {
-  apiBaseUrl,
-  mockMode,
-};
 
 export class ApiError extends Error {
   constructor(message, status, payload) {
