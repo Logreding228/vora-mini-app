@@ -7,7 +7,8 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "deploy:check": "npm run build"
+    "deploy:check": "npm run build",
+    "telegram:setup": "node scripts/setup-telegram-bot.mjs"
   },
   "keywords": [],
   "author": "",
