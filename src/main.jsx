@@ -91,7 +91,7 @@ const emptyMainData = {
   balance: '0.00',
   ref_balance: '0.00',
   expired_at: '',
-  plan: 'lite',
+  plan: '',
   subscription_month: 1,
   hwid: {
     used: 0,
@@ -343,7 +343,7 @@ function SectionDivider({ children }) {
   );
 }
 
-function PlanCard({ name, description, devices, extra, price, selected, popular, current, onClick }) {
+function PlanCard({ name, description, devices, extra, selected, popular, current, onClick }) {
   return (
     <button className={`plan-card ${selected ? 'selected' : ''}`} onClick={onClick}>
       <div className="plan-heading">
@@ -359,11 +359,6 @@ function PlanCard({ name, description, devices, extra, price, selected, popular,
           <span>{extra}</span>
         </div>
       </div>
-      <div className="thin-line" />
-      <div className="plan-price">
-        <strong>{price}</strong>
-        <span>/ мес</span>
-      </div>
     </button>
   );
 }
@@ -376,7 +371,6 @@ function PlansPair({ currentLite = false, selected = 'plus', onSelect }) {
         description="Для привычных зарубежных сервисов"
         devices="1 устройство"
         extra="+ еще 2"
-        price="300 ₽"
         selected={selected === 'lite'}
         current={currentLite}
         onClick={() => onSelect?.('lite')}
@@ -386,7 +380,6 @@ function PlansPair({ currentLite = false, selected = 'plus', onSelect }) {
         description={<><span className="link-text">VORA Flow</span> — для привычных сервисов без лишних действий</>}
         devices="3 устройства"
         extra="+ еще 3"
-        price="550 ₽"
         selected={selected === 'plus'}
         popular
         onClick={() => onSelect?.('plus')}
@@ -431,7 +424,7 @@ function TrialStart({ navigate, activeScreen }) {
     <AppFrame className="trial-screen" navigate={navigate} activeScreen={activeScreen}>
       <HeroOffer
         title="Попробуйте VORA"
-        accent="24 часа за 30₽"
+        accent="Пробный доступ"
         subtitle="Полный доступ ко всем возможностям тарифа"
         image="trial-check"
       />
@@ -443,10 +436,10 @@ function TrialStart({ navigate, activeScreen }) {
           <p>После окончания доступа списаний не будет</p>
         </div>
       </Card>
-      <PrimaryButton onClick={startTrial}>Начать за 30 ₽</PrimaryButton>
+      <PrimaryButton onClick={startTrial}>Начать пробный период</PrimaryButton>
       <SectionDivider>или оформите подписку сразу</SectionDivider>
       <PlansPair selected="plus" onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
-      <PrimaryButton className="outline-fill" onClick={() => navigate('tariff-plus')}>Подключить за&nbsp; 550 ₽</PrimaryButton>
+      <PrimaryButton className="outline-fill" onClick={() => navigate('tariff-plus')}>Выбрать подписку</PrimaryButton>
     </AppFrame>
   );
 }
@@ -456,7 +449,7 @@ function TrialActive({ navigate, activeScreen }) {
     <AppFrame className="trial-screen compact" navigate={navigate} activeScreen={activeScreen}>
       <HeroOffer
         title="Доступ активен"
-        accent="24 часа за 30₽"
+        accent="Пробный доступ"
         subtitle="Полный доступ ко всем возможностям тарифа"
         image="trial-clock"
       />
@@ -472,7 +465,7 @@ function TrialActive({ navigate, activeScreen }) {
       </Card>
       <SectionDivider>доступные тарифы</SectionDivider>
       <PlansPair selected="plus" onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
-      <PrimaryButton className="outline-fill" onClick={() => navigate('tariff-plus')}>Подключить за&nbsp; 550 ₽</PrimaryButton>
+      <PrimaryButton className="outline-fill" onClick={() => navigate('tariff-plus')}>Выбрать подписку</PrimaryButton>
     </AppFrame>
   );
 }
@@ -488,7 +481,7 @@ function TrialExpired({ navigate, activeScreen }) {
       />
       <SectionDivider>выберите тариф для продолжения</SectionDivider>
       <PlansPair selected="plus" onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
-      <PrimaryButton onClick={() => navigate('tariff-plus')}>Купить за&nbsp; 550 ₽</PrimaryButton>
+      <PrimaryButton onClick={() => navigate('tariff-plus')}>Выбрать подписку</PrimaryButton>
     </AppFrame>
   );
 }
@@ -534,7 +527,7 @@ function HomePopup({ navigate, activeScreen, mainData, telegramUser }) {
 }
 
 function SubscriptionSummary({ muted: sheetMuted = false, navigate, mainData }) {
-  const planName = mainData.plan === 'plus' ? 'Plus' : 'Lite';
+  const planName = mainData.plan ? (mainData.plan === 'plus' ? 'Plus' : mainData.plan === 'lite' ? 'Lite' : mainData.plan) : 'Подписка';
   const progress = Math.min(100, Math.max(0, (mainData.usedDevices / mainData.maxDevices) * 100));
 
   return (
@@ -542,7 +535,7 @@ function SubscriptionSummary({ muted: sheetMuted = false, navigate, mainData }) 
       <div>
         <span className="status-pill green"><i />Активен</span>
         <h2>{planName}</h2>
-        <p>Подписка на {mainData.subscriptionMonth} месяц</p>
+        <p>{mainData.expiredAt ? `Действует до ${dateRu(mainData.expiredAt)}` : 'Данные загружаются из API'}</p>
       </div>
       <img src={asset('shield-small')} alt="" />
       <div className="metrics">
@@ -555,7 +548,7 @@ function SubscriptionSummary({ muted: sheetMuted = false, navigate, mainData }) 
           </div>
         </div>
         <div className="metric-card">
-          <span>Следующие списание</span>
+          <span>Следующее списание</span>
           <strong>{dateRu(mainData.expiredAt)}</strong>
         </div>
       </div>
@@ -821,18 +814,13 @@ function ChangePlan({ navigate, activeScreen }) {
     <AppFrame className="change-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Смена тарифа" />
       <PlansPair selected="plus" currentLite onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
-      <SectionDivider>все тарифы для стран с самым высоким уровнем цензуры</SectionDivider>
+      <SectionDivider>стоимость рассчитывает backend</SectionDivider>
       <Card className="change-card">
         <span className="status-pill green">Апгрейд</span>
         <h2>Вы переходите на <span>Plus</span></h2>
-        <ChangeRow title="Цена" from="300 ₽" to="550 ₽" />
-        <ChangeRow title="Устройства" from="1" to="3" />
-        <p className="limit-text">Можно докупить до 6 устройств</p>
         <div className="thin-line" />
         <h3>Расчет платежа</h3>
-        <SummaryLine label="Осталось по текущему тарифу" value="20 дней" />
-        <SummaryLine label="Стоимость в месяц" value="550 ₽" />
-        <SummaryLine label="С учетом остатка (20 дней)" value={`~${money(upgradeAmount)}`} />
+        <SummaryLine label="К оплате по API" value={money(upgradeAmount)} />
       </Card>
       <Card className="payment-balance">
         <IconTile><Wallet size={25} /></IconTile>
@@ -858,14 +846,11 @@ function ChangePlan({ navigate, activeScreen }) {
         <div className="notice-box">
           <CalendarDays size={24} />
           <div>
-            <p>Смена тарифа будет запланирована</p>
-            <strong>20.04.2026</strong>
-            <span>До этой даты у вас останется тариф Plus со всеми его преимуществами.а</span>
+            <p>Даунгрейд выполняется через API</p>
+            <strong>Plus → Lite</strong>
+            <span>Срок подписки сохраняется на стороне backend</span>
           </div>
         </div>
-        <ChangeRow title="Цена" from="550 ₽" to="300 ₽" />
-        <ChangeRow title="Устройства" from="3" to="1" />
-        <p className="limit-text">Можно докупить до 3 устройств</p>
         <button className="secondary-button purple" onClick={downgradePlan}>Запланировать переход на Lite</button>
       </Card>
     </AppFrame>
@@ -896,10 +881,12 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
   const [selectedPayment, setSelectedPayment] = useState('device');
   const [selectedMethod, setSelectedMethod] = useState('card');
   const [selectedCurrency, setSelectedCurrency] = useState('USDT');
+  const [selectedPlan, setSelectedPlan] = useState('plus');
+  const [subscriptionMonths, setSubscriptionMonths] = useState(1);
+  const [hwidLimit, setHwidLimit] = useState(Math.max(1, mainData.maxDevices || 1));
   const [customAmount, setCustomAmount] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
   const [paymentError, setPaymentError] = useState('');
-  const paymentAmount = selectedPayment === 'device' ? '75 ₽' : selectedPayment === 'lite' ? '300 ₽' : '550 ₽';
   const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
   const paymentType = selectedPayment === 'device' ? 'HWID' : selectedPayment === 'balance' ? 'BALANCE' : 'SUBSCRIPTION';
 
@@ -907,11 +894,11 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
     const payload = paymentType === 'BALANCE'
       ? { amount: Number(customAmount || 0), currency: selectedMethod === 'crypto' ? selectedCurrency : 'RUB' }
       : paymentType === 'HWID'
-        ? { hwid: 2, currency: selectedMethod === 'crypto' ? selectedCurrency : 'RUB' }
+        ? { hwid: hwidLimit, currency: selectedMethod === 'crypto' ? selectedCurrency : 'RUB' }
         : {
-            plan: selectedPayment,
-            subscription_month: 1,
-            hwid: selectedPayment === 'plus' ? 3 : 1,
+            plan: selectedPlan,
+            subscription_month: subscriptionMonths,
+            hwid: hwidLimit,
             currency: selectedMethod === 'crypto' ? selectedCurrency : 'RUB',
           };
 
@@ -937,9 +924,8 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
       </Card>
       <Card className="payment-card">
         <h2>Выберите, что хотите оплатить</h2>
-        <PaymentOption icon={Plus} title="Докупить устройство" subtitle="Активация 1 устройства" price="75 ₽" checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} />
-        <PaymentOption title="Lite - 1 месяц" subtitle="Базовые возможности" price="300 ₽" feather checked={selectedPayment === 'lite'} onClick={() => setSelectedPayment('lite')} />
-        <PaymentOption title="Plus - 1 месяц" subtitle="Максимум возможностей" price="550 ₽" feather checked={selectedPayment === 'plus'} onClick={() => setSelectedPayment('plus')} />
+        <PaymentOption icon={Plus} title="Устройства" subtitle="Backend рассчитает стоимость по лимиту" checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} />
+        <PaymentOption title="Подписка" subtitle="Тариф, срок и лимит устройств" feather checked={selectedPayment === 'subscription'} onClick={() => setSelectedPayment('subscription')} />
         <SectionDivider>или ввести сумму вручную</SectionDivider>
         <div className={selectedPayment === 'balance' ? 'input-box selected' : 'input-box'} onClick={() => setSelectedPayment('balance')}>
           <span>Сумма попленения</span>
@@ -947,6 +933,34 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
           <p>₽</p>
         </div>
       </Card>
+      {selectedPayment === 'subscription' && (
+        <Card className="payment-card">
+          <h2>Параметры подписки</h2>
+          <div className="segmented-control compact">
+            {['lite', 'plus'].map((plan) => (
+              <button key={plan} className={selectedPlan === plan ? 'active' : ''} onClick={() => setSelectedPlan(plan)}>{plan === 'plus' ? 'Plus' : 'Lite'}</button>
+            ))}
+          </div>
+          <div className="segmented-control compact">
+            {[1, 6, 12].map((month) => (
+              <button key={month} className={subscriptionMonths === month ? 'active' : ''} onClick={() => setSubscriptionMonths(month)}>{month} мес</button>
+            ))}
+          </div>
+        </Card>
+      )}
+      {(selectedPayment === 'subscription' || selectedPayment === 'device') && (
+        <Card className="devices-counter compact-counter">
+          <div>
+            <h2>Лимит устройств</h2>
+            <p>Стоимость рассчитывает backend</p>
+          </div>
+          <div className="stepper">
+            <button onClick={() => setHwidLimit((value) => Math.max(1, value - 1))}>-</button>
+            <strong>{hwidLimit}</strong>
+            <button onClick={() => setHwidLimit((value) => Math.min(9, value + 1))}>+</button>
+          </div>
+        </Card>
+      )}
       <div className="payment-methods">
         <MethodCard title="Банковская карта" subtitle="Visa, Mastercard, Мир" checked={selectedMethod === 'card'} onClick={() => setSelectedMethod('card')} />
         <MethodCard title="Криптовалюта" subtitle="USDT, BTC, ETH и др." checked={selectedMethod === 'crypto'} onClick={() => setSelectedMethod('crypto')} />
@@ -966,7 +980,7 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
         </div>
       </div>
       {paymentError && <p className="inline-error">{paymentError}</p>}
-      <PrimaryButton onClick={createPayment}>Оплатить {selectedPayment === 'balance' && customAmount ? `${customAmount} ₽` : paymentAmount}</PrimaryButton>
+      <PrimaryButton onClick={createPayment}>{selectedPayment === 'balance' && customAmount ? `Пополнить на ${customAmount} ₽` : 'Создать счет'}</PrimaryButton>
     </AppFrame>
   );
 }
@@ -979,7 +993,7 @@ function PaymentOption({ icon: Icon, title, subtitle, price, checked, feather, o
         <strong>{title}</strong>
         <p>{subtitle}</p>
       </div>
-      <b>{price}</b>
+      {price && <b>{price}</b>}
       <span className={checked ? 'radio checked' : 'radio'} />
     </button>
   );
@@ -1259,23 +1273,22 @@ function MessageBubble({ author, time, support, attachment }) {
 }
 
 function TariffLite({ navigate, activeScreen }) {
-  return <TariffScreen selected="lite" name="Lite" price="300 ₽" discounts={['-10%', '-15%']} navigate={navigate} activeScreen={activeScreen} />;
+  return <TariffScreen selected="lite" navigate={navigate} activeScreen={activeScreen} />;
 }
 
 function TariffPlus({ navigate, activeScreen }) {
-  return <TariffScreen selected="plus" name="Plus" price="550 ₽" discounts={['-20%', '-30%']} navigate={navigate} activeScreen={activeScreen} />;
+  return <TariffScreen selected="plus" navigate={navigate} activeScreen={activeScreen} />;
 }
 
-function TariffScreen({ selected, price, discounts, navigate, activeScreen }) {
+function TariffScreen({ selected, navigate, activeScreen }) {
   const periods = [
-    { id: '1', title: '1 месяц', note: 'Без скидки', price, total: `${price} всего` },
-    { id: '6', title: '6 месяц', discount: discounts[0], price: selected === 'plus' ? '440 ₽' : '270 ₽', total: selected === 'plus' ? '2 640 ₽ всего' : '1 620 ₽ всего' },
-    { id: '12', title: '12 месяцев', discount: discounts[1], price: selected === 'plus' ? '385 ₽' : '255 ₽', total: selected === 'plus' ? '4 620 ₽ всего' : '3 060 ₽ всего' },
+    { id: '1', title: '1 месяц' },
+    { id: '6', title: '6 месяцев' },
+    { id: '12', title: '12 месяцев' },
   ];
   const [selectedPeriod, setSelectedPeriod] = useState('1');
   const [deviceCount, setDeviceCount] = useState(3);
   const [paymentError, setPaymentError] = useState('');
-  const activePeriod = periods.find((item) => item.id === selectedPeriod) || periods[0];
   const buySubscription = async () => {
     try {
       setPaymentError('');
@@ -1299,7 +1312,7 @@ function TariffScreen({ selected, price, discounts, navigate, activeScreen }) {
     <AppFrame className="tariff-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Подписка" />
       <PlansPair selected={selected} onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
-      <SectionDivider>выберите подходящий срок</SectionDivider>
+      <SectionDivider>backend рассчитает сумму и вернет ссылку оплаты</SectionDivider>
       <div className="periods">
         {periods.map((item) => (
           <PeriodCard key={item.id} {...item} selected={selectedPeriod === item.id} onClick={() => setSelectedPeriod(item.id)} />
@@ -1308,8 +1321,8 @@ function TariffScreen({ selected, price, discounts, navigate, activeScreen }) {
       <Card className="devices-counter">
         <div>
           <h2>Устройства</h2>
-          <p>Включено в тариф: 3 устройства</p>
-          <span>+75 ₽ за дополнительное устройство</span>
+          <p>Передается в invoice как hwid</p>
+          <span>Стоимость рассчитывает backend</span>
         </div>
         <div className="stepper">
           <button onClick={() => setDeviceCount((value) => Math.max(1, value - 1))}>-</button>
@@ -1319,31 +1332,28 @@ function TariffScreen({ selected, price, discounts, navigate, activeScreen }) {
       </Card>
       <Card className="checkout-card">
         <div>
-          <p>Итого к оплате</p>
-          <strong>4 188 ₽</strong>
+          <p>Тариф</p>
+          <strong>{selected === 'plus' ? 'Plus' : 'Lite'}</strong>
         </div>
         <div>
-          <span>5 985 ₽</span>
-          <b>-30%</b>
-          <p>{price} / мес</p>
+          <span>{selectedPeriod} мес</span>
+          <p>{deviceCount} устройств</p>
         </div>
         {paymentError && <p className="inline-error">{paymentError}</p>}
-        <PrimaryButton onClick={buySubscription}>Подключить за&nbsp; {activePeriod.price}</PrimaryButton>
+        <PrimaryButton onClick={buySubscription}>Создать счет</PrimaryButton>
         <small><Lock size={15} />Безопасная оплата. Отмена в любой момент</small>
       </Card>
     </AppFrame>
   );
 }
 
-function PeriodCard({ title, note, discount, price, total, selected, onClick }) {
+function PeriodCard({ title, selected, onClick }) {
   return (
     <button className={selected ? 'period-card selected' : 'period-card'} onClick={onClick}>
       <h3>{title}</h3>
-      {note && <p>{note}</p>}
-      {discount && <span>{discount}</span>}
       <div className="thin-line" />
-      <strong>{price} <small>/ мес</small></strong>
-      <b>{total}</b>
+      <strong>API</strong>
+      <b>Расчет на backend</b>
     </button>
   );
 }
