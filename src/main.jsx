@@ -535,7 +535,7 @@ function SubscriptionSummary({ muted: sheetMuted = false, navigate, mainData }) 
       <div>
         <span className="status-pill green"><i />Активен</span>
         <h2>{planName}</h2>
-        <p>{mainData.expiredAt ? `Действует до ${dateRu(mainData.expiredAt)}` : 'Данные загружаются из API'}</p>
+        <p>{mainData.expiredAt ? `Действует до ${dateRu(mainData.expiredAt)}` : 'Данные подписки загружаются'}</p>
       </div>
       <img src={asset('shield-small')} alt="" />
       <div className="metrics">
@@ -814,13 +814,13 @@ function ChangePlan({ navigate, activeScreen }) {
     <AppFrame className="change-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Смена тарифа" />
       <PlansPair selected="plus" currentLite onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
-      <SectionDivider>стоимость рассчитывает backend</SectionDivider>
+      <SectionDivider>выберите действие</SectionDivider>
       <Card className="change-card">
         <span className="status-pill green">Апгрейд</span>
         <h2>Вы переходите на <span>Plus</span></h2>
         <div className="thin-line" />
-        <h3>Расчет платежа</h3>
-        <SummaryLine label="К оплате по API" value={money(upgradeAmount)} />
+        <h3>Доплата за переход</h3>
+        <SummaryLine label="К оплате" value={money(upgradeAmount)} />
       </Card>
       <Card className="payment-balance">
         <IconTile><Wallet size={25} /></IconTile>
@@ -846,9 +846,9 @@ function ChangePlan({ navigate, activeScreen }) {
         <div className="notice-box">
           <CalendarDays size={24} />
           <div>
-            <p>Даунгрейд выполняется через API</p>
+            <p>Переход на Lite</p>
             <strong>Plus → Lite</strong>
-            <span>Срок подписки сохраняется на стороне backend</span>
+            <span>Срок подписки сохраняется</span>
           </div>
         </div>
         <button className="secondary-button purple" onClick={downgradePlan}>Запланировать переход на Lite</button>
@@ -924,7 +924,7 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
       </Card>
       <Card className="payment-card">
         <h2>Выберите, что хотите оплатить</h2>
-        <PaymentOption icon={Plus} title="Устройства" subtitle="Backend рассчитает стоимость по лимиту" checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} />
+        <PaymentOption icon={Plus} title="Устройства" subtitle="Увеличить лимит подключений" checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} />
         <PaymentOption title="Подписка" subtitle="Тариф, срок и лимит устройств" feather checked={selectedPayment === 'subscription'} onClick={() => setSelectedPayment('subscription')} />
         <SectionDivider>или ввести сумму вручную</SectionDivider>
         <div className={selectedPayment === 'balance' ? 'input-box selected' : 'input-box'} onClick={() => setSelectedPayment('balance')}>
@@ -952,7 +952,7 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
         <Card className="devices-counter compact-counter">
           <div>
             <h2>Лимит устройств</h2>
-            <p>Стоимость рассчитывает backend</p>
+            <p>Выберите новый лимит</p>
           </div>
           <div className="stepper">
             <button onClick={() => setHwidLimit((value) => Math.max(1, value - 1))}>-</button>
@@ -1177,7 +1177,7 @@ function TicketsScreen({ navigate, activeScreen }) {
           </div>
         </button>
       ))}
-      <p className="empty-state">API обращений пока не описан на бэкенде</p>
+      <p className="empty-state">Обращений пока нет</p>
       <PrimaryButton onClick={() => navigate('ticket-create')}>Новое обращение</PrimaryButton>
     </AppFrame>
   );
@@ -1186,7 +1186,7 @@ function TicketsScreen({ navigate, activeScreen }) {
 function CreateTicket({ navigate, activeScreen }) {
   return (
     <AppFrame className="create-ticket" navigate={navigate} activeScreen={activeScreen}>
-      <PageTitle title="Создать обращение" subtitle="На бэкенде пока нет API для создания обращений" />
+      <PageTitle title="Создать обращение" subtitle="Опишите вашу проблему, и мы поможем" />
       <Card className="field-card">
         <label>Тема обращения</label>
         <p>Кратко опишите проблему</p>
@@ -1216,17 +1216,17 @@ function CreateTicket({ navigate, activeScreen }) {
 function TicketThread({ navigate, activeScreen }) {
   return (
     <AppFrame className="thread-screen" navigate={navigate} activeScreen={activeScreen}>
-      <PageTitle title="Обращение" subtitle={<><span>API тикетов не подключен</span><Copy size={12} /></>} />
+      <PageTitle title="Обращение" subtitle={<><span>Данные обращения недоступны</span><Copy size={12} /></>} />
       <Card className="ticket-info">
         <InfoLine icon={Headphones} title="Статус" value="Недоступно" />
         <InfoLine icon={MoreVertical} title="Приоритет" value="Недоступно" />
         <InfoLine icon={CalendarDays} title="Обновлен" value="Недоступно" />
       </Card>
       <div className="date-pill">Нет данных</div>
-      <ThreadMarker>Эндпоинты обращений отсутствуют в OpenAPI</ThreadMarker>
+      <ThreadMarker>Переписка пока пуста</ThreadMarker>
       <div className="reopen-box">
         <Sparkles size={25} />
-        <div><strong>Переписка недоступна</strong><p>Нужен backend endpoint для тикетов и сообщений</p></div>
+        <div><strong>Переписка недоступна</strong><p>Попробуйте открыть список обращений позже</p></div>
       </div>
       <div className="message-input">
         <button onClick={() => navigate('ticket-create')} aria-label="Прикрепить файл"><Paperclip size={23} /></button>
@@ -1312,7 +1312,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
     <AppFrame className="tariff-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Подписка" />
       <PlansPair selected={selected} onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
-      <SectionDivider>backend рассчитает сумму и вернет ссылку оплаты</SectionDivider>
+      <SectionDivider>выберите срок</SectionDivider>
       <div className="periods">
         {periods.map((item) => (
           <PeriodCard key={item.id} {...item} selected={selectedPeriod === item.id} onClick={() => setSelectedPeriod(item.id)} />
@@ -1321,8 +1321,8 @@ function TariffScreen({ selected, navigate, activeScreen }) {
       <Card className="devices-counter">
         <div>
           <h2>Устройства</h2>
-          <p>Передается в invoice как hwid</p>
-          <span>Стоимость рассчитывает backend</span>
+          <p>Выберите лимит подключений</p>
+          <span>Можно изменить перед оплатой</span>
         </div>
         <div className="stepper">
           <button onClick={() => setDeviceCount((value) => Math.max(1, value - 1))}>-</button>
@@ -1352,8 +1352,8 @@ function PeriodCard({ title, selected, onClick }) {
     <button className={selected ? 'period-card selected' : 'period-card'} onClick={onClick}>
       <h3>{title}</h3>
       <div className="thin-line" />
-      <strong>API</strong>
-      <b>Расчет на backend</b>
+      <strong>{title}</strong>
+      <b>Срок подписки</b>
     </button>
   );
 }
