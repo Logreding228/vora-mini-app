@@ -14,9 +14,24 @@ export function initTelegramApp() {
 
   return {
     webApp,
-    user: webApp.initDataUnsafe?.user || null,
+    user: webApp.initDataUnsafe?.user || getUserFromInitData(webApp.initData) || null,
     initData: webApp.initData || '',
   };
+}
+
+function getUserFromInitData(initData) {
+  if (!initData) {
+    return null;
+  }
+
+  try {
+    const params = new URLSearchParams(initData);
+    const user = params.get('user');
+
+    return user ? JSON.parse(user) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function getDisplayName(user) {
