@@ -66,6 +66,11 @@ const formatDateTime = (value) => {
 const openPaymentUrl = (url) => {
   if (typeof url === 'string' && url) {
     window.location.href = url;
+    return;
+  }
+
+  if (url?.url || url?.payment_url || url?.invoice_url) {
+    window.location.href = url.url || url.payment_url || url.invoice_url;
   }
 };
 const mapClient = (connection) => (connection === 'v2RayTun' ? 'v2' : 'happ');
@@ -162,13 +167,17 @@ function getSubscriptionState(mainData) {
 }
 
 function getUiError(error) {
-  const message = error instanceof ApiError ? error.message : '';
+  const message = error instanceof ApiError ? error.message : error?.message || '';
 
   if (/hash|not authenticated|unauthorized|token|telegram/i.test(message)) {
     return 'Не удалось подтвердить Telegram. Закройте мини-приложение и откройте его через кнопку бота заново.';
   }
 
-  return message || 'Не удалось выполнить запрос';
+  if (/internal server error|failed to fetch|networkerror|load failed/i.test(message)) {
+    return 'Платежный сервис не создал счет. Попробуйте позже или выберите другой способ оплаты.';
+  }
+
+  return message || 'Запрос не выполнен. Попробуйте еще раз.';
 }
 
 const screens = [
@@ -961,14 +970,30 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
   const [selectedCurrency, setSelectedCurrency] = useState('USDT');
   const [selectedPlan, setSelectedPlan] = useState('plus');
   const [subscriptionMonths, setSubscriptionMonths] = useState(1);
-  const [hwidLimit, setHwidLimit] = useState(Math.max(1, mainData.maxDevices || 1));
+  const [hwidLimit, setHwidLimit] = useState(() => Math.min(9, Math.max(1, Number(mainData.maxDevices || 0) + 1)));
   const [customAmount, setCustomAmount] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
   const [paymentError, setPaymentError] = useState('');
   const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
   const paymentType = selectedPayment === 'device' ? 'HWID' : selectedPayment === 'balance' ? 'BALANCE' : 'SUBSCRIPTION';
 
+  useEffect(() => {
+    if (selectedPayment === 'device') {
+      setHwidLimit((value) => Math.max(value, Math.min(9, Number(mainData.maxDevices || 0) + 1)));
+    }
+  }, [mainData.maxDevices, selectedPayment]);
+
   const createPayment = async () => {
+    if (paymentType === 'BALANCE' && Number(customAmount || 0) <= 0) {
+      setPaymentError('Введите сумму пополнения');
+      return;
+    }
+
+    if (paymentType === 'HWID' && hwidLimit <= Number(mainData.maxDevices || 0)) {
+      setPaymentError('Выберите лимит больше текущего');
+      return;
+    }
+
     const payload = paymentType === 'BALANCE'
       ? { amount: Number(customAmount || 0), currency: selectedMethod === 'crypto' ? selectedCurrency : 'RUB' }
       : paymentType === 'HWID'
@@ -1030,10 +1055,10 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
         <Card className="devices-counter compact-counter">
           <div>
             <h2>Лимит устройств</h2>
-            <p>Выберите новый лимит</p>
+            <p>{selectedPayment === 'device' ? `Сейчас доступно ${mainData.maxDevices}` : 'Выберите лимит'}</p>
           </div>
           <div className="stepper">
-            <button onClick={() => setHwidLimit((value) => Math.max(1, value - 1))}>-</button>
+            <button onClick={() => setHwidLimit((value) => Math.max(selectedPayment === 'device' ? Number(mainData.maxDevices || 0) + 1 : 1, value - 1))}>-</button>
             <strong>{hwidLimit}</strong>
             <button onClick={() => setHwidLimit((value) => Math.min(9, value + 1))}>+</button>
           </div>
@@ -1365,8 +1390,13 @@ function TariffScreen({ selected, navigate, activeScreen }) {
     { id: '12', amount: '12', unit: 'месяцев' },
   ];
   const [selectedPeriod, setSelectedPeriod] = useState('1');
-  const [deviceCount, setDeviceCount] = useState(3);
+  const [deviceCount, setDeviceCount] = useState(selected === 'plus' ? 3 : 1);
   const [paymentError, setPaymentError] = useState('');
+
+  useEffect(() => {
+    setDeviceCount(selected === 'plus' ? 3 : 1);
+  }, [selected]);
+
   const buySubscription = async () => {
     try {
       setPaymentError('');
@@ -1417,6 +1447,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
           <span>{selectedPeriod} мес</span>
           <p>{deviceCount} устройств</p>
         </div>
+        <p className="muted-note">Сумма откроется на странице оплаты</p>
         {paymentError && <p className="inline-error">{paymentError}</p>}
         <PrimaryButton onClick={buySubscription}>Создать счет</PrimaryButton>
         <small><Lock size={15} />Безопасная оплата. Отмена в любой момент</small>

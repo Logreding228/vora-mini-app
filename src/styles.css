@@ -2144,8 +2144,13 @@ button {
 
 .checkout-card span {
   color: #9ca3ad;
-  text-decoration: line-through;
   font-size: 14px;
+}
+
+.checkout-card .muted-note {
+  grid-column: 1 / -1;
+  margin: -4px 0 0;
+  font-size: 12px;
 }
 
 .checkout-card b {

@@ -4,7 +4,6 @@ const telegramAuthPath = runtimeConfig.TELEGRAM_AUTH_PATH || import.meta.env.VIT
 const tokenRefreshPath = runtimeConfig.TOKEN_REFRESH_PATH || import.meta.env.VITE_TOKEN_REFRESH_PATH || '/auth/refresh_accessToken';
 let telegramInitData = runtimeConfig.TELEGRAM_INIT_DATA || import.meta.env.VITE_TELEGRAM_INIT_DATA || '';
 let refreshPromise = null;
-let authRejected = false;
 const memoryStorage = new Map();
 
 function readStorage(key) {
@@ -235,10 +234,6 @@ async function authenticateWithInitData() {
     return '';
   }
 
-  if (authRejected) {
-    throw new ApiError(telegramAuthMessage(), 403);
-  }
-
   let payload;
 
   try {
@@ -249,7 +244,6 @@ async function authenticateWithInitData() {
     });
   } catch (error) {
     if (isTelegramAuthError(error)) {
-      authRejected = true;
       clearTokenPair();
       throw new ApiError(telegramAuthMessage(), error.status, error.payload);
     }
@@ -259,11 +253,9 @@ async function authenticateWithInitData() {
 
   if (typeof payload === 'string') {
     writeStorage('access_token', payload);
-    authRejected = false;
     return payload;
   }
 
-  authRejected = false;
   return saveTokenPair(payload);
 }
 
@@ -302,7 +294,6 @@ async function request(path, options = {}) {
 
 export async function authenticateTelegram(initData) {
   telegramInitData = initData || telegramInitData;
-  authRejected = false;
 
   if (!apiBaseUrl || !telegramInitData) {
     return null;
