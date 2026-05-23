@@ -43,7 +43,7 @@ import './styles.css';
 
 const asset = (name) => `${import.meta.env.BASE_URL}assets/${name}.png`;
 const money = (value, fallback = '0') => `${Number(value ?? fallback).toLocaleString('ru-RU')} ₽`;
-const dateRu = (value, fallback = '20.04.2026') => {
+const dateRu = (value, fallback = '—') => {
   if (!value) {
     return fallback;
   }
@@ -87,7 +87,8 @@ const normalizeDeviceKind = (value) => {
   return name || 'windows';
 };
 const emptyMainData = {
-  status: 'active',
+  loaded: false,
+  status: '',
   balance: '0.00',
   ref_balance: '0.00',
   expired_at: '',
@@ -113,7 +114,8 @@ function normalizeMainData(data = emptyMainData) {
   })) : [];
 
   return {
-    status: data.status || 'active',
+    loaded: Boolean(data && Object.keys(data).length),
+    status: String(data.status || emptyMainData.status).toLowerCase(),
     balance: data.balance ?? emptyMainData.balance,
     refBalance: data.ref_balance ?? emptyMainData.ref_balance,
     expiredAt: data.expired_at || emptyMainData.expired_at,
@@ -123,6 +125,50 @@ function normalizeMainData(data = emptyMainData) {
     maxDevices: Number(hwid.limit ?? hwid.max ?? hwid.total ?? hwidResponse.limit ?? Math.max(2, devices.length)),
     devices,
   };
+}
+
+function isPastDate(value) {
+  if (!value) {
+    return false;
+  }
+
+  const date = new Date(`${value}T23:59:59`);
+
+  return !Number.isNaN(date.getTime()) && date.getTime() < Date.now();
+}
+
+function getSubscriptionState(mainData) {
+  if (!mainData.loaded) {
+    return { label: 'Загрузка', tone: 'purple', description: 'Загружаем данные подписки' };
+  }
+
+  if (mainData.expiredAt && isPastDate(mainData.expiredAt)) {
+    return { label: 'Истекла', tone: 'purple', description: `Закончилась ${dateRu(mainData.expiredAt)}` };
+  }
+
+  if (mainData.status === 'active') {
+    return { label: 'Активна', tone: 'green', description: mainData.expiredAt ? `Действует до ${dateRu(mainData.expiredAt)}` : 'Подписка активна' };
+  }
+
+  if (mainData.status === 'pending') {
+    return { label: 'Ожидает оплаты', tone: 'purple', description: 'Платеж еще не подтвержден' };
+  }
+
+  if (mainData.status === 'frozen') {
+    return { label: 'Заморожена', tone: 'purple', description: 'Доступ временно приостановлен' };
+  }
+
+  return { label: 'Нет подписки', tone: 'purple', description: 'Оформите подписку для доступа' };
+}
+
+function getUiError(error) {
+  const message = error instanceof ApiError ? error.message : '';
+
+  if (/hash|not authenticated|unauthorized|token|telegram/i.test(message)) {
+    return 'Не удалось подтвердить Telegram. Закройте мини-приложение и откройте его через кнопку бота заново.';
+  }
+
+  return message || 'Не удалось выполнить запрос';
 }
 
 const screens = [
@@ -178,7 +224,7 @@ function App() {
         setMainData(normalizeMainData(data));
         setApiNotice('');
       } catch (error) {
-        setApiNotice(error instanceof ApiError ? error.message : 'Откройте приложение через Telegram');
+        setApiNotice(getUiError(error));
       }
     };
 
@@ -423,7 +469,7 @@ function TrialStart({ navigate, activeScreen }) {
       const url = await api.createTrialInvoice({ provider: 'platega' });
       openPaymentUrl(url);
     } catch (error) {
-      window.alert(error instanceof ApiError ? error.message : 'Не удалось создать платеж');
+      window.alert(getUiError(error));
     }
   };
 
@@ -536,13 +582,14 @@ function HomePopup({ navigate, activeScreen, mainData, telegramUser }) {
 function SubscriptionSummary({ muted: sheetMuted = false, navigate, mainData }) {
   const planName = mainData.plan ? (mainData.plan === 'plus' ? 'Plus' : mainData.plan === 'lite' ? 'Lite' : mainData.plan) : 'Подписка';
   const progress = Math.min(100, Math.max(0, (mainData.usedDevices / mainData.maxDevices) * 100));
+  const subscriptionState = getSubscriptionState(mainData);
 
   return (
     <Card className={`subscription-card ${sheetMuted ? 'under-sheet' : ''}`}>
       <div>
-        <span className="status-pill green"><i />Активен</span>
+        <span className={`status-pill ${subscriptionState.tone}`}><i />{subscriptionState.label}</span>
         <h2>{planName}</h2>
-        <p>{mainData.expiredAt ? `Действует до ${dateRu(mainData.expiredAt)}` : 'Данные подписки загружаются'}</p>
+        <p>{subscriptionState.description}</p>
       </div>
       <img src={asset('shield-small')} alt="" />
       <div className="metrics">
@@ -606,7 +653,7 @@ function DevicesCard({ mainData }) {
       await api.deleteDevice(id);
       setDevices((items) => items.filter((item) => item.id !== id));
     } catch (error) {
-      setDeviceError(error.message);
+      setDeviceError(getUiError(error));
     }
   };
 
@@ -665,7 +712,7 @@ function DeviceSheet({ navigate }) {
       const url = await api.subscriptionUrl(client);
       openPaymentUrl(url);
     } catch (error) {
-      setConnectError(error.message);
+      setConnectError(getUiError(error));
     }
   };
 
@@ -675,7 +722,7 @@ function DeviceSheet({ navigate }) {
       const url = await api.subscriptionQr(client);
       setQrImage(await QRCode.toDataURL(url));
     } catch (error) {
-      setConnectError(error.message);
+      setConnectError(getUiError(error));
     }
   };
 
@@ -823,7 +870,7 @@ function ChangePlan({ navigate, activeScreen, mainData }) {
       const url = await api.createUpgradeInvoice({ provider: 'platega' });
       openPaymentUrl(url);
     } catch (error) {
-      setChangeError(error.message);
+      setChangeError(getUiError(error));
     }
   };
 
@@ -833,7 +880,7 @@ function ChangePlan({ navigate, activeScreen, mainData }) {
       await api.downgradePlan();
       navigate('home-active');
     } catch (error) {
-      setChangeError(error.message);
+      setChangeError(getUiError(error));
     }
   };
 
@@ -938,7 +985,7 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
       const url = await api.createInvoice({ provider, type: paymentType, payload });
       openPaymentUrl(url);
     } catch (error) {
-      setPaymentError(error.message);
+      setPaymentError(getUiError(error));
     }
   };
 
@@ -1058,7 +1105,7 @@ function BalanceHistory({ navigate, activeScreen }) {
         setHistory(await api.history(type));
         setHistoryError('');
       } catch (error) {
-        setHistoryError(error.message);
+        setHistoryError(getUiError(error));
       }
     };
 
@@ -1335,7 +1382,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
       });
       openPaymentUrl(url);
     } catch (error) {
-      setPaymentError(error.message);
+      setPaymentError(getUiError(error));
     }
   };
 

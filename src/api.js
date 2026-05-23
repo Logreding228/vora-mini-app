@@ -4,6 +4,7 @@ const telegramAuthPath = runtimeConfig.TELEGRAM_AUTH_PATH || import.meta.env.VIT
 const tokenRefreshPath = runtimeConfig.TOKEN_REFRESH_PATH || import.meta.env.VITE_TOKEN_REFRESH_PATH || '/auth/refresh_accessToken';
 let telegramInitData = runtimeConfig.TELEGRAM_INIT_DATA || import.meta.env.VITE_TELEGRAM_INIT_DATA || '';
 let refreshPromise = null;
+let authRejected = false;
 const memoryStorage = new Map();
 
 function readStorage(key) {
@@ -152,6 +153,14 @@ function getErrorMessage(payload) {
   return payload?.detail || payload?.message || (typeof payload === 'string' ? payload : 'API request failed');
 }
 
+function isTelegramAuthError(error) {
+  return error instanceof ApiError && (error.status === 401 || error.status === 403) && /hash|auth|token|signature/i.test(error.message);
+}
+
+function telegramAuthMessage() {
+  return 'Не удалось подтвердить Telegram. Закройте мини-приложение и откройте его через кнопку бота заново.';
+}
+
 async function rawRequest(path, { method = 'GET', query, body, token = getAccessToken(), initData } = {}) {
   if (!apiBaseUrl) {
     throw new ApiError('API base URL is not configured', 0);
@@ -226,17 +235,35 @@ async function authenticateWithInitData() {
     return '';
   }
 
-  const payload = await rawRequest(telegramAuthPath, {
-    method: 'POST',
-    body: { initData: telegramInitData },
-    token: '',
-  });
+  if (authRejected) {
+    throw new ApiError(telegramAuthMessage(), 403);
+  }
+
+  let payload;
+
+  try {
+    payload = await rawRequest(telegramAuthPath, {
+      method: 'POST',
+      body: { initData: telegramInitData },
+      token: '',
+    });
+  } catch (error) {
+    if (isTelegramAuthError(error)) {
+      authRejected = true;
+      clearTokenPair();
+      throw new ApiError(telegramAuthMessage(), error.status, error.payload);
+    }
+
+    throw error;
+  }
 
   if (typeof payload === 'string') {
     writeStorage('access_token', payload);
+    authRejected = false;
     return payload;
   }
 
+  authRejected = false;
   return saveTokenPair(payload);
 }
 
@@ -275,6 +302,7 @@ async function request(path, options = {}) {
 
 export async function authenticateTelegram(initData) {
   telegramInitData = initData || telegramInitData;
+  authRejected = false;
 
   if (!apiBaseUrl || !telegramInitData) {
     return null;
