@@ -54,14 +54,11 @@ async function telegram(method, payload) {
 
 const bot = await telegram('getMe');
 
-await telegram('setMyCommands', {
-  commands: [
-    {
-      command: 'start',
-      description: 'Открыть VORA',
-    },
-  ],
+await telegram('deleteWebhook', {
+  drop_pending_updates: true,
 });
+
+await telegram('deleteMyCommands');
 
 await telegram('setChatMenuButton', {
   menu_button: {
@@ -71,6 +68,10 @@ await telegram('setChatMenuButton', {
       url: miniAppUrl,
     },
   },
+});
+
+await telegram('setMyDescription', {
+  description: 'Открывайте VORA через кнопку меню внизу чата.',
 });
 
 await telegram('setMyShortDescription', {
