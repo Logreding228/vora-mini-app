@@ -690,7 +690,7 @@ function SubscriptionSummary({ muted: sheetMuted = false, navigate, mainData }) 
       </div>
       <img src={asset('shield-small')} alt="" />
       <div className="metrics">
-        <div className="metric-card">
+        <div className="metric-card device-metric">
           <IconTile tone="plain"><Monitor size={22} /></IconTile>
           <div className="metric-content">
             <span>Устройства</span>
@@ -698,7 +698,7 @@ function SubscriptionSummary({ muted: sheetMuted = false, navigate, mainData }) 
             <div className="mini-progress"><i style={{ width: `${progress}%` }} /></div>
           </div>
         </div>
-        <div className="metric-card">
+        <div className="metric-card date-metric">
           <span>Следующее списание</span>
           <strong>{dateRu(mainData.expiredAt)}</strong>
         </div>

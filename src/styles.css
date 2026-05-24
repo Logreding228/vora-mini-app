@@ -752,20 +752,26 @@ button {
   padding: 12px;
   border: 1px solid #f0f0f2;
   border-radius: 20px;
-  display: grid;
-  grid-template-columns: auto 1fr;
+  display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .metric-content {
   min-width: 0;
+  flex: 1;
+}
+
+.date-metric {
+  display: block;
 }
 
 .metric-card span {
   display: block;
   color: #9ca3ad;
   font-size: 9px;
+  white-space: nowrap;
 }
 
 .metric-card strong {
@@ -773,6 +779,7 @@ button {
   margin-top: 4px;
   font-size: 15px;
   line-height: 1.05;
+  white-space: nowrap;
 }
 
 .metric-card .mini-progress {
@@ -1980,12 +1987,18 @@ button {
 
 .support-card {
   min-height: 130px;
-  padding: 20px 12px;
+  padding: 20px 16px;
   position: relative;
   border-radius: 14px;
   background: #ffffff;
   color: #06162c;
   text-align: left;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px;
+  grid-template-rows: auto 1fr auto;
+  align-items: start;
+  gap: 10px;
+  overflow: hidden;
   box-shadow: 0 14px 35px rgba(6, 22, 44, 0.055);
 }
 
@@ -1998,22 +2011,33 @@ button {
 }
 
 .support-card strong {
+  grid-column: 1 / 2;
+  min-width: 0;
   display: block;
-  margin-top: 24px;
+  margin-top: 10px;
   font-size: 16px;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
 }
 
 .support-card p {
-  margin: 14px 0 0;
+  grid-column: 1 / 2;
+  min-width: 0;
+  margin: 0;
   color: #596371;
   font-size: 13px;
+  line-height: 1.24;
 }
 
 .support-card > svg:last-child {
-  position: absolute;
-  right: 20px;
-  top: 66px;
+  grid-column: 2 / 3;
+  grid-row: 1 / 4;
+  align-self: center;
+  justify-self: end;
   color: #4f5b68;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
 }
 
 .topic-list {
@@ -2650,5 +2674,45 @@ button {
 
   .nav-item {
     height: 60px;
+  }
+}
+
+@media (max-width: 390px) {
+  .content {
+    padding-inline: 14px;
+  }
+
+  .metrics {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .metric-card {
+    min-height: 58px;
+    border-radius: 18px;
+  }
+
+  .support-cards {
+    gap: 8px;
+  }
+
+  .support-card {
+    min-height: 124px;
+    padding: 18px 14px;
+    grid-template-columns: minmax(0, 1fr) 22px;
+  }
+
+  .support-card strong {
+    font-size: 15px;
+    line-height: 1.08;
+  }
+
+  .support-card p {
+    font-size: 12px;
+  }
+
+  .support-card > svg:last-child {
+    width: 21px;
+    height: 21px;
   }
 }
