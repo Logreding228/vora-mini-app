@@ -96,6 +96,7 @@ button {
 }
 
 .brand {
+  width: 184px;
   text-align: center;
   color: #3f3f42;
 }
@@ -104,6 +105,7 @@ button {
   font-size: 31px;
   line-height: 1;
   font-weight: 800;
+  transform-origin: center;
   transform: scaleX(1.35);
 }
 
@@ -708,10 +710,15 @@ button {
   font-size: 20px;
 }
 
+.subscription-card > div:first-child {
+  max-width: calc(100% - 112px);
+}
+
 .subscription-card p {
   margin: 0;
   color: #596371;
   font-size: 13px;
+  line-height: 1.25;
 }
 
 .status-pill.green {
@@ -2699,20 +2706,21 @@ button {
   .support-card {
     min-height: 124px;
     padding: 18px 14px;
-    grid-template-columns: minmax(0, 1fr) 22px;
+    grid-template-columns: minmax(0, 1fr) 19px;
+    gap: 7px;
   }
 
   .support-card strong {
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.08;
   }
 
   .support-card p {
-    font-size: 12px;
+    font-size: 11.5px;
   }
 
   .support-card > svg:last-child {
-    width: 21px;
-    height: 21px;
+    width: 19px;
+    height: 19px;
   }
 }
