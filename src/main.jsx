@@ -43,6 +43,51 @@ import './styles.css';
 
 const asset = (name) => `${import.meta.env.BASE_URL}assets/${name}.png`;
 const money = (value, fallback = '0') => `${Number(value ?? fallback).toLocaleString('ru-RU')} ₽`;
+const pluralRu = (value, one, few, many) => {
+  const mod10 = value % 10;
+  const mod100 = value % 100;
+
+  if (mod10 === 1 && mod100 !== 11) {
+    return one;
+  }
+
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+    return few;
+  }
+
+  return many;
+};
+const tariffCatalog = {
+  lite: {
+    name: 'Lite',
+    description: 'Для привычных зарубежных сервисов',
+    devices: 1,
+    extraDevices: 2,
+    monthPrice: 300,
+    route: 'tariff-lite',
+  },
+  plus: {
+    name: 'Plus',
+    description: 'VORA Flow для привычных сервисов без лишних действий',
+    devices: 3,
+    extraDevices: 3,
+    monthPrice: 550,
+    route: 'tariff-plus',
+  },
+  home: {
+    name: 'Home',
+    description: 'Для тех, кто за границей',
+    devices: 1,
+    extraDevices: 2,
+    monthPrice: 450,
+    route: 'tariff-home',
+  },
+};
+const periodDiscounts = {
+  1: 1,
+  6: 0.9,
+  12: 0.85,
+};
 const dateRu = (value, fallback = '—') => {
   if (!value) {
     return fallback;
@@ -189,12 +234,14 @@ const screens = [
   { id: 'change-plan', label: 'Смена тарифа', component: ChangePlan },
   { id: 'balance-topup', label: 'Пополнение', component: BalanceTopup },
   { id: 'balance-history', label: 'История баланса', component: BalanceHistory },
+  { id: 'referral', label: 'Реферальная', component: ReferralScreen },
   { id: 'support', label: 'Поддержка', component: SupportScreen },
   { id: 'tickets', label: 'Обращения', component: TicketsScreen },
   { id: 'ticket-create', label: 'Создать обращение', component: CreateTicket },
   { id: 'ticket-thread', label: 'Переписка', component: TicketThread },
   { id: 'tariff-lite', label: 'Тариф Lite', component: TariffLite },
   { id: 'tariff-plus', label: 'Тариф Plus', component: TariffPlus },
+  { id: 'tariff-home', label: 'Тариф Home', component: TariffHome },
   { id: 'profile', label: 'Профиль', component: ProfileScreen },
 ];
 const screenIds = new Set(screens.map((item) => item.id));
@@ -305,8 +352,10 @@ function BottomNav({ navigate, activeScreen }) {
     'change-plan': 'subscription',
     'tariff-lite': 'subscription',
     'tariff-plus': 'subscription',
+    'tariff-home': 'subscription',
     'balance-topup': 'bonus',
     'balance-history': 'bonus',
+    referral: 'bonus',
     support: 'support',
     tickets: 'support',
     'ticket-create': 'support',
@@ -316,8 +365,8 @@ function BottomNav({ navigate, activeScreen }) {
 
   const nav = [
     { icon: Home, label: 'Главная', route: 'home-active', section: 'home' },
-    { icon: BookOpen, label: 'Подписка', route: 'tariff-plus', section: 'subscription' },
-    { icon: Users, label: 'Бонусы', route: 'balance-history', section: 'bonus' },
+    { icon: BookOpen, label: 'Подписка', route: 'tariff-home', section: 'subscription' },
+    { icon: Users, label: 'Бонусы', route: 'referral', section: 'bonus' },
     { icon: Headphones, label: 'Поддержка', route: 'support', section: 'support' },
     { icon: UserGlyph, label: 'Профиль', route: 'profile', section: 'profile' },
   ];
@@ -405,7 +454,7 @@ function SectionDivider({ children }) {
   );
 }
 
-function PlanCard({ name, description, devices, extra, selected, popular, current, onClick }) {
+function PlanCard({ name, description, devices, extra, price, selected, popular, current, onClick }) {
   return (
     <button className={`plan-card ${selected ? 'selected' : ''}`} onClick={onClick}>
       <div className="plan-heading">
@@ -414,6 +463,12 @@ function PlanCard({ name, description, devices, extra, selected, popular, curren
         {current && <span className="current-pill">Текущий</span>}
       </div>
       <p className="plan-description">{description}</p>
+      {price && (
+        <div className="plan-price compact-price">
+          <strong>{price}</strong>
+          <span>/мес</span>
+        </div>
+      )}
       <div className="plan-devices">
         <Monitor size={28} />
         <div>
@@ -425,28 +480,61 @@ function PlanCard({ name, description, devices, extra, selected, popular, curren
   );
 }
 
-function PlansPair({ currentLite = false, selected = 'plus', onSelect }) {
+function HomePlanCard({ selected, onClick }) {
+  const plan = tariffCatalog.home;
+
   return (
-    <div className="plans-pair">
-      <PlanCard
-        name="Lite"
-        description="Для привычных зарубежных сервисов"
-        devices="1 устройство"
-        extra="+ еще 2"
-        selected={selected === 'lite'}
-        current={currentLite}
-        onClick={() => onSelect?.('lite')}
-      />
-      <PlanCard
-        name="Plus"
-        description={<><span className="link-text">VORA Flow</span> — для привычных сервисов без лишних действий</>}
-        devices="3 устройства"
-        extra="+ еще 3"
-        selected={selected === 'plus'}
-        popular
-        onClick={() => onSelect?.('plus')}
-      />
-    </div>
+    <button className={selected ? 'home-plan-card selected' : 'home-plan-card'} onClick={onClick}>
+      <img src={asset('home-city')} alt="" />
+      <div>
+        <span>VORA</span>
+        <h3>Home</h3>
+        <p>{plan.description}</p>
+      </div>
+      <div className="home-plan-bottom">
+        <div className="plan-devices">
+          <Monitor size={27} />
+          <div>
+            <strong>{plan.devices} устройство</strong>
+            <span>+ еще {plan.extraDevices}</span>
+          </div>
+        </div>
+        <div className="plan-price compact-price">
+          <strong>{plan.monthPrice}</strong>
+          <span>/мес</span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function PlansPair({ currentLite = false, selected = 'plus', onSelect, includeHome = false }) {
+  return (
+    <>
+      <div className="plans-pair">
+        <PlanCard
+          name="Lite"
+          description="Для привычных зарубежных сервисов"
+          devices="1 устройство"
+          extra="+ еще 2"
+          price={tariffCatalog.lite.monthPrice}
+          selected={selected === 'lite'}
+          current={currentLite}
+          onClick={() => onSelect?.('lite')}
+        />
+        <PlanCard
+          name="Plus"
+          description={<><span className="link-text">VORA Flow</span> — для привычных сервисов без лишних действий</>}
+          devices="3 устройства"
+          extra="+ еще 3"
+          price={tariffCatalog.plus.monthPrice}
+          selected={selected === 'plus'}
+          popular
+          onClick={() => onSelect?.('plus')}
+        />
+      </div>
+      {includeHome && <HomePlanCard selected={selected === 'home'} onClick={() => onSelect?.('home')} />}
+    </>
   );
 }
 
@@ -618,7 +706,7 @@ function SubscriptionSummary({ muted: sheetMuted = false, navigate, mainData }) 
       <PrimaryButton onClick={() => navigate('home-popup')}>Добавить устройство</PrimaryButton>
       <div className="balance-strip">
         <BalanceMini title="Основной баланс" value={money(mainData.balance)} tone="green" onClick={() => navigate('balance-topup')} />
-        <BalanceMini title="Реферальный баланс" value={money(mainData.refBalance)} tone="orange" onClick={() => navigate('balance-history')} />
+        <BalanceMini title="Реферальный баланс" value={money(mainData.refBalance)} tone="orange" onClick={() => navigate('referral')} />
       </div>
     </Card>
   );
@@ -1040,8 +1128,8 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
         <Card className="payment-card">
           <h2>Параметры подписки</h2>
           <div className="segmented-control compact">
-            {['lite', 'plus'].map((plan) => (
-              <button key={plan} className={selectedPlan === plan ? 'active' : ''} onClick={() => setSelectedPlan(plan)}>{plan === 'plus' ? 'Plus' : 'Lite'}</button>
+            {['lite', 'plus', 'home'].map((plan) => (
+              <button key={plan} className={selectedPlan === plan ? 'active' : ''} onClick={() => setSelectedPlan(plan)}>{tariffCatalog[plan].name}</button>
             ))}
           </div>
           <div className="segmented-control compact">
@@ -1111,6 +1199,114 @@ function MethodCard({ title, subtitle, checked, onClick }) {
       </div>
       <span className={checked ? 'radio checked' : 'radio'} />
     </button>
+  );
+}
+
+function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
+  const earned = Number(mainData.refBalance || 0);
+  const [amount, setAmount] = useState(earned ? String(Math.floor(earned)) : '');
+  const [notice, setNotice] = useState('');
+  const days = Math.max(0, Math.floor(Number(amount || 0) / 10));
+  const referralLink = telegramUser?.id ? `vorachoice.store/r/${telegramUser.id}` : '';
+
+  useEffect(() => {
+    setAmount(earned ? String(Math.floor(earned)) : '');
+  }, [earned]);
+
+  const copyReferralLink = async () => {
+    if (!referralLink) {
+      setNotice('Ссылка появится после входа через Telegram');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(referralLink);
+      setNotice('Ссылка скопирована');
+    } catch {
+      setNotice(referralLink);
+    }
+  };
+
+  const showApiNotice = () => {
+    setNotice('Для этого действия нужен отдельный endpoint в API');
+  };
+
+  return (
+    <AppFrame className="referral-screen" navigate={navigate} activeScreen={activeScreen}>
+      <PageTitle title="Реферальная программа" />
+      <Card className="referral-earn-card">
+        <div className="referral-earn-head">
+          <div>
+            <p>Вы заработали</p>
+            <strong>{money(earned)}</strong>
+          </div>
+          <span>= {Math.floor(earned / 10)} дней подписки</span>
+        </div>
+        <img src={asset('referral-gift')} alt="" />
+        <div className="referral-rate">
+          <span>1 день подписки</span>
+          <strong>= 10 ₽</strong>
+        </div>
+        <div className="referral-convert">
+          <label>
+            <span>Сумма</span>
+            <input value={amount} onChange={(event) => setAmount(event.target.value.replace(/[^\d]/g, ''))} inputMode="numeric" placeholder="0" />
+            <b>₽</b>
+          </label>
+          <ArrowRight size={22} />
+          <label>
+            <span>К подписке</span>
+            <input value={days} readOnly />
+            <b>дней</b>
+          </label>
+        </div>
+        <PrimaryButton onClick={showApiNotice}>Добавить {days || 0} дней</PrimaryButton>
+        <SectionDivider>или</SectionDivider>
+        <button className="withdraw-row" onClick={showApiNotice}>
+          <Wallet size={25} />
+          <div>
+            <strong>Вывести средства</strong>
+            <p>Минимум от 1 000 ₽</p>
+          </div>
+          <ChevronRight size={23} />
+        </button>
+        {notice && <p className="inline-error neutral">{notice}</p>}
+      </Card>
+      <Card className="invite-card">
+        <h2>Приглашайте друзей и получайте бонусы</h2>
+        <div className="bonus-grid">
+          <div>
+            <strong>до 561 ₽</strong>
+            <p>с оплаты друга</p>
+          </div>
+          <div>
+            <strong>до 56 ₽</strong>
+            <p>с оплат его друзей</p>
+          </div>
+        </div>
+        <div className="referral-link-box">
+          <Link size={21} />
+          <span>{referralLink || 'Ссылка появится после входа'}</span>
+          <button onClick={copyReferralLink} aria-label="Скопировать ссылку"><Copy size={19} /></button>
+        </div>
+        <p>Рекуррентные выплаты начисляются с каждой оплаты приглашенных пользователей.</p>
+      </Card>
+      <Card className="referral-stats-card">
+        <h2>Статистика</h2>
+        <div>
+          <Stat icon={Users} label="Приглашено друзей" value="—" />
+          <Stat icon={Sparkles} label="Активных друзей" value="—" />
+        </div>
+        <SummaryLine label="Всего заработано" value={money(earned)} />
+      </Card>
+      <button className="partner-card" onClick={showApiNotice}>
+        <div>
+          <strong>Партнерская программа</strong>
+          <p>Для блогеров и команд</p>
+        </div>
+        <ChevronRight size={24} />
+      </button>
+    </AppFrame>
   );
 }
 
@@ -1383,31 +1579,42 @@ function TariffPlus({ navigate, activeScreen }) {
   return <TariffScreen selected="plus" navigate={navigate} activeScreen={activeScreen} />;
 }
 
+function TariffHome({ navigate, activeScreen }) {
+  return <TariffScreen selected="home" navigate={navigate} activeScreen={activeScreen} />;
+}
+
 function TariffScreen({ selected, navigate, activeScreen }) {
-  const periods = [
-    { id: '1', amount: '1', unit: 'месяц' },
-    { id: '6', amount: '6', unit: 'месяцев' },
-    { id: '12', amount: '12', unit: 'месяцев' },
-  ];
+  const tariff = tariffCatalog[selected] || tariffCatalog.plus;
   const [selectedPeriod, setSelectedPeriod] = useState('1');
-  const [deviceCount, setDeviceCount] = useState(selected === 'plus' ? 3 : 1);
+  const [deviceCount, setDeviceCount] = useState(tariff.devices);
+  const [selectedMethod, setSelectedMethod] = useState('card');
+  const [promoCode, setPromoCode] = useState('');
+  const [promoApplied, setPromoApplied] = useState(false);
   const [paymentError, setPaymentError] = useState('');
+  const periodMonths = Number(selectedPeriod);
+  const periodMonthlyPrice = Math.floor(tariff.monthPrice * periodDiscounts[selectedPeriod]);
+  const baseTotal = periodMonthlyPrice * periodMonths;
+  const extraDevices = Math.max(0, deviceCount - tariff.devices);
+  const extraDevicesTotal = extraDevices * 75 * periodMonths;
+  const discount = tariff.monthPrice * periodMonths - baseTotal;
+  const total = baseTotal + extraDevicesTotal;
+  const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
 
   useEffect(() => {
-    setDeviceCount(selected === 'plus' ? 3 : 1);
+    setDeviceCount(tariff.devices);
   }, [selected]);
 
   const buySubscription = async () => {
     try {
       setPaymentError('');
       const url = await api.createInvoice({
-        provider: 'platega',
+        provider,
         type: 'SUBSCRIPTION',
         payload: {
           plan: selected,
           subscription_month: Number(selectedPeriod),
           hwid: deviceCount,
-          currency: 'RUB',
+          currency: selectedMethod === 'crypto' ? 'USDT' : 'RUB',
         },
       });
       openPaymentUrl(url);
@@ -1419,11 +1626,19 @@ function TariffScreen({ selected, navigate, activeScreen }) {
   return (
     <AppFrame className="tariff-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Подписка" />
-      <PlansPair selected={selected} onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
+      <PlansPair selected={selected} includeHome onSelect={(plan) => navigate(tariffCatalog[plan].route)} />
       <SectionDivider>выберите срок</SectionDivider>
       <div className="periods">
-        {periods.map((item) => (
-          <PeriodCard key={item.id} {...item} selected={selectedPeriod === item.id} onClick={() => setSelectedPeriod(item.id)} />
+        {['1', '6', '12'].map((period) => (
+          <PeriodCard
+            key={period}
+            amount={period}
+            unit={period === '1' ? 'месяц' : 'месяцев'}
+            price={Math.floor(tariff.monthPrice * periodDiscounts[period])}
+            discount={tariff.monthPrice * Number(period) - Math.floor(tariff.monthPrice * periodDiscounts[period]) * Number(period)}
+            selected={selectedPeriod === period}
+            onClick={() => setSelectedPeriod(period)}
+          />
         ))}
       </div>
       <Card className="devices-counter">
@@ -1433,36 +1648,53 @@ function TariffScreen({ selected, navigate, activeScreen }) {
           <span>Можно изменить перед оплатой</span>
         </div>
         <div className="stepper">
-          <button onClick={() => setDeviceCount((value) => Math.max(1, value - 1))}>-</button>
+          <button onClick={() => setDeviceCount((value) => Math.max(tariff.devices, value - 1))}>-</button>
           <strong>{deviceCount}</strong>
           <button onClick={() => setDeviceCount((value) => Math.min(9, value + 1))}>+</button>
         </div>
       </Card>
+      <div className="payment-methods tariff-methods">
+        <MethodCard title="Банковская карта" subtitle="Visa, Mastercard, Мир" checked={selectedMethod === 'card'} onClick={() => setSelectedMethod('card')} />
+        <MethodCard title="Криптовалюта" subtitle="USDT" checked={selectedMethod === 'crypto'} onClick={() => setSelectedMethod('crypto')} />
+      </div>
+      <div className="promo">
+        <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
+        <div>
+          <input value={promoCode} onChange={(event) => setPromoCode(event.target.value)} placeholder="Введите промокод" />
+          <button onClick={() => setPromoApplied((value) => !value)} disabled={!promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
+        </div>
+      </div>
       <Card className="checkout-card">
         <div>
           <p>Тариф</p>
-          <strong>{selected === 'plus' ? 'Plus' : 'Lite'}</strong>
+          <strong>{tariff.name}</strong>
         </div>
         <div>
           <span>{selectedPeriod} мес</span>
-          <p>{deviceCount} устройств</p>
+          <p>{deviceCount} {pluralRu(deviceCount, 'устройство', 'устройства', 'устройств')}</p>
         </div>
-        <p className="muted-note">Сумма откроется на странице оплаты</p>
+        <div className="checkout-lines">
+          <SummaryLine label="Стоимость тарифа" value={money(baseTotal)} />
+          {extraDevices > 0 && <SummaryLine label={`Доп. устройства x${extraDevices}`} value={money(extraDevicesTotal)} />}
+          {discount > 0 && <SummaryLine label="Скидка за период" value={`-${money(discount)}`} />}
+          <SummaryLine label="К оплате сегодня" value={money(total)} />
+        </div>
         {paymentError && <p className="inline-error">{paymentError}</p>}
-        <PrimaryButton onClick={buySubscription}>Создать счет</PrimaryButton>
+        <PrimaryButton onClick={buySubscription}>Подключить за {money(total)}</PrimaryButton>
         <small><Lock size={15} />Безопасная оплата. Отмена в любой момент</small>
       </Card>
     </AppFrame>
   );
 }
 
-function PeriodCard({ amount, unit, selected, onClick }) {
+function PeriodCard({ amount, unit, price, discount, selected, onClick }) {
   return (
     <button className={selected ? 'period-card selected' : 'period-card'} onClick={onClick}>
       <h3>{amount}</h3>
       <div className="thin-line" />
       <strong>{unit}</strong>
-      <b>Период оплаты</b>
+      <b>{price} ₽/мес</b>
+      {discount > 0 && <span>Скидка {money(discount)}</span>}
     </button>
   );
 }

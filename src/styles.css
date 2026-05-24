@@ -527,6 +527,112 @@ button {
   font-size: 18px;
 }
 
+.compact-price {
+  margin-bottom: 18px;
+}
+
+.compact-price strong {
+  font-size: 23px;
+}
+
+.compact-price span {
+  font-size: 12px;
+}
+
+.home-plan-card {
+  position: relative;
+  width: 100%;
+  min-height: 178px;
+  margin-top: 8px;
+  padding: 18px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #ffffff;
+  color: #06162c;
+  text-align: left;
+  box-shadow: 0 14px 35px rgba(6, 22, 44, 0.055);
+}
+
+.home-plan-card.selected {
+  border-color: #ff712d;
+  background: #fff8f4;
+}
+
+.home-plan-card > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.9;
+}
+
+.home-plan-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.72) 36%, rgba(255, 255, 255, 0.2) 70%, rgba(255, 255, 255, 0.04) 100%);
+  pointer-events: none;
+}
+
+.home-plan-card > div {
+  position: relative;
+  z-index: 2;
+}
+
+.home-plan-card span {
+  color: #ff712d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.home-plan-card h3 {
+  margin: 2px 0 4px;
+  font-size: 31px;
+  line-height: 1;
+}
+
+.home-plan-card p {
+  margin: 0;
+  width: 170px;
+  color: #596371;
+  font-size: 12px;
+}
+
+.home-plan-bottom {
+  margin-top: 40px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.home-plan-bottom .compact-price {
+  margin: 0;
+  min-height: 43px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 113, 45, 0.38);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 8px 20px rgba(6, 22, 44, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.home-plan-bottom .compact-price strong {
+  font-size: 23px;
+}
+
+.home-plan-bottom .compact-price span {
+  color: #ff712d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .outline-fill {
   color: #ff712d;
   background: #ffe8dc;
@@ -1467,6 +1573,7 @@ button {
 .segmented-control.compact {
   height: 44px;
   margin: 12px 0 0;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
 }
 
 .inline-error {
@@ -1474,6 +1581,11 @@ button {
   color: #f35d18;
   font-size: 12px;
   line-height: 1.35;
+}
+
+.inline-error.neutral {
+  color: #596371;
+  text-align: center;
 }
 
 .qr-preview {
@@ -1485,6 +1597,275 @@ button {
   background: #ffffff;
   padding: 8px;
   box-shadow: 0 14px 35px rgba(6, 22, 44, 0.055);
+}
+
+.referral-screen .page-title {
+  min-height: 112px;
+  align-items: flex-end;
+  padding-bottom: 24px;
+}
+
+.referral-screen .page-title h1 {
+  max-width: 260px;
+  font-size: 25px;
+}
+
+.referral-earn-card {
+  padding: 24px 20px 18px;
+  overflow: hidden;
+}
+
+.referral-earn-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.referral-earn-head p,
+.invite-card > p {
+  margin: 0;
+  color: #9ca3ad;
+  font-size: 13px;
+}
+
+.referral-earn-head strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 32px;
+  line-height: 1;
+}
+
+.referral-earn-head > span {
+  min-height: 28px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #e2f5e9;
+  color: #22b56c;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.referral-earn-card > img {
+  display: block;
+  width: 164px;
+  margin: 10px auto 0;
+  animation: floatAsset 4.2s ease-in-out infinite;
+}
+
+.referral-rate {
+  margin: 8px auto 18px;
+  width: min(100%, 230px);
+  min-height: 43px;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: #fff6f1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.referral-rate span {
+  color: #596371;
+  font-size: 12px;
+}
+
+.referral-rate strong {
+  color: #ff712d;
+  font-size: 15px;
+}
+
+.referral-convert {
+  display: grid;
+  grid-template-columns: 1fr 24px 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.referral-convert label {
+  position: relative;
+  min-height: 62px;
+  padding: 12px;
+  border: 1px solid #eeeeef;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.referral-convert label > span {
+  display: block;
+  color: #9ca3ad;
+  font-size: 10px;
+}
+
+.referral-convert input {
+  width: calc(100% - 32px);
+  margin-top: 5px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #06162c;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.referral-convert b {
+  position: absolute;
+  right: 12px;
+  bottom: 14px;
+  color: #9ca3ad;
+  font-size: 11px;
+}
+
+.referral-earn-card .primary-button {
+  margin-top: 14px;
+}
+
+.withdraw-row {
+  width: 100%;
+  min-height: 62px;
+  padding: 12px 4px;
+  display: grid;
+  grid-template-columns: 36px 1fr 24px;
+  gap: 12px;
+  align-items: center;
+  background: transparent;
+  color: #06162c;
+  text-align: left;
+}
+
+.withdraw-row svg:first-child {
+  color: #ff712d;
+}
+
+.withdraw-row strong {
+  font-size: 15px;
+}
+
+.withdraw-row p {
+  margin: 5px 0 0;
+  color: #9ca3ad;
+  font-size: 12px;
+}
+
+.invite-card,
+.referral-stats-card {
+  margin-top: 18px;
+  padding: 22px 20px;
+}
+
+.invite-card h2,
+.referral-stats-card h2 {
+  margin: 0 0 16px;
+  font-size: 21px;
+  line-height: 1.08;
+}
+
+.bonus-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.bonus-grid div {
+  min-height: 74px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #fff6f1;
+}
+
+.bonus-grid strong {
+  display: block;
+  color: #ff712d;
+  font-size: 22px;
+}
+
+.bonus-grid p {
+  margin: 7px 0 0;
+  color: #596371;
+  font-size: 11px;
+}
+
+.referral-link-box {
+  min-height: 48px;
+  margin: 16px 0 12px;
+  padding: 0 8px 0 14px;
+  border: 1px solid #eeeeef;
+  border-radius: 14px;
+  display: grid;
+  grid-template-columns: 24px 1fr 38px;
+  align-items: center;
+  gap: 8px;
+}
+
+.referral-link-box svg {
+  color: #ff712d;
+}
+
+.referral-link-box span {
+  min-width: 0;
+  overflow: hidden;
+  color: #596371;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.referral-link-box button {
+  height: 36px;
+  border-radius: 12px;
+  background: #fff6f1;
+  color: #ff712d;
+  display: grid;
+  place-items: center;
+}
+
+.referral-stats-card > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.referral-stats-card .stat {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.referral-stats-card .stat strong {
+  font-size: 24px;
+}
+
+.referral-stats-card .summary-line {
+  grid-template-columns: 1fr auto;
+  padding-top: 16px;
+  border-top: 1px solid #eeeeef;
+}
+
+.partner-card {
+  width: 100%;
+  min-height: 86px;
+  margin-top: 18px;
+  padding: 20px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #06162c, #2e2358);
+  color: #ffffff;
+  text-align: left;
+  box-shadow: 0 14px 35px rgba(6, 22, 44, 0.12);
+}
+
+.partner-card strong {
+  font-size: 18px;
+}
+
+.partner-card p {
+  margin: 7px 0 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 13px;
 }
 
 .transaction-card {
@@ -2081,6 +2462,10 @@ button {
   font-size: 9px;
 }
 
+.period-card span {
+  margin-top: 8px;
+}
+
 .devices-counter {
   min-height: 103px;
   margin-top: 24px;
@@ -2153,6 +2538,35 @@ button {
   font-size: 12px;
 }
 
+.checkout-lines {
+  grid-column: 1 / -1;
+  padding-top: 4px;
+  border-top: 1px solid #eeeeef;
+}
+
+.checkout-lines .summary-line {
+  grid-template-columns: 1fr auto;
+  min-height: 31px;
+  gap: 12px;
+}
+
+.checkout-lines .summary-line span,
+.checkout-lines .summary-line strong {
+  font-size: 14px;
+}
+
+.checkout-lines .summary-line:last-child {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid #eeeeef;
+}
+
+.checkout-lines .summary-line:last-child span,
+.checkout-lines .summary-line:last-child strong {
+  color: #06162c;
+  font-size: 17px;
+}
+
 .checkout-card b {
   display: inline-flex;
   margin-left: 10px;
@@ -2177,6 +2591,10 @@ button {
   gap: 8px;
   color: #9ca3ad;
   font-size: 10px;
+}
+
+.tariff-methods {
+  margin-top: 18px;
 }
 
 .profile-card {
