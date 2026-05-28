@@ -21,10 +21,6 @@ body {
     linear-gradient(180deg, #ffffff 0%, #f7f7f8 28rem);
 }
 
-.trial-screen {
-  background: #ffffff;
-}
-
 button,
 input {
   font: inherit;
@@ -38,15 +34,6 @@ button {
 .workspace {
   min-height: 100vh;
   width: 100%;
-}
-
-.trial-workspace {
-  background: #ffffff;
-}
-
-.trial-workspace .phone,
-.trial-workspace .screen {
-  background: #ffffff;
 }
 
 .phone {
@@ -296,7 +283,11 @@ button {
 
 .hero-offer img {
   width: 220px;
+  height: 250px;
+  object-fit: cover;
+  object-position: center 57%;
   margin-top: 31px;
+  border-radius: 18px;
   animation: floatAsset 4.2s ease-in-out infinite;
 }
 

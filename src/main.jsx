@@ -316,7 +316,7 @@ function App() {
   };
 
   return (
-    <div className={activeScreen === 'trial-start' ? 'workspace trial-workspace' : 'workspace'}>
+    <div className="workspace">
       <main className="phone">
         <div className="page-transition" key={activeScreen}>
           <Screen navigate={navigate} activeScreen={activeScreen} mainData={mainData} telegramUser={telegramUser} apiNotice={apiNotice} />
