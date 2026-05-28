@@ -21,6 +21,10 @@ body {
     linear-gradient(180deg, #ffffff 0%, #f7f7f8 28rem);
 }
 
+.trial-screen {
+  background: #ffffff;
+}
+
 button,
 input {
   font: inherit;
@@ -260,14 +264,15 @@ button {
 }
 
 .hero-offer h1 {
-  font-size: 24px;
+  font-size: 28px;
+  line-height: 1.05;
 }
 
 .hero-offer strong {
   display: block;
-  margin-top: 16px;
+  margin-top: 18px;
   color: #ff712d;
-  font-size: 24px;
+  font-size: 31px;
   line-height: 1;
   font-weight: 800;
 }
@@ -281,8 +286,8 @@ button {
 }
 
 .hero-offer img {
-  width: 190px;
-  margin-top: 25px;
+  width: 220px;
+  margin-top: 31px;
   animation: floatAsset 4.2s ease-in-out infinite;
 }
 
@@ -292,30 +297,30 @@ button {
 }
 
 .features-card {
-  margin-top: 27px;
-  padding: 20px 12px 18px;
+  margin-top: 31px;
+  padding: 22px 18px 20px;
   text-align: left;
 }
 
 .features-card h2 {
   margin: 0;
-  font-size: 13px;
+  font-size: 17px;
 }
 
 .features-card > p {
-  margin: 8px 0 13px;
+  margin: 9px 0 17px;
   color: #9ca3ad;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .feature-row {
-  min-height: 37px;
+  min-height: 47px;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 14px;
   border-top: 1px solid #eeeeef;
   color: #596371;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .feature-row:first-of-type {
@@ -369,8 +374,8 @@ button {
 }
 
 .renew-card {
-  margin-top: 12px;
-  padding: 21px 12px;
+  margin-top: 18px;
+  padding: 20px 18px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -379,13 +384,13 @@ button {
 
 .renew-card h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: 17px;
 }
 
 .renew-card p {
   margin: 4px 0 0;
   color: #9ca3ad;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .renew-card svg {
@@ -393,7 +398,7 @@ button {
 }
 
 .trial-screen .primary-button {
-  margin-top: 12px;
+  margin-top: 18px;
 }
 
 .section-divider {
@@ -1554,6 +1559,68 @@ button {
   background: linear-gradient(180deg, #ff762d, #f35d18);
   color: #ffffff;
   font-size: 13px;
+}
+
+.trial-methods {
+  margin-top: 18px;
+}
+
+.trial-methods .method-card {
+  min-height: 66px;
+}
+
+.trial-promo {
+  margin: 18px 0 0;
+}
+
+.trial-promo p {
+  text-align: left;
+}
+
+.trial-plan-list {
+  overflow: hidden;
+  text-align: left;
+}
+
+.trial-plan-list > button {
+  width: 100%;
+  min-height: 72px;
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  background: #ffffff;
+  color: #06162c;
+  text-align: left;
+  border-bottom: 1px solid #eeeeef;
+}
+
+.trial-plan-list > button:last-child {
+  border-bottom: 0;
+}
+
+.trial-plan-list strong {
+  display: block;
+  font-size: 17px;
+}
+
+.trial-plan-list p {
+  margin: 5px 0 0;
+  color: #9ca3ad;
+  font-size: 13px;
+}
+
+.trial-plan-list .popular {
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #fff0e8;
+}
+
+.trial-plan-list .choose-plan-row {
+  grid-template-columns: 1fr 24px;
+  min-height: 56px;
 }
 
 .segmented-control,

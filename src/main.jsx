@@ -253,7 +253,15 @@ const screenIds = new Set(screens.map((item) => item.id));
 function getScreenFromHash() {
   const hash = window.location.hash.slice(1);
 
-  return screenIds.has(hash) ? hash : 'home-active';
+  if (screenIds.has(hash)) {
+    return hash;
+  }
+
+  return hash ? 'trial-start' : 'home-active';
+}
+
+function hasExplicitScreenHash() {
+  return screenIds.has(window.location.hash.slice(1));
 }
 
 function App() {
@@ -283,14 +291,15 @@ function App() {
         const data = await api.mainScreen();
         const normalizedData = normalizeMainData(data);
         setMainData(normalizedData);
-        if (!window.location.hash && !hasActiveSubscription(normalizedData)) {
-          setActiveScreen('trial-start');
-          window.history.replaceState(null, '', '#trial-start');
+        if (!hasExplicitScreenHash()) {
+          const nextScreen = hasActiveSubscription(normalizedData) ? 'home-active' : 'trial-start';
+          setActiveScreen(nextScreen);
+          window.history.replaceState(null, '', `#${nextScreen}`);
         }
         setApiNotice('');
       } catch (error) {
         setApiNotice(getUiError(error));
-        if (!window.location.hash) {
+        if (!hasExplicitScreenHash()) {
           setActiveScreen('trial-start');
           window.history.replaceState(null, '', '#trial-start');
         }
@@ -574,12 +583,21 @@ function FeatureList() {
 }
 
 function TrialStart({ navigate, activeScreen }) {
+  const [selectedMethod, setSelectedMethod] = useState('card');
+  const [promoCode, setPromoCode] = useState('');
+  const [paymentError, setPaymentError] = useState('');
+  const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
+
   const startTrial = async () => {
     try {
-      const url = await api.createTrialInvoice({ provider: 'platega' });
+      setPaymentError('');
+      const url = await api.createTrialInvoice({
+        provider,
+        currency: selectedMethod === 'crypto' ? 'USDT' : undefined,
+      });
       openPaymentUrl(url);
     } catch (error) {
-      window.alert(getUiError(error));
+      setPaymentError(getUiError(error));
     }
   };
 
@@ -599,10 +617,41 @@ function TrialStart({ navigate, activeScreen }) {
           <p>После окончания доступа списаний не будет</p>
         </div>
       </Card>
+      <div className="payment-methods trial-methods">
+        <MethodCard title="Банковская карта" subtitle="Visa, Mastercard, Мир" checked={selectedMethod === 'card'} onClick={() => setSelectedMethod('card')} />
+        <MethodCard title="Криптовалюта" subtitle="USDT, BTC, ETH и др." checked={selectedMethod === 'crypto'} onClick={() => setSelectedMethod('crypto')} />
+      </div>
+      <div className="promo trial-promo">
+        <p>Есть промокод?</p>
+        <div>
+          <input value={promoCode} onChange={(event) => setPromoCode(event.target.value)} placeholder="Введите промокод" />
+          <button onClick={() => setPromoCode('')}>{promoCode ? 'Убрать' : 'Применить'}</button>
+        </div>
+      </div>
+      {paymentError && <p className="inline-error">{paymentError}</p>}
       <PrimaryButton onClick={startTrial}>Начать за 30 ₽</PrimaryButton>
       <SectionDivider>или оформите подписку сразу</SectionDivider>
-      <PlansPair selected="plus" onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
-      <PrimaryButton className="outline-fill" onClick={() => navigate('tariff-plus')}>Подключить за&nbsp; 550 ₽</PrimaryButton>
+      <Card className="trial-plan-list">
+        <button onClick={() => navigate('tariff-lite')}>
+          <IconTile tone="feather"><span className="feather-mark" /></IconTile>
+          <div>
+            <strong>Lite</strong>
+            <p>от 300 ₽</p>
+          </div>
+        </button>
+        <button onClick={() => navigate('tariff-plus')}>
+          <IconTile tone="feather"><span className="feather-mark" /></IconTile>
+          <div>
+            <strong>Plus</strong>
+            <p>от 550 ₽</p>
+          </div>
+          <span className="popular"><Sparkles size={12} />Популярный</span>
+        </button>
+        <button className="choose-plan-row" onClick={() => navigate('tariff-plus')}>
+          <strong>Выбрать подписку</strong>
+          <ChevronRight size={24} />
+        </button>
+      </Card>
     </AppFrame>
   );
 }
