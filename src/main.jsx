@@ -211,6 +211,10 @@ function getSubscriptionState(mainData) {
   return { label: 'Нет подписки', tone: 'purple', description: 'Оформите подписку для доступа' };
 }
 
+function hasActiveSubscription(mainData) {
+  return mainData.status === 'active' && !isPastDate(mainData.expiredAt);
+}
+
 function getUiError(error) {
   const message = error instanceof ApiError ? error.message : error?.message || '';
 
@@ -277,10 +281,19 @@ function App() {
       try {
         await authenticateTelegram(telegram.initData);
         const data = await api.mainScreen();
-        setMainData(normalizeMainData(data));
+        const normalizedData = normalizeMainData(data);
+        setMainData(normalizedData);
+        if (!window.location.hash && !hasActiveSubscription(normalizedData)) {
+          setActiveScreen('trial-start');
+          window.history.replaceState(null, '', '#trial-start');
+        }
         setApiNotice('');
       } catch (error) {
         setApiNotice(getUiError(error));
+        if (!window.location.hash) {
+          setActiveScreen('trial-start');
+          window.history.replaceState(null, '', '#trial-start');
+        }
       }
     };
 
@@ -299,7 +312,7 @@ function App() {
         <div className="page-transition" key={activeScreen}>
           <Screen navigate={navigate} activeScreen={activeScreen} mainData={mainData} telegramUser={telegramUser} apiNotice={apiNotice} />
         </div>
-        <BottomNav navigate={navigate} activeScreen={activeScreen} />
+        <BottomNav navigate={navigate} activeScreen={activeScreen} mainData={mainData} />
       </main>
     </div>
   );
@@ -315,7 +328,7 @@ function AppFrame({ children, className = '', navigate, activeScreen }) {
 }
 
 function AppHeader({ navigate, activeScreen }) {
-  const canClose = activeScreen && activeScreen !== 'home-active';
+  const canClose = activeScreen && !['home-active', 'trial-start'].includes(activeScreen);
 
   return (
     <header className="app-header">
@@ -338,7 +351,7 @@ function Logo() {
   );
 }
 
-function BottomNav({ navigate, activeScreen }) {
+function BottomNav({ navigate, activeScreen, mainData }) {
   const navRef = useRef(null);
   const itemRefs = useRef([]);
   const [indicatorStyle, setIndicatorStyle] = useState({ width: 0, transform: 'translate3d(0, 0, 0)' });
@@ -346,7 +359,7 @@ function BottomNav({ navigate, activeScreen }) {
   const activeSectionByScreen = {
     'home-active': 'home',
     'home-popup': 'home',
-    'trial-start': 'subscription',
+    'trial-start': 'home',
     'trial-active': 'subscription',
     'trial-expired': 'subscription',
     'change-plan': 'subscription',
@@ -364,7 +377,7 @@ function BottomNav({ navigate, activeScreen }) {
   };
 
   const nav = [
-    { icon: Home, label: 'Главная', route: 'home-active', section: 'home' },
+    { icon: Home, label: 'Главная', route: hasActiveSubscription(mainData) ? 'home-active' : 'trial-start', section: 'home' },
     { icon: BookOpen, label: 'Подписка', route: 'tariff-home', section: 'subscription' },
     { icon: Users, label: 'Бонусы', route: 'referral', section: 'bonus' },
     { icon: Headphones, label: 'Поддержка', route: 'support', section: 'support' },
@@ -574,7 +587,7 @@ function TrialStart({ navigate, activeScreen }) {
     <AppFrame className="trial-screen" navigate={navigate} activeScreen={activeScreen}>
       <HeroOffer
         title="Попробуйте VORA"
-        accent="Пробный доступ"
+        accent="24 часа за 30₽"
         subtitle="Полный доступ ко всем возможностям тарифа"
         image="trial-check"
       />
@@ -586,10 +599,10 @@ function TrialStart({ navigate, activeScreen }) {
           <p>После окончания доступа списаний не будет</p>
         </div>
       </Card>
-      <PrimaryButton onClick={startTrial}>Начать пробный период</PrimaryButton>
+      <PrimaryButton onClick={startTrial}>Начать за 30 ₽</PrimaryButton>
       <SectionDivider>или оформите подписку сразу</SectionDivider>
       <PlansPair selected="plus" onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
-      <PrimaryButton className="outline-fill" onClick={() => navigate('tariff-plus')}>Выбрать подписку</PrimaryButton>
+      <PrimaryButton className="outline-fill" onClick={() => navigate('tariff-plus')}>Подключить за&nbsp; 550 ₽</PrimaryButton>
     </AppFrame>
   );
 }
