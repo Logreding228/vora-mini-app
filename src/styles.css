@@ -40,6 +40,15 @@ button {
   width: 100%;
 }
 
+.trial-workspace {
+  background: #ffffff;
+}
+
+.trial-workspace .phone,
+.trial-workspace .screen {
+  background: #ffffff;
+}
+
 .phone {
   width: 100%;
   min-height: 100vh;
