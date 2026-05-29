@@ -579,12 +579,42 @@ function FlowSparkleIcon({ size = 22 }) {
   );
 }
 
+function FeaturePhoneIcon({ size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" aria-hidden="true">
+      <rect x="7" y="2.5" width="8" height="17" rx="1.9" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M11 16.4h.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function FeatureUsersIcon({ size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" aria-hidden="true">
+      <path d="M8.8 10.2a3.1 3.1 0 1 0 0-6.2 3.1 3.1 0 0 0 0 6.2Z" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M3.5 18.2v-1.3c0-2.6 2.2-4.7 5.3-4.7s5.3 2.1 5.3 4.7v1.3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path d="M14.2 4.6a2.8 2.8 0 0 1 0 5.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path d="M16.1 12.6c1.8.7 2.9 2.2 2.9 4.1v1.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function FeatureDevicesIcon({ size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" aria-hidden="true">
+      <path d="M3 4.8c0-.9.7-1.6 1.6-1.6h10.8c.9 0 1.6.7 1.6 1.6v7.4c0 .9-.7 1.6-1.6 1.6H4.6c-.9 0-1.6-.7-1.6-1.6V4.8Z" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M8.2 17.4h4.9M10.6 13.8v3.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <rect x="15.4" y="10.3" width="4.1" height="8.3" rx="1.2" fill="#ffffff" stroke="currentColor" strokeWidth="1.7" />
+    </svg>
+  );
+}
+
 function FeatureList() {
   const items = [
-    [FlowSparkleIcon, 'VORA Flow для привычных сервисов', 'soft-orange'],
-    [Monitor, '3 устройства одновременно', 'soft-green'],
-    [Users, 'Работает без лишних действий', 'soft-peach'],
-    [Users, 'Поддержка всех устройств', 'soft-peach'],
+    [FlowSparkleIcon, 'VORA Flow для привычных сервисов', 'feature-orange'],
+    [FeaturePhoneIcon, '3 устройства одновременно', 'feature-blue'],
+    [FeatureUsersIcon, 'Работает без лишних действий', 'feature-gray'],
+    [FeatureDevicesIcon, 'Поддержка всех устройств', 'feature-green'],
   ];
 
   return (

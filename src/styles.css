@@ -359,24 +359,23 @@ button {
 }
 
 .features-card .icon-tile svg {
-  width: 17px;
-  height: 17px;
-  stroke-width: 1.7;
+  width: 22px;
+  height: 22px;
 }
 
-.features-card .feature-row:nth-of-type(2) .icon-tile {
+.features-card .icon-tile.feature-orange {
   color: #ff7a3a;
 }
 
-.features-card .feature-row:nth-of-type(3) .icon-tile {
+.features-card .icon-tile.feature-blue {
   color: #5d85ff;
 }
 
-.features-card .feature-row:nth-of-type(4) .icon-tile {
+.features-card .icon-tile.feature-gray {
   color: #6c7480;
 }
 
-.features-card .feature-row:nth-of-type(5) .icon-tile {
+.features-card .icon-tile.feature-green {
   color: #42b86a;
 }
 
