@@ -310,15 +310,19 @@ function App() {
   }, []);
 
   const navigate = (id) => {
+    const keepsTariffContext = activeScreen.startsWith('tariff-') && id.startsWith('tariff-');
+
     setActiveScreen(id);
     window.history.replaceState(null, '', `#${id}`);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!keepsTariffContext) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (
     <div className="workspace">
       <main className="phone">
-        <div className="page-transition" key={activeScreen}>
+        <div className={activeScreen.startsWith('tariff-') ? 'page-transition no-page-animation' : 'page-transition'} key={activeScreen}>
           <Screen navigate={navigate} activeScreen={activeScreen} mainData={mainData} telegramUser={telegramUser} apiNotice={apiNotice} />
         </div>
         <BottomNav navigate={navigate} activeScreen={activeScreen} mainData={mainData} />
@@ -354,8 +358,7 @@ function AppHeader({ navigate, activeScreen }) {
 function Logo() {
   return (
     <div className="brand">
-      <div className="brand-name">VORA</div>
-      <div className="brand-subtitle">SANITY IN THE DIGITAL CHAOS</div>
+      <img className="brand-logo" src={asset('logo')} alt="VORA" />
     </div>
   );
 }
@@ -466,6 +469,10 @@ function IconTile({ children, tone = 'orange', className = '' }) {
   return <span className={`icon-tile ${tone} ${className}`}>{children}</span>;
 }
 
+function AssetIcon({ name, className = '' }) {
+  return <img className={`asset-icon ${className}`} src={asset(name)} alt="" />;
+}
+
 function SectionDivider({ children }) {
   return (
     <div className="section-divider">
@@ -476,10 +483,11 @@ function SectionDivider({ children }) {
   );
 }
 
-function PlanCard({ name, description, devices, extra, price, selected, popular, current, onClick }) {
+function PlanCard({ name, description, devices, extra, price, selected, popular, current, iconName, onClick }) {
   return (
     <button className={`plan-card ${selected ? 'selected' : ''}`} onClick={onClick}>
       <div className="plan-heading">
+        {iconName && <IconTile tone={`tariff-image ${name.toLowerCase()}`}><AssetIcon name={iconName} /></IconTile>}
         <h3>{name}</h3>
         {popular && <span className="popular"><Sparkles size={12} />Популярный</span>}
         {current && <span className="current-pill">Текущий</span>}
@@ -542,6 +550,7 @@ function PlansPair({ currentLite = false, selected = 'plus', onSelect, includeHo
           price={tariffCatalog.lite.monthPrice}
           selected={selected === 'lite'}
           current={currentLite}
+          iconName={selected === 'lite' ? 'plan-lite-alt' : 'plan-lite'}
           onClick={() => onSelect?.('lite')}
         />
         <PlanCard
@@ -552,6 +561,7 @@ function PlansPair({ currentLite = false, selected = 'plus', onSelect, includeHo
           price={tariffCatalog.plus.monthPrice}
           selected={selected === 'plus'}
           popular
+          iconName={selected === 'plus' ? 'plan-plus-alt' : 'plan-plus'}
           onClick={() => onSelect?.('plus')}
         />
       </div>
@@ -709,14 +719,14 @@ function TrialStart({ navigate, activeScreen }) {
       <SectionDivider>или оформите подписку сразу</SectionDivider>
       <Card className="trial-plan-list">
         <button onClick={() => navigate('tariff-lite')}>
-          <IconTile tone="tariff-feather lite"><TariffFeatherIcon variant="lite" /></IconTile>
+          <IconTile tone="tariff-image lite"><AssetIcon name="plan-lite" /></IconTile>
           <div>
             <strong>Lite</strong>
             <p>от 300 ₽</p>
           </div>
         </button>
         <button onClick={() => navigate('tariff-plus')}>
-          <IconTile tone="tariff-feather plus"><TariffFeatherIcon variant="plus" /></IconTile>
+          <IconTile tone="tariff-image plus"><AssetIcon name="plan-plus-alt" /></IconTile>
           <div>
             <strong>Plus</strong>
             <p>от 550 ₽</p>
@@ -1315,9 +1325,13 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
 }
 
 function PaymentOption({ icon: Icon, title, subtitle, price, checked, feather, onClick }) {
+  const iconName = title === 'Устройства'
+    ? (checked ? 'device-add-alt' : 'device-add')
+    : (checked ? 'plan-home-alt' : 'plan-home');
+
   return (
     <button className={checked ? 'payment-option checked' : 'payment-option'} onClick={onClick}>
-      <IconTile tone={feather ? 'feather' : 'solid'}>{Icon ? <Icon size={25} /> : <span className="feather-mark" />}</IconTile>
+      <IconTile tone="payment-image"><AssetIcon name={iconName} /></IconTile>
       <div>
         <strong>{title}</strong>
         <p>{subtitle}</p>
