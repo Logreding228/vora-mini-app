@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
 * {
   box-sizing: border-box;
 }
@@ -5,7 +7,7 @@
 :root {
   color: #071426;
   background: #f7f7f8;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
   text-rendering: geometricPrecision;
   -webkit-font-smoothing: antialiased;
@@ -20,6 +22,7 @@ body {
 button,
 input {
   font: inherit;
+  letter-spacing: 0;
 }
 
 button {
@@ -172,7 +175,9 @@ button {
   background: linear-gradient(180deg, #f87d3d 0%, #e96b2e 100%);
   color: #ffffff;
   font-size: 14px;
+  line-height: 100%;
   font-weight: 500;
+  letter-spacing: 0;
   transition: transform 180ms ease, filter 180ms ease;
 }
 
@@ -256,27 +261,36 @@ button {
 }
 
 .hero-offer h1 {
-  font-size: 25px;
-  line-height: 1.12;
-  font-weight: 700;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 24px;
+  line-height: 100%;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-align: center;
 }
 
 .hero-offer strong {
   display: block;
   margin-top: 11px;
   color: #f57a3f;
-  font-size: 26px;
-  line-height: 1.05;
-  font-weight: 700;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 24px;
+  line-height: 100%;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-align: center;
 }
 
 .hero-offer p {
   width: 218px;
   margin: 10px auto 0;
   color: #586473;
-  font-size: 13px;
-  line-height: 1.23;
-  font-weight: 400;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+  line-height: 100%;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-align: center;
 }
 
 .hero-offer img {
@@ -303,16 +317,21 @@ button {
 .features-card h2 {
   margin: 0;
   color: #071426;
-  font-size: 14px;
-  line-height: 1.2;
-  font-weight: 700;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+  line-height: 100%;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 .features-card > p {
   margin: 7px 0 12px;
   color: #a0a6af;
-  font-size: 11px;
-  line-height: 1.25;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 10px;
+  line-height: 100%;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .feature-row {
@@ -322,8 +341,11 @@ button {
   gap: 12px;
   border-top: 1px solid #eeeeef;
   color: #596371;
-  font-size: 13px;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+  line-height: 100%;
   font-weight: 500;
+  letter-spacing: 0;
 }
 
 .feature-row:first-of-type {
@@ -416,17 +438,21 @@ button {
 
 .renew-card h3 {
   margin: 0;
-  font-size: 15px;
-  line-height: 1.2;
-  font-weight: 700;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 100%;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 .renew-card p {
   margin: 5px 0 0;
   color: #a0a6af;
-  font-size: 13px;
-  line-height: 1.2;
-  font-weight: 600;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+  line-height: 100%;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .renew-card svg {
@@ -457,6 +483,9 @@ button {
   margin: 0;
   color: #a0a6af;
   font-size: 8px;
+  line-height: 100%;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .plans-pair {
@@ -1555,15 +1584,18 @@ button {
 
 .method-card strong {
   font-size: 11px;
-  line-height: 1.15;
-  font-weight: 700;
+  line-height: 100%;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 .method-card p {
   margin: 4px 0 0;
   color: #596371;
   font-size: 8px;
-  line-height: 1.15;
+  line-height: 100%;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .promo {
@@ -1574,7 +1606,9 @@ button {
   margin: 0 0 9px;
   color: #596371;
   font-size: 13px;
-  font-weight: 600;
+  line-height: 100%;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .promo div {
@@ -1596,6 +1630,9 @@ button {
   background: transparent;
   color: #06162c;
   font-size: 13px;
+  line-height: 100%;
+  font-weight: 500;
+  letter-spacing: 0;
   outline: 0;
 }
 
@@ -1609,7 +1646,9 @@ button {
   background: transparent;
   color: #f47a3d;
   font-size: 13px;
-  font-weight: 400;
+  line-height: 100%;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .trial-methods {
@@ -1655,15 +1694,18 @@ button {
 .trial-plan-list strong {
   display: block;
   font-size: 14px;
-  line-height: 1.2;
-  font-weight: 700;
+  line-height: 100%;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 .trial-plan-list p {
   margin: 4px 0 0;
   color: #9ca3ad;
   font-size: 13px;
-  line-height: 1.2;
+  line-height: 100%;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .trial-plan-list .popular {
@@ -1672,7 +1714,9 @@ button {
   border-radius: 999px;
   background: #fff0e8;
   font-size: 8px;
-  font-weight: 600;
+  line-height: 100%;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .trial-plan-list .choose-plan-row {
