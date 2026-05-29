@@ -1461,11 +1461,11 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
       <Card className="referral-stats-card">
         <h2>Статистика</h2>
         <div className="referral-stat-row"><Users size={20} /><span>Приглашено друзей</span><strong>24</strong></div>
-        <div className="referral-stat-row"><ArrowUp size={20} /><span>Активных друзей</span><strong>18</strong></div>
-        <div className="referral-stat-row"><Wallet size={20} /><span>Всего заработано</span><strong>{money(earned || 1250)}</strong></div>
+        <div className="referral-stat-row active-friends"><GrowthArrowIcon /><span>Активных друзей</span><strong>18</strong></div>
+        <div className="referral-stat-row earned-total"><Wallet size={20} /><span>Всего заработано</span><strong>{money(earned || 1250)}</strong></div>
       </Card>
       <button className="partner-card" onClick={showApiNotice}>
-        <IconTile tone="soft-blue"><Users size={24} /></IconTile>
+        <IconTile tone="soft-purple"><PartnerUsersIcon /></IconTile>
         <div>
           <strong>Партнерская программа</strong>
           <p>Особые условия для крупных партнеров</p>
@@ -1551,6 +1551,26 @@ function BonusStep({ icon: Icon, label }) {
 
 function GiftIcon({ size = 22 }) {
   return <img className="gift-step-icon" src={asset('referral-gift')} alt="" style={{ width: size, height: size }} />;
+}
+
+function PartnerUsersIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M23 20.9999V18.9999C22.9993 18.1136 22.7044 17.2527 22.1614 16.5522C21.6184 15.8517 20.8581 15.3515 20 15.1299" stroke="#8B5CF6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="#8B5CF6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 3.12988C16.8604 3.35018 17.623 3.85058 18.1676 4.55219C18.7122 5.2538 19.0078 6.11671 19.0078 7.00488C19.0078 7.89305 18.7122 8.75596 18.1676 9.45757C17.623 10.1592 16.8604 10.6596 16 10.8799" stroke="#8B5CF6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="#8B5CF6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function GrowthArrowIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <path d="M23.3125 10.9375L16.5625 17.6875L13.75 14.875L8.6875 19.9375" stroke="#2BB673" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M23.3125 15.4375V10.9375H18.8125" stroke="#2BB673" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
 function BalanceHistory({ navigate, activeScreen }) {
