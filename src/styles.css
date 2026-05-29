@@ -2810,37 +2810,61 @@ button {
 
 .checkout-card {
   margin-top: 24px;
-  padding: 28px 24px;
-  display: grid;
-  grid-template-columns: 1fr auto;
+  padding: 22px 24px 24px;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
 }
 
-.checkout-card p {
-  margin: 0 0 12px;
-  color: #9ca3ad;
-  font-size: 14px;
+.checkout-total {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.checkout-card strong {
+.checkout-total p {
+  margin: 0 0 8px;
+  color: #9ca3ad;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.checkout-total strong {
+  display: block;
+  color: #06162c;
   font-size: 31px;
+  line-height: 1;
+  font-weight: 650;
+  white-space: nowrap;
 }
 
-.checkout-card span {
-  color: #9ca3ad;
+.checkout-saving {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.checkout-saving del {
+  color: #8b929d;
   font-size: 14px;
+  line-height: 1;
+  font-weight: 500;
 }
 
-.checkout-card .muted-note {
-  grid-column: 1 / -1;
-  margin: -4px 0 0;
+.checkout-saving span {
+  min-height: 23px;
+  padding: 0 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  background: #e2f5e9;
+  color: #22b56c;
   font-size: 12px;
-}
-
-.checkout-lines {
-  grid-column: 1 / -1;
-  padding-top: 4px;
-  border-top: 1px solid #eeeeef;
+  line-height: 1;
+  font-weight: 400;
+  white-space: nowrap;
 }
 
 .checkout-lines .summary-line {
@@ -2866,21 +2890,11 @@ button {
   font-size: 17px;
 }
 
-.checkout-card b {
-  display: inline-flex;
-  margin-left: 10px;
-  height: 21px;
-  padding: 0 8px;
-  border-radius: 12px;
-  align-items: center;
-  background: #e2f5e9;
-  color: #22b56c;
-  font-size: 12px;
-}
-
-.checkout-card .primary-button,
-.checkout-card small {
-  grid-column: 1 / -1;
+.checkout-card .primary-button {
+  min-height: 55px;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 450;
 }
 
 .checkout-card small {

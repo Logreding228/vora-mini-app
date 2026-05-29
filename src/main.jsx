@@ -1750,6 +1750,8 @@ function TariffScreen({ selected, navigate, activeScreen }) {
   const extraDevicesTotal = extraDevices * 75 * periodMonths;
   const discount = tariff.monthPrice * periodMonths - baseTotal;
   const total = baseTotal + extraDevicesTotal;
+  const originalTotal = tariff.monthPrice * periodMonths + extraDevicesTotal;
+  const savings = originalTotal - total;
   const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
 
   useEffect(() => {
@@ -1817,19 +1819,17 @@ function TariffScreen({ selected, navigate, activeScreen }) {
         </div>
       </div>
       <Card className="checkout-card">
-        <div>
-          <p>Тариф</p>
-          <strong>{tariff.name}</strong>
-        </div>
-        <div>
-          <span>{selectedPeriod} мес</span>
-          <p>{deviceCount} {pluralRu(deviceCount, 'устройство', 'устройства', 'устройств')}</p>
-        </div>
-        <div className="checkout-lines">
-          <SummaryLine label="Стоимость тарифа" value={money(baseTotal)} />
-          {extraDevices > 0 && <SummaryLine label={`Доп. устройства x${extraDevices}`} value={money(extraDevicesTotal)} />}
-          {discount > 0 && <SummaryLine label="Скидка за период" value={`-${money(discount)}`} />}
-          <SummaryLine label="К оплате сегодня" value={money(total)} />
+        <div className="checkout-total">
+          <div>
+            <p>Итого к оплате</p>
+            <strong>{money(total)}</strong>
+          </div>
+          {savings > 0 && (
+            <div className="checkout-saving">
+              <del>{money(originalTotal)}</del>
+              <span>Экономия {money(savings)}</span>
+            </div>
+          )}
         </div>
         {paymentError && <p className="inline-error">{paymentError}</p>}
         <PrimaryButton onClick={buySubscription}>Подключить за {money(total)}</PrimaryButton>
