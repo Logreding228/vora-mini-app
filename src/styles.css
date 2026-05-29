@@ -1315,17 +1315,27 @@ button {
 }
 
 .radio {
+  position: relative;
   width: 19px;
   height: 19px;
   border-radius: 50%;
   border: 1px solid #c6cbd2;
   flex: 0 0 auto;
+  background: #ffffff;
 }
 
 .radio.checked {
   border: 2px solid #f47a3d;
-  background: #f47a3d;
+  background: #ffffff;
   box-shadow: 0 0 0 3px #fff7f2;
+}
+
+.radio.checked::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: #f47a3d;
 }
 
 .collapse-button {
