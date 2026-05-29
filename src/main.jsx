@@ -1465,12 +1465,26 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
         <div className="referral-stat-row earned-total"><Wallet size={20} /><span>Всего заработано</span><strong>{money(earned || 1250)}</strong></div>
       </Card>
       <button className="partner-card" onClick={showApiNotice}>
-        <IconTile tone="soft-purple"><PartnerUsersIcon /></IconTile>
-        <div>
-          <strong>Партнерская программа</strong>
-          <p>Особые условия для крупных партнеров</p>
+        <div className="partner-card-main">
+          <IconTile tone="soft-purple"><PartnerUsersIcon /></IconTile>
+          <div>
+            <strong>Партнерская программа</strong>
+            <p>Особые условия для крупных партнеров</p>
+          </div>
+          <span>Оставить заявку</span>
         </div>
-        <span>Оставить заявку</span>
+        <div className="partner-fit">
+          <i />
+          <span>подходит</span>
+          <i />
+        </div>
+        <div className="partner-audience">
+          <span>Блогерам</span>
+          <b />
+          <span>Сообществам</span>
+          <b />
+          <span>Партнерам</span>
+        </div>
       </button>
     </AppFrame>
   );
