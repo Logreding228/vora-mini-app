@@ -2413,6 +2413,18 @@ button {
   box-shadow: none;
 }
 
+.partner-card .icon-tile {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+}
+
+.partner-card .icon-tile svg {
+  width: 28px !important;
+  height: 28px !important;
+  display: block;
+}
+
 .partner-card strong {
   font-size: 13px;
   font-weight: 600;
