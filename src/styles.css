@@ -2291,6 +2291,11 @@ button {
   color: #ff712d;
 }
 
+.bonus-grid .second-level svg {
+  color: #6b7280;
+  stroke: #6b7280;
+}
+
 .bonus-grid strong {
   color: #06162c;
   font-size: 17px;

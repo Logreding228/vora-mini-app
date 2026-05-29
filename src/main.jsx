@@ -1434,11 +1434,11 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
         <p>и продлевайте подписку бонусами</p>
         <div className="bonus-grid">
           <div>
-            <Users size={22} />
+            <SingleUserIcon />
             <strong>до 561 ₽</strong>
             <p>с оплаты друга</p>
           </div>
-          <div>
+          <div className="second-level">
             <Users size={22} />
             <strong>до 56 ₽</strong>
             <p>с оплат его друзей</p>
@@ -1583,6 +1583,15 @@ function GrowthArrowIcon() {
     <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
       <path d="M23.3125 10.9375L16.5625 17.6875L13.75 14.875L8.6875 19.9375" stroke="#2BB673" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M23.3125 15.4375V10.9375H18.8125" stroke="#2BB673" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SingleUserIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#FF7A2F" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="#FF7A2F" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
