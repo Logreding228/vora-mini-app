@@ -2501,44 +2501,85 @@ button {
   background: #a78bfa;
 }
 
-.referral-info-screen {
-  min-height: 100vh;
-  background: rgba(0, 0, 0, 0.78);
-}
-
-.referral-info-screen .app-header {
-  display: none;
-}
-
-.referral-info-screen .content {
-  width: min(100%, 430px);
-  min-height: 100vh;
-  padding: 55px 6px 0;
+.bonus-sheet-overlay {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  padding: 42px 6px 0;
   display: flex;
   align-items: flex-end;
+  justify-content: center;
+  background: rgba(2, 18, 39, 0.42);
+  backdrop-filter: blur(3px);
+  animation: bonusBackdropIn 180ms ease-out both;
 }
 
 .bonus-popup {
   position: relative;
-  width: 100%;
-  max-height: calc(100vh - 55px);
+  width: min(430px, 100%);
+  max-height: calc(100dvh - 42px);
   overflow-y: auto;
-  padding: 14px 20px 24px;
+  padding: 14px 20px max(24px, env(safe-area-inset-bottom));
   border-radius: 18px 18px 0 0;
   background: #ffffff;
   box-shadow: 0 -18px 40px rgba(0, 0, 0, 0.16);
-  animation: bonusSheetIn 240ms ease-out both;
+  animation: bonusSheetIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  overscroll-behavior: contain;
+}
+
+.bonus-sheet-overlay.closing {
+  animation: bonusBackdropOut 180ms ease-in both;
+}
+
+.bonus-sheet-overlay.closing .bonus-popup {
+  animation: bonusSheetOut 180ms ease-in both;
+}
+
+@keyframes bonusBackdropIn {
+  from {
+    background: rgba(2, 18, 39, 0);
+    backdrop-filter: blur(0);
+  }
+
+  to {
+    background: rgba(2, 18, 39, 0.42);
+    backdrop-filter: blur(3px);
+  }
+}
+
+@keyframes bonusBackdropOut {
+  from {
+    background: rgba(2, 18, 39, 0.42);
+    backdrop-filter: blur(3px);
+  }
+
+  to {
+    background: rgba(2, 18, 39, 0);
+    backdrop-filter: blur(0);
+  }
 }
 
 @keyframes bonusSheetIn {
   from {
-    transform: translateY(100%);
-    opacity: 0.55;
+    transform: translate3d(0, 32px, 0);
+    opacity: 0;
   }
 
   to {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
     opacity: 1;
+  }
+}
+
+@keyframes bonusSheetOut {
+  from {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translate3d(0, 28px, 0);
+    opacity: 0;
   }
 }
 

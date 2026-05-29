@@ -239,7 +239,6 @@ const screens = [
   { id: 'balance-topup', label: 'Пополнение', component: BalanceTopup },
   { id: 'balance-history', label: 'История баланса', component: BalanceHistory },
   { id: 'referral', label: 'Реферальная', component: ReferralScreen },
-  { id: 'referral-info', label: 'О бонусах', component: ReferralInfoScreen },
   { id: 'support', label: 'Поддержка', component: SupportScreen },
   { id: 'tickets', label: 'Обращения', component: TicketsScreen },
   { id: 'ticket-create', label: 'Создать обращение', component: CreateTicket },
@@ -253,6 +252,10 @@ const screenIds = new Set(screens.map((item) => item.id));
 
 function getScreenFromHash() {
   const hash = window.location.hash.slice(1);
+
+  if (hash === 'referral-info') {
+    return 'referral';
+  }
 
   if (screenIds.has(hash)) {
     return hash;
@@ -326,7 +329,7 @@ function App() {
         <div className={activeScreen.startsWith('tariff-') ? 'page-transition no-page-animation' : 'page-transition'} key={activeScreen}>
           <Screen navigate={navigate} activeScreen={activeScreen} mainData={mainData} telegramUser={telegramUser} apiNotice={apiNotice} />
         </div>
-        {activeScreen !== 'referral-info' && <BottomNav navigate={navigate} activeScreen={activeScreen} mainData={mainData} />}
+        <BottomNav navigate={navigate} activeScreen={activeScreen} mainData={mainData} />
       </main>
     </div>
   );
@@ -382,7 +385,6 @@ function BottomNav({ navigate, activeScreen, mainData }) {
     'balance-topup': 'bonus',
     'balance-history': 'bonus',
     referral: 'bonus',
-    'referral-info': 'bonus',
     support: 'support',
     tickets: 'support',
     'ticket-create': 'support',
@@ -1360,6 +1362,8 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
   const earned = Number(mainData.refBalance || 0);
   const [amount, setAmount] = useState(earned ? String(Math.floor(earned)) : '');
   const [notice, setNotice] = useState('');
+  const [isBonusInfoOpen, setBonusInfoOpen] = useState(false);
+  const [isBonusInfoClosing, setBonusInfoClosing] = useState(false);
   const days = Math.max(0, Math.floor(Number(amount || 0) / 10));
   const referralLink = telegramUser?.id ? `vorachoice.store/r/${telegramUser.id}` : '';
   const displayedLink = referralLink || 'vorachoice.store/r/a123';
@@ -1386,11 +1390,24 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
     setNotice('Для этого действия нужен отдельный endpoint в API');
   };
 
+  const openBonusInfo = () => {
+    setBonusInfoClosing(false);
+    setBonusInfoOpen(true);
+  };
+
+  const closeBonusInfo = () => {
+    setBonusInfoClosing(true);
+    window.setTimeout(() => {
+      setBonusInfoOpen(false);
+      setBonusInfoClosing(false);
+    }, 180);
+  };
+
   return (
     <AppFrame className="referral-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle
         title="Реферальная программа"
-        action={<button className="square-action" onClick={() => navigate('referral-info')} aria-label="Как работают бонусы"><CircleHelp size={24} /></button>}
+        action={<button className="square-action" onClick={openBonusInfo} aria-label="Как работают бонусы"><CircleHelp size={24} /></button>}
       />
       <Card className="referral-earn-card">
         <div className="referral-earn-head">
@@ -1430,7 +1447,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
         {notice && <p className="inline-error neutral">{notice}</p>}
       </Card>
       <Card className="invite-card">
-        <h2>Приглашайте друзей <button onClick={() => navigate('referral-info')} aria-label="Как работают бонусы"><CircleHelp size={14} /></button></h2>
+        <h2>Приглашайте друзей <button onClick={openBonusInfo} aria-label="Как работают бонусы"><CircleHelp size={14} /></button></h2>
         <p>и продлевайте подписку бонусами</p>
         <div className="bonus-grid">
           <div>
@@ -1486,19 +1503,20 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
           <span>Партнерам</span>
         </div>
       </button>
+      {isBonusInfoOpen && <BonusInfoSheet closing={isBonusInfoClosing} onClose={closeBonusInfo} />}
     </AppFrame>
   );
 }
 
-function ReferralInfoScreen({ navigate, activeScreen }) {
+function BonusInfoSheet({ closing, onClose }) {
   return (
-    <AppFrame className="referral-info-screen" navigate={navigate} activeScreen={activeScreen}>
-      <div className="bonus-popup">
+    <div className={closing ? 'bonus-sheet-overlay closing' : 'bonus-sheet-overlay'} role="dialog" aria-modal="true" aria-labelledby="bonus-info-title" onClick={onClose}>
+      <div className="bonus-popup" onClick={(event) => event.stopPropagation()}>
         <span className="sheet-grip" />
-        <button className="bonus-popup-close" onClick={() => navigate('referral')} aria-label="Закрыть">
+        <button className="bonus-popup-close" onClick={onClose} aria-label="Закрыть">
           <X size={20} />
         </button>
-        <h1>Как работают бонусы</h1>
+        <h1 id="bonus-info-title">Как работают бонусы</h1>
         <p>Приглашайте друзей и получайте бонусы с их оплат подписки</p>
         <div className="bonus-steps">
           <BonusStep icon={Link} label="Пригласите друга" />
@@ -1550,7 +1568,7 @@ function ReferralInfoScreen({ navigate, activeScreen }) {
           </div>
         </Card>
       </div>
-    </AppFrame>
+    </div>
   );
 }
 
