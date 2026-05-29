@@ -428,19 +428,49 @@ button {
   overflow: hidden;
 }
 
+.icon-tile.payment-image {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+
+.icon-tile.tariff-image {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
 .asset-icon {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: 82%;
+  height: 82%;
   object-fit: contain;
   pointer-events: none;
 }
 
 .icon-tile.payment-image .asset-icon,
 .icon-tile.tariff-image .asset-icon {
-  width: 240%;
-  height: 240%;
-  max-width: none;
+  width: 82%;
+  height: 82%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.plan-heading .icon-tile.tariff-image {
+  width: 28px;
+  height: 28px;
+}
+
+.trial-plan-list .icon-tile.tariff-image {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+
+.trial-plan-list .icon-tile.tariff-image .asset-icon,
+.payment-option .icon-tile.payment-image .asset-icon {
+  width: 88%;
+  height: 88%;
 }
 
 .icon-tile.tariff-feather {
