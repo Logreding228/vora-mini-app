@@ -1325,7 +1325,7 @@ button {
 }
 
 .radio.checked {
-  border: 2px solid #f47a3d;
+  border: 1px solid #f47a3d;
   background: #ffffff;
   box-shadow: 0 0 0 3px #fff7f2;
 }
@@ -1333,7 +1333,7 @@ button {
 .radio.checked::after {
   content: "";
   position: absolute;
-  inset: 4px;
+  inset: 3px;
   border-radius: 50%;
   background: #f47a3d;
 }
