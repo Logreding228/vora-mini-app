@@ -1445,7 +1445,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
           </div>
         </div>
         <div className="referral-link-box">
-          <Link size={21} />
+          <ReferralLinkIcon />
           <span>{displayedLink}</span>
           <button onClick={copyReferralLink} aria-label="Скопировать ссылку"><Copy size={19} /></button>
         </div>
@@ -1565,6 +1565,14 @@ function BonusStep({ icon: Icon, label }) {
 
 function GiftIcon({ size = 22 }) {
   return <img className="gift-step-icon" src={asset('referral-gift')} alt="" style={{ width: size, height: size }} />;
+}
+
+function ReferralLinkIcon() {
+  return (
+    <svg className="referral-link-icon" width="21" height="12" viewBox="0 0 21 12" fill="none" aria-hidden="true">
+      <path d="M7.43324 10.2334H5.56657C4.32889 10.2334 3.14191 9.74169 2.26674 8.86652C1.39157 7.99135 0.899902 6.80437 0.899902 5.56669C0.899902 4.32901 1.39157 3.14203 2.26674 2.26686C3.14191 1.39169 4.32889 0.900024 5.56657 0.900024H7.43324M13.0332 0.900024H14.8999C16.1376 0.900024 17.3246 1.39169 18.1997 2.26686C19.0749 3.14203 19.5666 4.32901 19.5666 5.56669C19.5666 6.80437 19.0749 7.99135 18.1997 8.86652C17.3246 9.74169 16.1376 10.2334 14.8999 10.2334H13.0332M6.4999 5.56669H13.9666" stroke="#021227" strokeOpacity="0.5" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
 function PartnerUsersIcon() {
