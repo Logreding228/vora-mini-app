@@ -239,6 +239,7 @@ const screens = [
   { id: 'balance-topup', label: 'Пополнение', component: BalanceTopup },
   { id: 'balance-history', label: 'История баланса', component: BalanceHistory },
   { id: 'referral', label: 'Реферальная', component: ReferralScreen },
+  { id: 'referral-info', label: 'О бонусах', component: ReferralInfoScreen },
   { id: 'support', label: 'Поддержка', component: SupportScreen },
   { id: 'tickets', label: 'Обращения', component: TicketsScreen },
   { id: 'ticket-create', label: 'Создать обращение', component: CreateTicket },
@@ -325,7 +326,7 @@ function App() {
         <div className={activeScreen.startsWith('tariff-') ? 'page-transition no-page-animation' : 'page-transition'} key={activeScreen}>
           <Screen navigate={navigate} activeScreen={activeScreen} mainData={mainData} telegramUser={telegramUser} apiNotice={apiNotice} />
         </div>
-        <BottomNav navigate={navigate} activeScreen={activeScreen} mainData={mainData} />
+        {activeScreen !== 'referral-info' && <BottomNav navigate={navigate} activeScreen={activeScreen} mainData={mainData} />}
       </main>
     </div>
   );
@@ -381,6 +382,7 @@ function BottomNav({ navigate, activeScreen, mainData }) {
     'balance-topup': 'bonus',
     'balance-history': 'bonus',
     referral: 'bonus',
+    'referral-info': 'bonus',
     support: 'support',
     tickets: 'support',
     'ticket-create': 'support',
@@ -1360,6 +1362,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
   const [notice, setNotice] = useState('');
   const days = Math.max(0, Math.floor(Number(amount || 0) / 10));
   const referralLink = telegramUser?.id ? `vorachoice.store/r/${telegramUser.id}` : '';
+  const displayedLink = referralLink || 'vorachoice.store/r/a123';
 
   useEffect(() => {
     setAmount(earned ? String(Math.floor(earned)) : '');
@@ -1385,20 +1388,22 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
 
   return (
     <AppFrame className="referral-screen" navigate={navigate} activeScreen={activeScreen}>
-      <PageTitle title="Реферальная программа" />
+      <PageTitle
+        title="Реферальная программа"
+        action={<button className="square-action" onClick={() => navigate('referral-info')} aria-label="Как работают бонусы"><CircleHelp size={24} /></button>}
+      />
       <Card className="referral-earn-card">
         <div className="referral-earn-head">
           <div>
             <p>Вы заработали</p>
             <strong>{money(earned)}</strong>
+            <span>= {Math.floor(earned / 10)} дней подписки</span>
           </div>
-          <span>= {Math.floor(earned / 10)} дней подписки</span>
+          <img src={asset('referral-gift')} alt="" />
         </div>
-        <img src={asset('referral-gift')} alt="" />
-        <div className="referral-rate">
-          <span>1 день подписки</span>
-          <strong>= 10 ₽</strong>
-        </div>
+        <div className="thin-line" />
+        <h2>Конвертация в дни</h2>
+        <p className="referral-rate-text">1 день = 10 ₽</p>
         <div className="referral-convert">
           <label>
             <span>Сумма</span>
@@ -1409,7 +1414,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
           <label>
             <span>К подписке</span>
             <input value={days} readOnly />
-            <b>дней</b>
+            <b><CalendarDays size={15} /></b>
           </label>
         </div>
         <PrimaryButton onClick={showApiNotice}>Добавить {days || 0} дней</PrimaryButton>
@@ -1425,41 +1430,127 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
         {notice && <p className="inline-error neutral">{notice}</p>}
       </Card>
       <Card className="invite-card">
-        <h2>Приглашайте друзей и получайте бонусы</h2>
+        <h2>Приглашайте друзей <button onClick={() => navigate('referral-info')} aria-label="Как работают бонусы"><CircleHelp size={14} /></button></h2>
+        <p>и продлевайте подписку бонусами</p>
         <div className="bonus-grid">
           <div>
+            <Users size={22} />
             <strong>до 561 ₽</strong>
             <p>с оплаты друга</p>
           </div>
           <div>
+            <Users size={22} />
             <strong>до 56 ₽</strong>
             <p>с оплат его друзей</p>
           </div>
         </div>
         <div className="referral-link-box">
           <Link size={21} />
-          <span>{referralLink || 'Ссылка появится после входа'}</span>
+          <span>{displayedLink}</span>
           <button onClick={copyReferralLink} aria-label="Скопировать ссылку"><Copy size={19} /></button>
         </div>
-        <p>Рекуррентные выплаты начисляются с каждой оплаты приглашенных пользователей.</p>
+        <p>Поделитесь ссылкой и начните зарабатывать</p>
+        <div className="recurring-box">
+          <span>∞</span>
+          <div>
+            <strong>Рекуррентные выплаты</strong>
+            <p>Бонусы начисляются с каждого продления подписки</p>
+          </div>
+        </div>
       </Card>
       <Card className="referral-stats-card">
         <h2>Статистика</h2>
-        <div>
-          <Stat icon={Users} label="Приглашено друзей" value="—" />
-          <Stat icon={Sparkles} label="Активных друзей" value="—" />
-        </div>
-        <SummaryLine label="Всего заработано" value={money(earned)} />
+        <div className="referral-stat-row"><Users size={20} /><span>Приглашено друзей</span><strong>24</strong></div>
+        <div className="referral-stat-row"><ArrowUp size={20} /><span>Активных друзей</span><strong>18</strong></div>
+        <div className="referral-stat-row"><Wallet size={20} /><span>Всего заработано</span><strong>{money(earned || 1250)}</strong></div>
       </Card>
       <button className="partner-card" onClick={showApiNotice}>
+        <IconTile tone="soft-blue"><Users size={24} /></IconTile>
         <div>
           <strong>Партнерская программа</strong>
-          <p>Для блогеров и команд</p>
+          <p>Особые условия для крупных партнеров</p>
         </div>
-        <ChevronRight size={24} />
+        <span>Оставить заявку</span>
       </button>
     </AppFrame>
   );
+}
+
+function ReferralInfoScreen({ navigate, activeScreen }) {
+  return (
+    <AppFrame className="referral-info-screen" navigate={navigate} activeScreen={activeScreen}>
+      <div className="bonus-popup">
+        <span className="sheet-grip" />
+        <button className="bonus-popup-close" onClick={() => navigate('referral')} aria-label="Закрыть">
+          <X size={20} />
+        </button>
+        <h1>Как работают бонусы</h1>
+        <p>Приглашайте друзей и получайте бонусы с их оплат подписки</p>
+        <div className="bonus-steps">
+          <BonusStep icon={Link} label="Пригласите друга" />
+          <BonusStep icon={Wallet} label="Друг оплачивает подписку" />
+          <BonusStep icon={GiftIcon} label="Вы получаете до 10%" />
+        </div>
+        <div className="bonus-capabilities">
+          <strong>₽</strong>
+          <span>Бонусы можно:</span>
+          <p>Конвертировать в дни подписки</p>
+          <p>Вывести средства</p>
+        </div>
+        <Card className="bonus-level-card">
+          <div className="bonus-level-head">
+            <h2>Начисления по срокам и уровням</h2>
+            <span>1 уровень</span>
+          </div>
+          <div className="bonus-table">
+            <span />
+            <b>1 месяц</b>
+            <b>6 месяцев</b>
+            <b>12 месяцев</b>
+            <p>1 уровень<br /><small>Ваши друзья</small></p>
+            <strong>10%</strong>
+            <strong>7%</strong>
+            <strong>5%</strong>
+            <p>2 уровень<br /><small>Их друзья</small></p>
+            <strong>3%</strong>
+            <strong>2%</strong>
+            <strong>1%</strong>
+          </div>
+          <div className="recurring-box compact">
+            <CalendarDays size={20} />
+            <div>
+              <strong>Начисления рекуррентные</strong>
+              <p>Бонусы начисляются с каждого продления подписки другом</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="bonus-example-card">
+          <div className="bonus-level-head">
+            <h2>Пример бонусов с тарифа Plus</h2>
+            <span>1 уровень</span>
+          </div>
+          <div className="bonus-example-grid">
+            <p>550 ₽ → <strong>55 ₽</strong></p>
+            <p>2 970 ₽ → <strong>207 ₽</strong></p>
+            <p>5 610 ₽ → <strong>561 ₽</strong></p>
+          </div>
+        </Card>
+      </div>
+    </AppFrame>
+  );
+}
+
+function BonusStep({ icon: Icon, label }) {
+  return (
+    <div>
+      <IconTile><Icon size={22} /></IconTile>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function GiftIcon({ size = 22 }) {
+  return <img className="gift-step-icon" src={asset('referral-gift')} alt="" style={{ width: size, height: size }} />;
 }
 
 function BalanceHistory({ navigate, activeScreen }) {
