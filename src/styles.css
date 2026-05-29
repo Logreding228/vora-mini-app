@@ -300,7 +300,6 @@ button {
   object-position: center 58%;
   margin-top: 27px;
   border-radius: 0;
-  animation: floatAsset 4.2s ease-in-out infinite;
 }
 
 @keyframes floatAsset {
@@ -423,6 +422,24 @@ button {
 
 .icon-tile.feather {
   background: #f4f4f4;
+}
+
+.icon-tile.tariff-feather {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #f3f3f3;
+  color: #ff7a31;
+}
+
+.icon-tile.tariff-feather.plus {
+  background: #101013;
+}
+
+.tariff-feather-icon {
+  display: block;
+  width: 30px;
+  height: 30px;
 }
 
 .renew-card {

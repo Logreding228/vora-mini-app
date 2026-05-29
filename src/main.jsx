@@ -609,6 +609,33 @@ function FeatureDevicesIcon({ size = 22 }) {
   );
 }
 
+function TariffFeatherIcon({ variant = 'lite', size = 30 }) {
+  const isPlus = variant === 'plus';
+
+  return (
+    <svg className={`tariff-feather-icon ${variant}`} width={size} height={size} viewBox="0 0 30 30" fill="none" aria-hidden="true">
+      <path
+        d={isPlus ? 'M21.8 2.8C12.2 5.5 6.4 12.1 4.8 25.4C11.9 21.3 18.4 15.1 24.2 5.2C24.9 4 23.3 2.4 21.8 2.8Z' : 'M22.1 3.1C12.8 6.7 7.1 13.4 4.8 25.2C11.7 20.6 18.4 13.7 24.1 5.6C25 4.3 23.8 2.4 22.1 3.1Z'}
+        fill="#ffffff"
+        stroke="#ff7a31"
+        strokeWidth="1.2"
+      />
+      <path d="M5 25.2C10.8 18.9 16.5 12.7 23.4 4.5" stroke="#ff7a31" strokeWidth="1.6" strokeLinecap="round" />
+      {isPlus ? (
+        <>
+          <path d="M13.8 12.4l8.4-1.2M11.5 15.7l6.6-.8M9.2 19l4.8-.7" stroke="#ff7a31" strokeWidth="1.15" strokeLinecap="round" />
+          <path d="M13.4 12.8l-1.3-4.5M11.1 16.1l-1.5-4.2M8.9 19.4l-1.5-3.3" stroke="#ff7a31" strokeWidth="1.15" strokeLinecap="round" />
+        </>
+      ) : (
+        <>
+          <path d="M13.6 13.2l6.4-.8M10.8 17.1l4.2-.5" stroke="#ff7a31" strokeWidth="1.15" strokeLinecap="round" />
+          <path d="M13.2 13.6l-1.1-3.5M10.5 17.5l-1.1-2.7" stroke="#ff7a31" strokeWidth="1.15" strokeLinecap="round" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 function FeatureList() {
   const items = [
     [FlowSparkleIcon, 'VORA Flow для привычных сервисов', 'feature-orange'],
@@ -682,14 +709,14 @@ function TrialStart({ navigate, activeScreen }) {
       <SectionDivider>или оформите подписку сразу</SectionDivider>
       <Card className="trial-plan-list">
         <button onClick={() => navigate('tariff-lite')}>
-          <IconTile tone="feather"><span className="feather-mark" /></IconTile>
+          <IconTile tone="tariff-feather lite"><TariffFeatherIcon variant="lite" /></IconTile>
           <div>
             <strong>Lite</strong>
             <p>от 300 ₽</p>
           </div>
         </button>
         <button onClick={() => navigate('tariff-plus')}>
-          <IconTile tone="feather"><span className="feather-mark" /></IconTile>
+          <IconTile tone="tariff-feather plus"><TariffFeatherIcon variant="plus" /></IconTile>
           <div>
             <strong>Plus</strong>
             <p>от 550 ₽</p>
