@@ -530,7 +530,7 @@ function HomePlanCard({ selected, onClick }) {
           </div>
         </div>
         <div className="plan-price compact-price">
-          <strong>{plan.monthPrice}</strong>
+          <strong>{plan.monthPrice} ₽</strong>
           <span>/мес</span>
         </div>
       </div>
@@ -1779,7 +1779,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
     <AppFrame className="tariff-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Подписка" />
       <PlansPair selected={selected} includeHome onSelect={(plan) => navigate(tariffCatalog[plan].route)} />
-      <SectionDivider>выберите срок</SectionDivider>
+      <SectionDivider>выберите подходящий срок</SectionDivider>
       <div className="periods">
         {['1', '6', '12'].map((period) => (
           <PeriodCard
@@ -1842,11 +1842,13 @@ function TariffScreen({ selected, navigate, activeScreen }) {
 function PeriodCard({ amount, unit, price, discount, selected, onClick }) {
   return (
     <button className={selected ? 'period-card selected' : 'period-card'} onClick={onClick}>
-      <h3>{amount}</h3>
+      <h3>{amount} {unit}</h3>
+      {discount > 0 ? <span>Экономия {money(discount)}</span> : <p>Стандартный тариф</p>}
       <div className="thin-line" />
-      <strong>{unit}</strong>
-      <b>{price} ₽/мес</b>
-      {discount > 0 && <span>Скидка {money(discount)}</span>}
+      <div className="period-price">
+        <strong>{price} ₽</strong>
+        <small>/ мес</small>
+      </div>
     </button>
   );
 }
