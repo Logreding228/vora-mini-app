@@ -1752,6 +1752,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
   const total = baseTotal + extraDevicesTotal;
   const originalTotal = tariff.monthPrice * periodMonths + extraDevicesTotal;
   const savings = originalTotal - total;
+  const maxDeviceCount = tariff.devices + tariff.extraDevices;
   const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
 
   useEffect(() => {
@@ -1798,13 +1799,13 @@ function TariffScreen({ selected, navigate, activeScreen }) {
       <Card className="devices-counter">
         <div>
           <h2>Устройства</h2>
-          <p>Выберите лимит подключений</p>
-          <span>Можно изменить перед оплатой</span>
+          <p>Включено в тариф: {tariff.devices} {pluralRu(tariff.devices, 'устройство', 'устройства', 'устройств')}</p>
+          <span>+75 ₽ за дополнительное устройство</span>
         </div>
         <div className="stepper">
-          <button onClick={() => setDeviceCount((value) => Math.max(tariff.devices, value - 1))}>-</button>
+          <button disabled={deviceCount <= tariff.devices} onClick={() => setDeviceCount((value) => Math.max(tariff.devices, value - 1))}>-</button>
           <strong>{deviceCount}</strong>
-          <button onClick={() => setDeviceCount((value) => Math.min(9, value + 1))}>+</button>
+          <button disabled={deviceCount >= maxDeviceCount} onClick={() => setDeviceCount((value) => Math.min(maxDeviceCount, value + 1))}>+</button>
         </div>
       </Card>
       <div className="payment-methods tariff-methods">
@@ -1832,7 +1833,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
           )}
         </div>
         {paymentError && <p className="inline-error">{paymentError}</p>}
-        <PrimaryButton onClick={buySubscription}>Подключить за {money(total)}</PrimaryButton>
+        <PrimaryButton className="checkout-submit" onClick={buySubscription}>Подключить за <span>{money(total)}</span></PrimaryButton>
         <small><Lock size={15} />Безопасная оплата. Отмена в любой момент</small>
       </Card>
     </AppFrame>

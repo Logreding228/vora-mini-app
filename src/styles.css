@@ -532,7 +532,7 @@ button {
 }
 
 .section-divider {
-  margin: 22px 0 18px;
+  margin: 18px 0;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
@@ -574,6 +574,7 @@ button {
 
 .plan-card.selected {
   border-color: #ff712d;
+  background: #fef7f4;
 }
 
 .plan-heading {
@@ -685,7 +686,7 @@ button {
   position: relative;
   width: 100%;
   min-height: 178px;
-  margin-top: 8px;
+  margin-top: 18px;
   padding: 18px;
   border: 1px solid transparent;
   border-radius: 14px;
@@ -698,7 +699,7 @@ button {
 
 .home-plan-card.selected {
   border-color: #ff712d;
-  background: #fff8f4;
+  background: #fef7f4;
 }
 
 .home-plan-card > img {
@@ -1600,7 +1601,7 @@ button {
 
 .input-box.selected {
   border-color: #ff8b53;
-  background: #fff8f4;
+  background: #fef7f4;
 }
 
 .input-box span {
@@ -1657,7 +1658,7 @@ button {
 
 .method-card.checked {
   border-color: #f47a3d;
-  background: #fffdfb;
+  background: #fef7f4;
 }
 
 .method-card strong {
@@ -2676,7 +2677,26 @@ button {
 .tariff-screen .page-title {
   min-height: 118px;
   align-items: flex-end;
-  padding-bottom: 32px;
+  padding-bottom: 24px;
+}
+
+.tariff-screen .section-divider {
+  margin: 18px 0;
+}
+
+.tariff-screen .payment-methods,
+.tariff-screen .promo {
+  margin-top: 18px;
+}
+
+.tariff-screen .promo {
+  margin-bottom: 18px;
+}
+
+.tariff-screen .devices-counter h2 {
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 650;
 }
 
 .periods {
@@ -2700,7 +2720,7 @@ button {
 
 .period-card.selected {
   border-color: #ff712d;
-  background: #fff8f4;
+  background: #fef7f4;
 }
 
 .period-card h3 {
@@ -2765,7 +2785,7 @@ button {
 
 .devices-counter {
   min-height: 103px;
-  margin-top: 24px;
+  margin-top: 18px;
   padding: 24px 18px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -2775,14 +2795,17 @@ button {
 
 .devices-counter p,
 .devices-counter span {
-  margin: 12px 0 0;
+  margin: 11px 0 0;
   color: #9ca3ad;
-  font-size: 11px;
+  font-size: 15px;
+  line-height: 1.15;
+  font-weight: 400;
 }
 
 .devices-counter span {
   display: block;
   color: #ff712d;
+  white-space: nowrap;
 }
 
 .stepper {
@@ -2803,13 +2826,18 @@ button {
   color: #06162c;
 }
 
+.stepper button:disabled {
+  color: #bec2c7;
+  cursor: default;
+}
+
 .stepper strong {
   font-size: 24px;
   font-weight: 560;
 }
 
 .checkout-card {
-  margin-top: 24px;
+  margin-top: 18px;
   padding: 22px 24px 24px;
   display: flex;
   flex-direction: column;
@@ -2895,6 +2923,10 @@ button {
   border-radius: 14px;
   font-size: 17px;
   font-weight: 450;
+}
+
+.checkout-card .primary-button span {
+  font-weight: 300;
 }
 
 .checkout-card small {
