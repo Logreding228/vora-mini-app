@@ -754,15 +754,15 @@ button {
 .home-plan-bottom .compact-price {
   margin: 0;
   min-height: 43px;
-  padding: 0 14px;
+  padding: 0 13px;
   border: 0;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 8px 20px rgba(6, 22, 44, 0.08);
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: 0 8px 20px rgba(6, 22, 44, 0.06);
+  backdrop-filter: blur(10px);
 }
 
 .home-plan-bottom .compact-price strong {
@@ -2766,11 +2766,11 @@ button {
 .devices-counter {
   min-height: 103px;
   margin-top: 24px;
-  padding: 26px 24px;
+  padding: 24px 18px;
   display: grid;
-  grid-template-columns: 1fr 113px;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 18px;
+  gap: 12px;
 }
 
 .devices-counter p,
@@ -2786,7 +2786,8 @@ button {
 }
 
 .stepper {
-  height: 48px;
+  width: 98px;
+  height: 42px;
   border-radius: 14px;
   background: #f2f3f5;
   border: 1px solid #e6e8eb;
@@ -2798,12 +2799,13 @@ button {
 
 .stepper button {
   background: transparent;
-  font-size: 28px;
+  font-size: 22px;
   color: #06162c;
 }
 
 .stepper strong {
-  font-size: 26px;
+  font-size: 24px;
+  font-weight: 560;
 }
 
 .checkout-card {
