@@ -2681,14 +2681,15 @@ button {
 
 .periods {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .period-card {
+  min-width: 0;
   width: 100%;
-  min-height: 128px;
-  padding: 17px 10px 18px;
+  min-height: 119px;
+  padding: 15px 6px 16px;
   text-align: center;
   border: 1px solid transparent;
   border-radius: 14px;
@@ -2704,58 +2705,59 @@ button {
 
 .period-card h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 15px;
   line-height: 1.08;
-  font-weight: 500;
+  font-weight: 450;
   white-space: nowrap;
 }
 
 .period-card p {
-  min-height: 22px;
-  margin: 14px 0 0;
+  min-height: 20px;
+  margin: 12px 0 0;
   color: #8b929d;
-  font-size: 11px;
+  font-size: 9px;
   line-height: 1;
   font-weight: 400;
+  white-space: nowrap;
 }
 
 .period-card span {
   display: inline-flex;
-  min-height: 26px;
-  margin-top: 10px;
-  padding: 0 10px;
+  min-height: 22px;
+  margin-top: 9px;
+  padding: 0 7px;
   border-radius: 999px;
   align-items: center;
   background: #e2f5e9;
   color: #22b56c;
-  font-size: 11px;
+  font-size: 9px;
   line-height: 1;
   font-weight: 400;
   white-space: nowrap;
 }
 
 .period-card .thin-line {
-  margin: 13px 8px 18px;
+  margin: 12px 5px 15px;
 }
 
 .period-price {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 .period-price strong {
   color: #06162c;
-  font-size: 23px;
+  font-size: 20px;
   line-height: 1;
-  font-weight: 650;
+  font-weight: 560;
   white-space: nowrap;
 }
 
 .period-price small {
   color: #bec2c7;
-  font-size: 18px;
+  font-size: 14px;
   line-height: 1;
   font-weight: 400;
   white-space: nowrap;
