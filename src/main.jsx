@@ -560,9 +560,28 @@ function PlansPair({ currentLite = false, selected = 'plus', onSelect, includeHo
   );
 }
 
+function FlowSparkleIcon({ size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" aria-hidden="true">
+      <path
+        d="M14 2.5l1.7 5.1 5.1 1.8-5.1 1.8-1.7 5.1-1.8-5.1-5.1-1.8 5.1-1.8L14 2.5Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M5.3 12.8l.8 2.1 2 .8-2 .8-.8 2.1-.8-2.1-2-.8 2-.8.8-2.1Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function FeatureList() {
   const items = [
-    [Sparkles, 'VORA Flow для привычных сервисов', 'soft-orange'],
+    [FlowSparkleIcon, 'VORA Flow для привычных сервисов', 'soft-orange'],
     [Monitor, '3 устройства одновременно', 'soft-green'],
     [Users, 'Работает без лишних действий', 'soft-peach'],
     [Users, 'Поддержка всех устройств', 'soft-peach'],
