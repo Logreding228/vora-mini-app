@@ -2694,9 +2694,9 @@ button {
 }
 
 .tariff-screen .devices-counter h2 {
-  font-size: 26px;
+  font-size: 16px;
   line-height: 1;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .periods {
@@ -2795,9 +2795,9 @@ button {
 
 .devices-counter p,
 .devices-counter span {
-  margin: 11px 0 0;
+  margin: 10px 0 0;
   color: #9ca3ad;
-  font-size: 15px;
+  font-size: 10px;
   line-height: 1.15;
   font-weight: 400;
 }
