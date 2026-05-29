@@ -208,7 +208,7 @@ function getSubscriptionState(mainData) {
     return { label: 'Заморожена', tone: 'purple', description: 'Доступ временно приостановлен' };
   }
 
-  return { label: 'Нет подписки', tone: 'purple', description: 'Оформите подписку для доступа' };
+  return { label: 'Нет подписки', tone: 'red', description: 'Оформите подписку для доступа' };
 }
 
 function hasActiveSubscription(mainData) {
@@ -247,6 +247,7 @@ const screens = [
   { id: 'tariff-plus', label: 'Тариф Plus', component: TariffPlus },
   { id: 'tariff-home', label: 'Тариф Home', component: TariffHome },
   { id: 'profile', label: 'Профиль', component: ProfileScreen },
+  { id: 'security', label: 'Безопасность', component: SecurityScreen },
 ];
 const screenIds = new Set(screens.map((item) => item.id));
 
@@ -390,6 +391,7 @@ function BottomNav({ navigate, activeScreen, mainData }) {
     'ticket-create': 'support',
     'ticket-thread': 'support',
     profile: 'profile',
+    security: 'profile',
   };
 
   const nav = [
@@ -542,7 +544,7 @@ function HomePlanCard({ selected, onClick }) {
   );
 }
 
-function PlansPair({ currentLite = false, selected = 'plus', onSelect, includeHome = false }) {
+function PlansPair({ currentLite = false, selected = 'plus', onSelect, includeHome = false, hideIcons = false }) {
   return (
     <>
       <div className="plans-pair">
@@ -554,7 +556,7 @@ function PlansPair({ currentLite = false, selected = 'plus', onSelect, includeHo
           price={tariffCatalog.lite.monthPrice}
           selected={selected === 'lite'}
           current={currentLite}
-          iconName={selected === 'lite' ? 'plan-lite-alt' : 'plan-lite'}
+          iconName={hideIcons ? '' : selected === 'lite' ? 'plan-lite-alt' : 'plan-lite'}
           onClick={() => onSelect?.('lite')}
         />
         <PlanCard
@@ -565,7 +567,7 @@ function PlansPair({ currentLite = false, selected = 'plus', onSelect, includeHo
           price={tariffCatalog.plus.monthPrice}
           selected={selected === 'plus'}
           popular
-          iconName={selected === 'plus' ? 'plan-plus-alt' : 'plan-plus'}
+          iconName={hideIcons ? '' : selected === 'plus' ? 'plan-plus-alt' : 'plan-plus'}
           onClick={() => onSelect?.('plus')}
         />
       </div>
@@ -834,7 +836,7 @@ function SubscriptionSummary({ muted: sheetMuted = false, navigate, mainData }) 
   const subscriptionState = getSubscriptionState(mainData);
 
   return (
-    <Card className={`subscription-card ${sheetMuted ? 'under-sheet' : ''}`}>
+    <Card className={`subscription-card subscription-${subscriptionState.tone} ${sheetMuted ? 'under-sheet' : ''}`}>
       <div>
         <span className={`status-pill ${subscriptionState.tone}`}><i />{subscriptionState.label}</span>
         <h2>{planName}</h2>
@@ -1136,7 +1138,7 @@ function ChangePlan({ navigate, activeScreen, mainData }) {
   return (
     <AppFrame className="change-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Смена тарифа" />
-      <PlansPair selected={currentPlan === 'lite' ? 'lite' : 'plus'} currentLite={currentPlan === 'lite'} onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
+      <PlansPair selected={currentPlan === 'lite' ? 'lite' : 'plus'} currentLite={currentPlan === 'lite'} hideIcons onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
       <SectionDivider>выберите действие</SectionDivider>
       {canUpgrade && (
         <>
@@ -1679,7 +1681,7 @@ function BalanceHistory({ navigate, activeScreen }) {
       <h2 className="muted-heading">Сводка</h2>
       <Card className="stats-card">
         <Stat icon={Wallet} label="Всего потрачено" value={money(history.sum_pay)} />
-        <Stat icon={ArrowLeftRight} label="Всего транзакций" value={String(history.sym_trac ?? transactions.length)} />
+        <Stat icon={ArrowLeftRight} label="Всего транзакций" value={String(history.sym_trac ?? transactions.length)} tone="green" />
       </Card>
       <Card className="help-card">
         <IconTile><Headphones size={28} /></IconTile>
@@ -1693,9 +1695,9 @@ function BalanceHistory({ navigate, activeScreen }) {
   );
 }
 
-function Stat({ icon: Icon, label, value }) {
+function Stat({ icon: Icon, label, value, tone = 'orange' }) {
   return (
-    <div className="stat">
+    <div className={`stat ${tone}`}>
       <Icon size={25} />
       <div>
         <p>{label}</p>
@@ -1795,29 +1797,34 @@ function TicketsScreen({ navigate, activeScreen }) {
 }
 
 function CreateTicket({ navigate, activeScreen }) {
+  const [subject, setSubject] = useState('');
+  const [description, setDescription] = useState('');
+  const [fileName, setFileName] = useState('');
+
   return (
     <AppFrame className="create-ticket" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Создать обращение" subtitle="Опишите вашу проблему, и мы поможем" />
       <Card className="field-card">
-        <label>Тема обращения</label>
-        <p>Кратко опишите проблему</p>
-        <span>0/100</span>
+        <label htmlFor="ticket-subject">Тема обращения</label>
+        <input id="ticket-subject" value={subject} onChange={(event) => setSubject(event.target.value.slice(0, 100))} placeholder="Кратко опишите проблему" maxLength={100} />
+        <span>{subject.length}/100</span>
       </Card>
       <Card className="textarea-card">
-        <label>Описание проблемы</label>
-        <p>Подробно опишите вашу проблему</p>
-        <span>0/1000</span>
+        <label htmlFor="ticket-description">Описание проблемы</label>
+        <textarea id="ticket-description" value={description} onChange={(event) => setDescription(event.target.value.slice(0, 1000))} placeholder="Подробно опишите вашу проблему" maxLength={1000} />
+        <span>{description.length}/1000</span>
         <div className="hint-box"><Sparkles size={21} />Чем подробнее вы опишите ситуацию, тем быстрее мы сможем помочь</div>
       </Card>
       <Card className="attach-card">
         <p>Прикрепить файлы</p>
-        <div>
+        <label className="attach-drop">
+          <input type="file" onChange={(event) => setFileName(event.target.files?.[0]?.name || '')} />
           <Paperclip size={30} />
           <span>
-            <strong>Нажмите чтобы прикрепить файл</strong>
+            <strong>{fileName || 'Нажмите чтобы прикрепить файл'}</strong>
             <small>Размер файла не более 10 МБ</small>
           </span>
-        </div>
+        </label>
       </Card>
       <PrimaryButton onClick={() => navigate('tickets')}>Вернуться к обращениям</PrimaryButton>
     </AppFrame>
@@ -2021,7 +2028,7 @@ function ProfileScreen({ navigate, activeScreen, telegramUser }) {
     <AppFrame className="profile-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Профиль" subtitle="Аккаунт и настройки" action={<button className="square-action" onClick={() => navigate('tickets')} aria-label="Уведомления"><Bell size={28} /></button>} />
       <Card className="profile-card">
-        <div className="profile-avatar"><UserGlyph size={30} /></div>
+        <ProfileAvatar user={telegramUser} />
         <div>
           <h2>{displayName}</h2>
           <p>{telegramUser?.username ? `@${telegramUser.username}` : telegramUser?.id ? `VORA ID ${telegramUser.id}` : 'Откройте через Telegram'}</p>
@@ -2029,8 +2036,40 @@ function ProfileScreen({ navigate, activeScreen, telegramUser }) {
       </Card>
       <Card className="link-list">
         <ActionRow icon={Wallet} title="Баланс" subtitle="Пополнения и история платежей" onClick={() => navigate('balance-history')} />
-        <ActionRow icon={Shield} title="Безопасность" subtitle="Данные аккаунта и устройства" onClick={() => navigate('home-active')} />
+        <ActionRow icon={Shield} title="Безопасность" subtitle="Данные аккаунта и устройства" onClick={() => navigate('security')} />
         <ActionRow icon={Headphones} title="Поддержка" subtitle="Обращения и помощь" onClick={() => navigate('support')} />
+      </Card>
+    </AppFrame>
+  );
+}
+
+function ProfileAvatar({ user }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const photoUrl = user?.photo_url;
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [photoUrl]);
+
+  if (photoUrl && !imageFailed) {
+    return (
+      <div className="profile-avatar has-photo">
+        <img src={photoUrl} alt="" onError={() => setImageFailed(true)} />
+      </div>
+    );
+  }
+
+  return <div className="profile-avatar"><UserGlyph size={30} /></div>;
+}
+
+function SecurityScreen({ navigate, activeScreen, telegramUser }) {
+  return (
+    <AppFrame className="security-screen" navigate={navigate} activeScreen={activeScreen}>
+      <PageTitle title="Безопасность" subtitle="Данные аккаунта и устройства" />
+      <Card className="link-list">
+        <ActionRow icon={Shield} title="Telegram авторизация" subtitle={telegramUser?.username ? `Подключен @${telegramUser.username}` : 'Откройте мини-приложение через Telegram'} onClick={() => navigate('profile')} />
+        <ActionRow icon={Monitor} title="Устройства" subtitle="Посмотреть подключенные устройства" onClick={() => navigate('home-active')} />
+        <ActionRow icon={Headphones} title="Нужна помощь?" subtitle="Написать в поддержку" onClick={() => navigate('support')} />
       </Card>
     </AppFrame>
   );

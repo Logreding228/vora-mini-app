@@ -842,6 +842,10 @@ button {
   line-height: 1.25;
 }
 
+.subscription-card.subscription-red p {
+  color: #d75f5f;
+}
+
 .status-pill.green {
   background: #e2f5e9;
   color: #22b56c;
@@ -858,6 +862,19 @@ button {
 .status-pill.purple {
   background: #eee5ff;
   color: #8058ff;
+}
+
+.status-pill.red {
+  background: #ffe8e8;
+  color: #d75f5f;
+}
+
+.status-pill.red i {
+  width: 5px;
+  height: 5px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .subscription-card > img {
@@ -2808,32 +2825,46 @@ button {
   min-height: 87px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  padding: 20px 24px;
+  padding: 18px 20px;
+  align-items: center;
 }
 
 .stat {
   display: flex;
   align-items: center;
-  gap: 13px;
+  gap: 10px;
+  min-width: 0;
 }
 
 .stat + .stat {
   border-left: 1px solid #eeeeef;
-  padding-left: 16px;
+  padding-left: 14px;
 }
 
-.stat svg {
+.stat.orange svg {
   color: #ff712d;
+}
+
+.stat.green svg {
+  color: #2bb673;
+}
+
+.stat div {
+  min-width: 0;
 }
 
 .stat p {
   margin: 0 0 7px;
   color: #9ca3ad;
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .stat strong {
-  font-size: 25px;
+  display: block;
+  font-size: 24px;
+  line-height: 1;
 }
 
 .help-card {
@@ -3035,7 +3066,7 @@ button {
 .textarea-card,
 .attach-card {
   margin-bottom: 12px;
-  padding: 28px 24px;
+  padding: 22px 24px;
   text-align: left;
 }
 
@@ -3047,6 +3078,11 @@ button {
   min-height: 160px;
 }
 
+.field-card,
+.textarea-card {
+  position: relative;
+}
+
 .field-card label,
 .textarea-card label {
   display: block;
@@ -3054,22 +3090,39 @@ button {
   font-size: 14px;
 }
 
-.field-card p,
-.textarea-card p {
-  margin: 14px 0 0;
-  color: #9ca3ad;
+.field-card input,
+.textarea-card textarea {
+  width: 100%;
+  margin-top: 14px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #06162c;
   font-size: 14px;
+  resize: none;
+}
+
+.textarea-card textarea {
+  min-height: 72px;
+  line-height: 1.35;
+}
+
+.field-card input::placeholder,
+.textarea-card textarea::placeholder {
+  color: #9ca3ad;
 }
 
 .field-card span,
 .textarea-card span {
-  float: right;
+  position: absolute;
+  right: 24px;
+  top: 24px;
   color: #9ca3ad;
   font-size: 11px;
 }
 
 .hint-box {
-  margin-top: 40px;
+  margin-top: 16px;
   min-height: 36px;
   border: 1px solid #ffe0d2;
   border-radius: 10px;
@@ -3078,7 +3131,8 @@ button {
   gap: 18px;
   padding: 10px;
   color: #596371;
-  font-size: 9px;
+  font-size: 11px;
+  line-height: 1.25;
 }
 
 .hint-box svg {
@@ -3095,10 +3149,15 @@ button {
   font-size: 14px;
 }
 
-.attach-card div {
+.attach-drop {
   display: flex;
   align-items: center;
   gap: 22px;
+  cursor: pointer;
+}
+
+.attach-drop input {
+  display: none;
 }
 
 .attach-card svg {
@@ -3586,11 +3645,20 @@ button {
 .profile-avatar {
   width: 52px;
   height: 52px;
-  border-radius: 18px;
+  flex: 0 0 52px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
+  overflow: hidden;
   color: #ff712d;
   background: #fff0e8;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 }
 
 .profile-card h2 {
