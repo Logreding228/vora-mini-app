@@ -409,9 +409,19 @@ button {
   color: #707985;
 }
 
-.icon-tile.custom {
-  background: var(--tile-bg, #f4f4f4);
-  color: var(--tile-color, #06162c);
+.icon-tile.topic-blue {
+  background: #eaf2ff;
+  color: #3b82f6;
+}
+
+.icon-tile.topic-green {
+  background: #e6f6ec;
+  color: #2bb673;
+}
+
+.icon-tile.topic-orange {
+  background: #ffe9de;
+  color: #ff7a2f;
 }
 
 .icon-tile.plain,
