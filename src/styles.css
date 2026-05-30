@@ -410,18 +410,18 @@ button {
 }
 
 .icon-tile.topic-blue {
-  background: #eaf2ff;
-  color: #3b82f6;
+  background: #eaf2ff !important;
+  color: #3b82f6 !important;
 }
 
 .icon-tile.topic-green {
-  background: #e6f6ec;
-  color: #2bb673;
+  background: #e6f6ec !important;
+  color: #2bb673 !important;
 }
 
 .icon-tile.topic-orange {
-  background: #ffe9de;
-  color: #ff7a2f;
+  background: #ffe9de !important;
+  color: #ff7a2f !important;
 }
 
 .icon-tile.plain,
@@ -1090,8 +1090,8 @@ button {
   font-size: 11px;
 }
 
-.action-row svg:last-child,
-.topic-row svg:last-child {
+.action-row > svg:last-child,
+.topic-row > svg:last-child {
   color: #4f5b68;
 }
 
