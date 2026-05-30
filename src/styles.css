@@ -25,6 +25,12 @@ input {
   letter-spacing: 0;
 }
 
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
 button {
   cursor: pointer;
   border: 0;
@@ -77,6 +83,20 @@ button {
 .close-screen {
   position: absolute;
   right: 20px;
+  bottom: 12px;
+  width: 39px;
+  height: 39px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  color: #4f5b68;
+  box-shadow: 0 12px 34px rgba(6, 22, 44, 0.05);
+}
+
+.back-screen {
+  position: absolute;
+  left: 20px;
   bottom: 12px;
   width: 39px;
   height: 39px;
@@ -160,11 +180,15 @@ button {
   border-radius: 14px;
   background: linear-gradient(180deg, #f87d3d 0%, #e96b2e 100%);
   color: #ffffff;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 100%;
   font-weight: 500;
   letter-spacing: 0;
   transition: none;
+}
+
+.primary-button span {
+  font-weight: 400;
 }
 
 .bottom-nav {
@@ -713,6 +737,23 @@ button {
   margin: 2px 0 4px;
   font-size: 31px;
   line-height: 1;
+}
+
+.home-plan-card h3 span:first-child {
+  color: #06162c;
+  font-size: inherit;
+  font-weight: 500;
+}
+
+.home-plan-card h3 .home-info-link,
+.link-text.clickable {
+  color: #ff712d;
+  font-weight: 400;
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-color: #ff712d;
+  text-underline-offset: 4px;
+  cursor: pointer;
 }
 
 .home-plan-card p {
@@ -1494,10 +1535,10 @@ button {
 }
 
 .balance-hero {
-  min-height: 108px;
-  padding: 26px 24px 16px;
+  min-height: 96px;
+  padding: 22px 24px 16px;
   display: grid;
-  grid-template-columns: 1fr 95px 20px;
+  grid-template-columns: 1fr 62px 20px;
   align-items: center;
 }
 
@@ -1508,22 +1549,24 @@ button {
 }
 
 .balance-hero strong {
-  font-size: 35px;
+  font-size: 17px;
+  font-weight: 600;
   line-height: 1;
 }
 
 .balance-hero strong span {
-  color: #8b929d;
-  font-size: 22px;
+  color: #06162c;
+  font-size: 17px;
+  font-weight: 600;
 }
 
 .balance-hero img {
-  width: 90px;
+  width: 56px;
 }
 
 .payment-card {
   margin-top: 18px;
-  padding: 20px 12px;
+  padding: 20px 18px;
 }
 
 .payment-card h2 {
@@ -1533,12 +1576,12 @@ button {
 
 .payment-option {
   width: 100%;
-  min-height: 69px;
+  min-height: 76px;
   display: grid;
-  grid-template-columns: 38px 1fr auto 20px;
-  gap: 12px;
+  grid-template-columns: 48px 1fr auto 20px;
+  gap: 16px;
   align-items: center;
-  padding: 12px;
+  padding: 12px 8px;
   border-bottom: 1px solid #eeeeef;
   background: #ffffff;
   color: #06162c;
@@ -1549,10 +1592,12 @@ button {
   border: 1px solid #ff8b53;
   border-radius: 13px;
   margin-bottom: 5px;
+  padding-inline: 26px;
 }
 
 .payment-option strong {
-  font-size: 15px;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .payment-option p {
@@ -1563,6 +1608,8 @@ button {
 
 .payment-option b {
   font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .feather-mark {
@@ -1575,10 +1622,10 @@ button {
 }
 
 .input-box {
-  height: 45px;
+  height: 54px;
   border: 1px solid #eeeeef;
   border-radius: 13px;
-  padding: 8px 12px;
+  padding: 10px 14px;
   position: relative;
   background: #ffffff;
   cursor: text;
@@ -1601,8 +1648,8 @@ button {
   padding: 0;
   background: transparent;
   color: #8b929d;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 400;
   outline: 0;
 }
 
@@ -1613,7 +1660,7 @@ button {
 .input-box p {
   position: absolute;
   right: 12px;
-  bottom: 10px;
+  bottom: 12px;
   margin: 0;
   color: #8b929d;
   font-size: 9px;
@@ -1845,6 +1892,10 @@ button {
   background: #ffffff;
   padding: 8px;
   box-shadow: 0 14px 35px rgba(6, 22, 44, 0.055);
+}
+
+.camera-input {
+  display: none;
 }
 
 .referral-screen .page-title {
@@ -2606,6 +2657,35 @@ button {
   place-items: center;
   background: #f4f5f6;
   color: #596371;
+}
+
+.image-sheet-overlay {
+  position: fixed;
+  z-index: 22;
+  inset: 0;
+  padding: 42px 6px 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(2, 18, 39, 0.22);
+}
+
+.image-sheet {
+  position: relative;
+  width: min(430px, 100%);
+  max-height: calc(100dvh - 42px);
+  overflow-y: auto;
+  padding: 14px 0 0;
+  border-radius: 18px 18px 0 0;
+  background: #ffffff;
+  box-shadow: 0 -18px 40px rgba(0, 0, 0, 0.16);
+  animation: bonusSheetIn 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.image-sheet img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .bonus-popup h1 {

@@ -146,10 +146,10 @@ async function parseResponse(response) {
 
 function getErrorMessage(payload) {
   if (Array.isArray(payload?.detail)) {
-    return payload.detail.map((item) => item.msg).filter(Boolean).join(', ') || 'API request failed';
+    return payload.detail.map((item) => item.msg).filter(Boolean).join(', ') || 'Запрос не выполнен';
   }
 
-  return payload?.detail || payload?.message || (typeof payload === 'string' ? payload : 'API request failed');
+  return payload?.detail || payload?.message || (typeof payload === 'string' ? payload : 'Запрос не выполнен');
 }
 
 function isTelegramAuthError(error) {
@@ -162,7 +162,7 @@ function telegramAuthMessage() {
 
 async function rawRequest(path, { method = 'GET', query, body, token = getAccessToken(), initData } = {}) {
   if (!apiBaseUrl) {
-    throw new ApiError('API base URL is not configured', 0);
+    throw new ApiError('Сервис временно недоступен', 0);
   }
 
   const headers = {};

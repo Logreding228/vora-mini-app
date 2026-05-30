@@ -1,9 +1,9 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import QRCode from 'qrcode';
 import {
   AlertTriangle,
   ArrowDown,
+  ArrowLeft,
   ArrowLeftRight,
   ArrowRight,
   ArrowUp,
@@ -271,6 +271,7 @@ function hasExplicitScreenHash() {
 
 function App() {
   const [activeScreen, setActiveScreen] = useState(getScreenFromHash);
+  const [screenHistory, setScreenHistory] = useState([]);
   const [telegramUser, setTelegramUser] = useState(null);
   const [mainData, setMainData] = useState(() => normalizeMainData(emptyMainData));
   const [apiNotice, setApiNotice] = useState('');
@@ -314,8 +315,12 @@ function App() {
     loadData();
   }, []);
 
-  const navigate = (id) => {
+  const navigate = (id, options = {}) => {
     const keepsTariffContext = activeScreen.startsWith('tariff-') && id.startsWith('tariff-');
+
+    if (id !== activeScreen && !options.replace) {
+      setScreenHistory((items) => [...items.slice(-12), activeScreen]);
+    }
 
     setActiveScreen(id);
     window.history.replaceState(null, '', `#${id}`);
@@ -323,6 +328,19 @@ function App() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
+  const goBack = () => {
+    setScreenHistory((items) => {
+      const previous = items[items.length - 1] || 'home-active';
+      setActiveScreen(previous);
+      window.history.replaceState(null, '', `#${previous}`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return items.slice(0, -1);
+    });
+  };
+
+  window.__voraGoBack = goBack;
+  window.__voraCanGoBack = screenHistory.length > 0;
 
   return (
     <div className="workspace">
@@ -339,7 +357,7 @@ function App() {
 function AppFrame({ children, className = '', navigate, activeScreen }) {
   return (
     <div className={`screen ${className}`}>
-      <AppHeader navigate={navigate} activeScreen={activeScreen} />
+      <AppHeader navigate={navigate} activeScreen={activeScreen} goBack={window.__voraGoBack || null} />
       <div className="content">{children}</div>
     </div>
   );
@@ -347,9 +365,15 @@ function AppFrame({ children, className = '', navigate, activeScreen }) {
 
 function AppHeader({ navigate, activeScreen }) {
   const canClose = activeScreen && !['home-active', 'trial-start'].includes(activeScreen);
+  const canGoBack = canClose;
 
   return (
     <header className="app-header">
+      {canGoBack && (
+        <button className="back-screen" onClick={() => window.__voraGoBack?.()} aria-label="Назад">
+          <ArrowLeft size={22} />
+        </button>
+      )}
       <Logo />
       {canClose && (
         <button className="close-screen" onClick={() => navigate('home-active')} aria-label="Закрыть">
@@ -516,15 +540,14 @@ function PlanCard({ name, description, devices, extra, price, selected, popular,
   );
 }
 
-function HomePlanCard({ selected, onClick }) {
+function HomePlanCard({ selected, onClick, onInfo }) {
   const plan = tariffCatalog.home;
 
   return (
     <button className={selected ? 'home-plan-card selected' : 'home-plan-card'} onClick={onClick}>
       <img src={asset('home-city')} alt="" />
       <div>
-        <span>VORA</span>
-        <h3>Home</h3>
+        <h3><span>VORA</span> <span className="home-info-link" role="button" tabIndex={0} onClick={(event) => { event.stopPropagation(); onInfo?.(); }} onKeyDown={(event) => { if (event.key === 'Enter') onInfo?.(); }}>Home</span></h3>
         <p>{plan.description}</p>
       </div>
       <div className="home-plan-bottom">
@@ -544,7 +567,7 @@ function HomePlanCard({ selected, onClick }) {
   );
 }
 
-function PlansPair({ currentLite = false, selected = 'plus', onSelect, includeHome = false, hideIcons = false }) {
+function PlansPair({ currentLite = false, selected = 'plus', onSelect, includeHome = false, hideIcons = false, onHomeInfo }) {
   return (
     <>
       <div className="plans-pair">
@@ -571,7 +594,7 @@ function PlansPair({ currentLite = false, selected = 'plus', onSelect, includeHo
           onClick={() => onSelect?.('plus')}
         />
       </div>
-      {includeHome && <HomePlanCard selected={selected === 'home'} onClick={() => onSelect?.('home')} />}
+      {includeHome && <HomePlanCard selected={selected === 'home'} onClick={() => onSelect?.('home')} onInfo={onHomeInfo} />}
     </>
   );
 }
@@ -803,17 +826,24 @@ function HeroOffer({ title, accent, subtitle, image }) {
 
 function HomeActive({ navigate, activeScreen, mainData, telegramUser, apiNotice }) {
   const displayName = getDisplayName(telegramUser);
+  const [infoSheet, setInfoSheet] = useState('');
 
   return (
     <AppFrame className="home-screen" navigate={navigate} activeScreen={activeScreen}>
-      <PageTitle title={`Привет, ${displayName}!`} subtitle={apiNotice} action={<button className="square-action" onClick={() => navigate('tickets')} aria-label="Уведомления"><Bell size={28} /></button>} />
+      <PageTitle title={`Привет, ${displayName}!`} subtitle={apiNotice} action={<button className="square-action" onClick={() => navigate('balance-history')} aria-label="Уведомления"><Bell size={28} /></button>} />
       <SubscriptionSummary navigate={navigate} mainData={mainData} />
       <Card className="link-list">
         <ActionRow icon={SlidersHorizontal} title="Управление тарифом" subtitle="Сменить тариф или период" onClick={() => navigate('change-plan')} />
         <ActionRow icon={CircleHelp} title="Вопросы и ответы" subtitle="Инструкции и частые вопросы" onClick={() => navigate('support')} />
-        <ActionRow icon={Sparkles} title="Не работает нужный сервис?" subtitle={<><span>Добавьте его в </span><span className="link-text">VORA Flow</span></>} onClick={() => navigate('support')} />
+        <ActionRow
+          icon={Sparkles}
+          title="Не работает нужный сервис?"
+          subtitle={<><span>Добавьте его в </span><span className="link-text clickable" role="button" tabIndex={0} onClick={(event) => { event.stopPropagation(); setInfoSheet('flow'); }} onKeyDown={(event) => { if (event.key === 'Enter') setInfoSheet('flow'); }}>VORA Flow</span></>}
+          onClick={() => navigate('ticket-create')}
+        />
       </Card>
       <DevicesCard mainData={mainData} />
+      {infoSheet === 'flow' && <ImageInfoSheet src={asset('vora-flow-popup')} alt="Что такое VORA Flow" onClose={() => setInfoSheet('')} />}
     </AppFrame>
   );
 }
@@ -941,11 +971,12 @@ function DevicesCard({ mainData }) {
 }
 
 function DeviceSheet({ navigate }) {
+  const cameraInputRef = useRef(null);
   const [selectedSystem, setSelectedSystem] = useState('iOS');
   const [selectedConnection, setSelectedConnection] = useState('Happ');
-  const [systemsExpanded, setSystemsExpanded] = useState(true);
-  const [qrImage, setQrImage] = useState('');
+  const [systemsExpanded, setSystemsExpanded] = useState(false);
   const [connectError, setConnectError] = useState('');
+  const [scanFileName, setScanFileName] = useState('');
   const systems = [
     ['iOS', 'apple'],
     ['Android', 'android'],
@@ -954,7 +985,7 @@ function DeviceSheet({ navigate }) {
     ['AndroidTV', 'androidtv'],
     ['tvOS', 'apple'],
   ];
-  const visibleSystems = systemsExpanded ? systems : systems.slice(0, 3);
+  const visibleSystems = systemsExpanded ? systems : systems.slice(0, 2);
   const client = mapClient(selectedConnection);
 
   const connectDevice = async () => {
@@ -968,18 +999,12 @@ function DeviceSheet({ navigate }) {
   };
 
   const showQr = async () => {
-    try {
-      setConnectError('');
-      const url = await api.subscriptionQr(client);
-      setQrImage(await QRCode.toDataURL(url));
-    } catch (error) {
-      setConnectError(getUiError(error));
-    }
+    cameraInputRef.current?.click();
   };
 
   return (
-    <div className="modal-layer">
-      <div className="bottom-sheet">
+    <div className="modal-layer" onClick={() => navigate('home-active')}>
+      <div className="bottom-sheet" onClick={(event) => event.stopPropagation()}>
         <span className="sheet-grip" />
         <button className="sheet-close" onClick={() => navigate('home-active')} aria-label="Закрыть">
           <X size={22} />
@@ -1000,11 +1025,12 @@ function DeviceSheet({ navigate }) {
           <RadioRow title="v2RayTun" subtitle="Ручная настройка" checked={selectedConnection === 'v2RayTun'} icon="v2ray" onClick={() => setSelectedConnection('v2RayTun')} />
         </Card>
         {connectError && <p className="inline-error">{connectError}</p>}
-        {qrImage && <img className="qr-preview" src={qrImage} alt="QR-код подключения" />}
+        {scanFileName && <p className="inline-error neutral">Камера открыта: {scanFileName}</p>}
         <ActionRow icon={CircleHelp} title="Нужна помощь?" subtitle="Краткая инструкция здесь" onClick={() => navigate('support')} />
         <PrimaryButton onClick={connectDevice}>Подключить</PrimaryButton>
         <SectionDivider>или</SectionDivider>
         <ActionRow icon={QrCode} title="Подключить на другом устройстве" subtitle="Отсканируйте QR-код камерой устройства" onClick={showQr} />
+        <input className="camera-input" ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={(event) => setScanFileName(event.target.files?.[0]?.name || '')} />
       </div>
     </div>
   );
@@ -1210,14 +1236,18 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
   const [selectedPayment, setSelectedPayment] = useState('device');
   const [selectedMethod, setSelectedMethod] = useState('card');
   const [selectedCurrency, setSelectedCurrency] = useState('USDT');
-  const [selectedPlan, setSelectedPlan] = useState('plus');
-  const [subscriptionMonths, setSubscriptionMonths] = useState(1);
   const [hwidLimit, setHwidLimit] = useState(() => Math.min(9, Math.max(1, Number(mainData.maxDevices || 0) + 1)));
   const [customAmount, setCustomAmount] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
   const [paymentError, setPaymentError] = useState('');
   const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
+  const planPayment = ['lite', 'home', 'plus'].includes(selectedPayment) ? selectedPayment : '';
   const paymentType = selectedPayment === 'device' ? 'HWID' : selectedPayment === 'balance' ? 'BALANCE' : 'SUBSCRIPTION';
+  const selectedAmount = selectedPayment === 'device'
+    ? 75
+    : selectedPayment === 'balance'
+      ? Number(customAmount || 0)
+      : tariffCatalog[planPayment]?.monthPrice || 0;
 
   useEffect(() => {
     if (selectedPayment === 'device') {
@@ -1241,9 +1271,9 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
       : paymentType === 'HWID'
         ? { hwid: hwidLimit, currency: selectedMethod === 'crypto' ? selectedCurrency : 'RUB' }
         : {
-            plan: selectedPlan,
-            subscription_month: subscriptionMonths,
-            hwid: hwidLimit,
+            plan: planPayment || 'plus',
+            subscription_month: 1,
+            hwid: tariffCatalog[planPayment]?.devices || 3,
             currency: selectedMethod === 'crypto' ? selectedCurrency : 'RUB',
           };
 
@@ -1269,43 +1299,17 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
       </Card>
       <Card className="payment-card">
         <h2>Выберите, что хотите оплатить</h2>
-        <PaymentOption icon={Plus} title="Устройства" subtitle="Увеличить лимит подключений" checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} />
-        <PaymentOption title="Подписка" subtitle="Тариф, срок и лимит устройств" feather checked={selectedPayment === 'subscription'} onClick={() => setSelectedPayment('subscription')} />
+        <PaymentOption iconName={selectedPayment === 'device' ? 'device-add-alt' : 'device-add'} title="Докупить устройство" subtitle="Активация 1 устройства" price="75 ₽" checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} />
+        <PaymentOption iconName={selectedPayment === 'lite' ? 'plan-lite-alt' : 'plan-lite'} title="Lite - 1 месяц" subtitle="Базовые возможности" price="300 ₽" checked={selectedPayment === 'lite'} onClick={() => setSelectedPayment('lite')} />
+        <PaymentOption iconName={selectedPayment === 'home' ? 'plan-home-alt' : 'plan-home'} title="Home - 1 месяц" subtitle="Для тех, кто за границей" price="450 ₽" checked={selectedPayment === 'home'} onClick={() => setSelectedPayment('home')} />
+        <PaymentOption iconName={selectedPayment === 'plus' ? 'plan-plus-alt' : 'plan-plus'} title="Plus - 1 месяц" subtitle="Максимум возможностей" price="550 ₽" checked={selectedPayment === 'plus'} onClick={() => setSelectedPayment('plus')} />
         <SectionDivider>или ввести сумму вручную</SectionDivider>
         <div className={selectedPayment === 'balance' ? 'input-box selected' : 'input-box'} onClick={() => setSelectedPayment('balance')}>
-          <span>Сумма попленения</span>
+          <span>Сумма пополнения</span>
           <input value={customAmount} onChange={(event) => setCustomAmount(event.target.value)} placeholder="Введите сумму" inputMode="decimal" />
           <p>₽</p>
         </div>
       </Card>
-      {selectedPayment === 'subscription' && (
-        <Card className="payment-card">
-          <h2>Параметры подписки</h2>
-          <div className="segmented-control compact">
-            {['lite', 'plus', 'home'].map((plan) => (
-              <button key={plan} className={selectedPlan === plan ? 'active' : ''} onClick={() => setSelectedPlan(plan)}>{tariffCatalog[plan].name}</button>
-            ))}
-          </div>
-          <div className="segmented-control compact">
-            {[1, 6, 12].map((month) => (
-              <button key={month} className={subscriptionMonths === month ? 'active' : ''} onClick={() => setSubscriptionMonths(month)}>{month} мес</button>
-            ))}
-          </div>
-        </Card>
-      )}
-      {(selectedPayment === 'subscription' || selectedPayment === 'device') && (
-        <Card className="devices-counter compact-counter">
-          <div>
-            <h2>Лимит устройств</h2>
-            <p>{selectedPayment === 'device' ? `Сейчас доступно ${mainData.maxDevices}` : 'Выберите лимит'}</p>
-          </div>
-          <div className="stepper">
-            <button onClick={() => setHwidLimit((value) => Math.max(selectedPayment === 'device' ? Number(mainData.maxDevices || 0) + 1 : 1, value - 1))}>-</button>
-            <strong>{hwidLimit}</strong>
-            <button onClick={() => setHwidLimit((value) => Math.min(9, value + 1))}>+</button>
-          </div>
-        </Card>
-      )}
       <div className="payment-methods">
         <MethodCard title="Банковская карта" subtitle="Visa, Mastercard, Мир" checked={selectedMethod === 'card'} onClick={() => setSelectedMethod('card')} />
         <MethodCard title="Криптовалюта" subtitle="USDT, BTC, ETH и др." checked={selectedMethod === 'crypto'} onClick={() => setSelectedMethod('crypto')} />
@@ -1325,16 +1329,12 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
         </div>
       </div>
       {paymentError && <p className="inline-error">{paymentError}</p>}
-      <PrimaryButton onClick={createPayment}>{selectedPayment === 'balance' && customAmount ? `Пополнить на ${customAmount} ₽` : 'Создать счет'}</PrimaryButton>
+      <PrimaryButton onClick={createPayment}>Оплатить <span>{selectedAmount ? money(selectedAmount) : ''}</span></PrimaryButton>
     </AppFrame>
   );
 }
 
-function PaymentOption({ icon: Icon, title, subtitle, price, checked, feather, onClick }) {
-  const iconName = title === 'Устройства'
-    ? (checked ? 'device-add-alt' : 'device-add')
-    : (checked ? 'plan-home-alt' : 'plan-home');
-
+function PaymentOption({ iconName, title, subtitle, price, checked, onClick }) {
   return (
     <button className={checked ? 'payment-option checked' : 'payment-option'} onClick={onClick}>
       <IconTile tone="payment-image"><AssetIcon name={iconName} /></IconTile>
@@ -1389,7 +1389,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
   };
 
   const showApiNotice = () => {
-    setNotice('Для этого действия нужен отдельный endpoint в API');
+    setNotice('Функция скоро будет доступна');
   };
 
   const openBonusInfo = () => {
@@ -1569,6 +1569,20 @@ function BonusInfoSheet({ closing, onClose }) {
             <p>5 610 ₽ → <strong>561 ₽</strong></p>
           </div>
         </Card>
+      </div>
+    </div>
+  );
+}
+
+function ImageInfoSheet({ src, alt, onClose }) {
+  return (
+    <div className="image-sheet-overlay" role="dialog" aria-modal="true" onClick={onClose}>
+      <div className="image-sheet" onClick={(event) => event.stopPropagation()}>
+        <span className="sheet-grip" />
+        <button className="bonus-popup-close" onClick={onClose} aria-label="Закрыть">
+          <X size={20} />
+        </button>
+        <img src={src} alt={alt} />
       </div>
     </div>
   );
@@ -1904,6 +1918,7 @@ function TariffHome({ navigate, activeScreen }) {
 
 function TariffScreen({ selected, navigate, activeScreen }) {
   const tariff = tariffCatalog[selected] || tariffCatalog.plus;
+  const [infoSheet, setInfoSheet] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('1');
   const [deviceCount, setDeviceCount] = useState(tariff.devices);
   const [selectedMethod, setSelectedMethod] = useState('card');
@@ -1948,7 +1963,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
   return (
     <AppFrame className="tariff-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Подписка" />
-      <PlansPair selected={selected} includeHome onSelect={(plan) => navigate(tariffCatalog[plan].route)} />
+      <PlansPair selected={selected} includeHome onSelect={(plan) => navigate(tariffCatalog[plan].route)} onHomeInfo={() => setInfoSheet('home')} />
       <SectionDivider>выберите подходящий срок</SectionDivider>
       <div className="periods">
         {['1', '6', '12'].map((period) => (
@@ -2003,6 +2018,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
         <PrimaryButton className="checkout-submit" onClick={buySubscription}>Подключить за <span>{money(total)}</span></PrimaryButton>
         <small><Lock size={15} />Безопасная оплата. Отмена в любой момент</small>
       </Card>
+      {infoSheet === 'home' && <ImageInfoSheet src={asset('vora-home-popup')} alt="Что такое VORA Home" onClose={() => setInfoSheet('')} />}
     </AppFrame>
   );
 }
