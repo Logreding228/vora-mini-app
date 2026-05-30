@@ -387,7 +387,7 @@ function AppHeader({ navigate, activeScreen }) {
 function Logo() {
   return (
     <div className="brand">
-      <img className="brand-logo" src={asset('logo')} alt="VORA" />
+      <img className="brand-logo" src={`${asset('logo')}?v=3`} alt="VORA" />
     </div>
   );
 }
