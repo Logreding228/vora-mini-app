@@ -409,6 +409,11 @@ button {
   color: #707985;
 }
 
+.icon-tile.custom {
+  background: var(--tile-bg, #f4f4f4);
+  color: var(--tile-color, #06162c);
+}
+
 .icon-tile.plain,
 .icon-tile.transparent {
   background: transparent;
@@ -1135,8 +1140,8 @@ button {
   flex: 0 0 42px;
   width: 42px;
   height: 42px;
-  border-radius: 13px;
-  border: 1px solid #f0f0f2;
+  border-radius: 0;
+  border: 0;
   display: grid;
   place-items: center;
   color: #06162c;
@@ -1149,38 +1154,18 @@ button {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 22px;
-  height: 22px;
+  width: auto;
+  height: auto;
   display: block;
   flex: 0 0 auto;
-  fill: currentColor;
   overflow: hidden;
   transform: translate(-50%, -50%);
-}
-
-.platform.androidtv svg,
-.brand-mark.android svg,
-.brand-mark.androidtv svg {
-  width: 23px;
-  height: 23px;
-}
-
-.platform.apple svg,
-.brand-mark.apple svg {
-  width: 21px;
-  height: 21px;
-}
-
-.platform.windows svg,
-.brand-mark.windows svg {
-  width: 21px;
-  height: 21px;
 }
 
 .platform.androidtv,
 .brand-mark.android,
 .brand-mark.androidtv {
-  color: #2fbd73;
+  color: #021227;
 }
 
 .platform.windows,
@@ -1190,10 +1175,11 @@ button {
 
 .platform.apple,
 .brand-mark.apple {
-  color: #06162c;
+  color: #021227;
 }
 
 .device-row strong {
+  color: #021227;
   font-size: 16px;
 }
 
@@ -1332,6 +1318,7 @@ button {
 }
 
 .radio-row strong {
+  color: #021227;
   font-size: 15px;
 }
 
@@ -1343,21 +1330,21 @@ button {
 
 .brand-mark {
   position: relative;
-  flex: 0 0 32px;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  border-radius: 0;
   display: grid;
   place-items: center;
   color: #06162c;
-  background: #f6f7f8;
+  background: transparent;
   line-height: 0;
   overflow: hidden;
 }
 
 .brand-mark.happ {
   color: #06162c;
-  background: #ffffff;
+  background: transparent;
 }
 
 .brand-mark.v2ray {
@@ -2977,6 +2964,11 @@ button {
   grid-template-columns: 42px 1fr auto;
   gap: 12px;
   align-items: center;
+}
+
+.help-card .icon-tile {
+  width: 34px;
+  height: 34px;
 }
 
 .help-card h3 {
