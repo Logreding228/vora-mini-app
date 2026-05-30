@@ -72,9 +72,9 @@ button {
 .app-header {
   position: relative;
   width: min(100%, 430px);
-  height: 82px;
+  height: 122px;
   margin: 0 auto;
-  padding: 25px 16px 13px;
+  padding: 22px 16px 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -109,8 +109,8 @@ button {
 }
 
 .brand {
-  width: 178px;
-  height: 44px;
+  width: 356px;
+  height: 88px;
   text-align: center;
   color: #3f3f42;
 }
@@ -3776,8 +3776,8 @@ button {
   }
 
   .app-header {
-    height: 70px;
-    padding-top: 22px;
+    height: 110px;
+    padding-top: 18px;
   }
 
   .bottom-nav {
