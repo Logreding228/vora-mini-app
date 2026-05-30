@@ -567,7 +567,7 @@ function HomePlanCard({ selected, onClick, onInfo }) {
   );
 }
 
-function PlansPair({ currentLite = false, selected = 'plus', onSelect, includeHome = false, hideIcons = false, onHomeInfo }) {
+function PlansPair({ currentLite = false, selected = 'plus', onSelect, includeHome = false, hideIcons = false, onHomeInfo, onFlowInfo }) {
   return (
     <>
       <div className="plans-pair">
@@ -584,7 +584,7 @@ function PlansPair({ currentLite = false, selected = 'plus', onSelect, includeHo
         />
         <PlanCard
           name="Plus"
-          description={<><span className="link-text">VORA Flow</span> — для привычных сервисов без лишних действий</>}
+          description={<><span className={onFlowInfo ? 'link-text clickable' : 'link-text'} role={onFlowInfo ? 'button' : undefined} tabIndex={onFlowInfo ? 0 : undefined} onClick={(event) => { event.stopPropagation(); onFlowInfo?.(); }} onKeyDown={(event) => { if (event.key === 'Enter') onFlowInfo?.(); }}>VORA Flow</span> — для привычных сервисов без лишних действий</>}
           devices="3 устройства"
           extra="+ еще 3"
           price={tariffCatalog.plus.monthPrice}
@@ -853,7 +853,7 @@ function HomePopup({ navigate, activeScreen, mainData, telegramUser }) {
 
   return (
     <AppFrame className="home-screen has-sheet" navigate={navigate} activeScreen={activeScreen}>
-      <PageTitle title={`Привет, ${displayName}!`} action={<button className="square-action" onClick={() => navigate('tickets')} aria-label="Уведомления"><Bell size={28} /></button>} />
+      <PageTitle title={`Привет, ${displayName}!`} action={<button className="square-action" onClick={() => navigate('balance-history')} aria-label="Уведомления"><Bell size={28} /></button>} />
       <SubscriptionSummary muted navigate={navigate} mainData={mainData} />
       <DeviceSheet navigate={navigate} />
     </AppFrame>
@@ -946,7 +946,7 @@ function DevicesCard({ mainData }) {
           {expanded ? <ChevronUp size={22} /> : <ChevronDown size={22} />}
         </button>
       </div>
-      {expanded && (
+      <div className={expanded ? 'collapsible-list expanded' : 'collapsible-list'}>
         <div className="device-list">
           {deviceError && <p className="inline-error">{deviceError}</p>}
           {devices.map(({ id, kind, title, model, lastSeen }) => (
@@ -965,7 +965,7 @@ function DevicesCard({ mainData }) {
           ))}
           {devices.length === 0 && <p className="empty-state">Устройства не подключены</p>}
         </div>
-      )}
+      </div>
     </Card>
   );
 }
@@ -985,7 +985,6 @@ function DeviceSheet({ navigate }) {
     ['AndroidTV', 'androidtv'],
     ['tvOS', 'apple'],
   ];
-  const visibleSystems = systemsExpanded ? systems : systems.slice(0, 2);
   const client = mapClient(selectedConnection);
 
   const connectDevice = async () => {
@@ -1011,10 +1010,14 @@ function DeviceSheet({ navigate }) {
         </button>
         <h2>Подключить новое устройство</h2>
         <StepTitle number="1" title="Операционная система" />
-        <Card className="option-list">
-          {visibleSystems.map(([name, icon]) => (
-            <RadioRow key={name} title={name} checked={selectedSystem === name} icon={icon} onClick={() => setSelectedSystem(name)} />
-          ))}
+        <Card className="option-list system-option-list">
+          <div className={systemsExpanded ? 'collapsible-list expanded' : 'collapsible-list'}>
+            <div>
+              {systems.map(([name, icon]) => (
+                <RadioRow key={name} title={name} checked={selectedSystem === name} icon={icon} onClick={() => setSelectedSystem(name)} />
+              ))}
+            </div>
+          </div>
           <button className="collapse-button" onClick={() => setSystemsExpanded((value) => !value)}>
             {systemsExpanded ? 'Свернуть' : 'Показать все'} {systemsExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
@@ -1672,7 +1675,7 @@ function BalanceHistory({ navigate, activeScreen }) {
 
   return (
     <AppFrame className="history-screen" navigate={navigate} activeScreen={activeScreen}>
-      <PageTitle title="История баланса" subtitle="Все ваши транзакции" action={<button className="square-action" onClick={() => navigate('tickets')} aria-label="Уведомления"><Bell size={28} /></button>} />
+      <PageTitle title="История баланса" subtitle="Все ваши транзакции" action={<button className="square-action" onClick={() => navigate('balance-history')} aria-label="Уведомления"><Bell size={28} /></button>} />
       <div className="segmented-control">
         <button className={selectedType === 'income' ? 'active' : ''} onClick={() => setSelectedType('income')}><ArrowDown size={22} />Пополнения</button>
         <button className={selectedType === 'outcome' ? 'active' : ''} onClick={() => setSelectedType('outcome')}><ArrowUp size={22} />Списания</button>
@@ -1963,7 +1966,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
   return (
     <AppFrame className="tariff-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Подписка" />
-      <PlansPair selected={selected} includeHome onSelect={(plan) => navigate(tariffCatalog[plan].route)} onHomeInfo={() => setInfoSheet('home')} />
+      <PlansPair selected={selected} includeHome onSelect={(plan) => navigate(tariffCatalog[plan].route)} onHomeInfo={() => setInfoSheet('home')} onFlowInfo={() => setInfoSheet('flow')} />
       <SectionDivider>выберите подходящий срок</SectionDivider>
       <div className="periods">
         {['1', '6', '12'].map((period) => (
@@ -2018,6 +2021,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
         <PrimaryButton className="checkout-submit" onClick={buySubscription}>Подключить за <span>{money(total)}</span></PrimaryButton>
         <small><Lock size={15} />Безопасная оплата. Отмена в любой момент</small>
       </Card>
+      {infoSheet === 'flow' && <ImageInfoSheet src={asset('vora-flow-popup')} alt="Что такое VORA Flow" onClose={() => setInfoSheet('')} />}
       {infoSheet === 'home' && <ImageInfoSheet src={asset('vora-home-popup')} alt="Что такое VORA Home" onClose={() => setInfoSheet('')} />}
     </AppFrame>
   );
@@ -2042,7 +2046,7 @@ function ProfileScreen({ navigate, activeScreen, telegramUser }) {
 
   return (
     <AppFrame className="profile-screen" navigate={navigate} activeScreen={activeScreen}>
-      <PageTitle title="Профиль" subtitle="Аккаунт и настройки" action={<button className="square-action" onClick={() => navigate('tickets')} aria-label="Уведомления"><Bell size={28} /></button>} />
+      <PageTitle title="Профиль" subtitle="Аккаунт и настройки" action={<button className="square-action" onClick={() => navigate('balance-history')} aria-label="Уведомления"><Bell size={28} /></button>} />
       <Card className="profile-card">
         <ProfileAvatar user={telegramUser} />
         <div>
