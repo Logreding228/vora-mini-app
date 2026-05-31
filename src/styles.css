@@ -182,7 +182,7 @@ button {
   border-radius: 14px;
   background: linear-gradient(180deg, #f87d3d 0%, #e96b2e 100%);
   color: #ffffff;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 100%;
   font-weight: 500;
   letter-spacing: 0;
@@ -1238,7 +1238,7 @@ button {
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  background: rgba(0, 0, 0, 0.58);
+  background: rgba(0, 0, 0, 0.5);
   overscroll-behavior: none;
   touch-action: none;
 }
@@ -1587,11 +1587,14 @@ button {
 }
 
 .balance-hero {
-  min-height: 96px;
+  width: 100%;
+  min-height: 128px;
   padding: 22px 24px 16px;
   display: grid;
   grid-template-columns: 1fr 62px 20px;
   align-items: center;
+  color: #06162c;
+  text-align: left;
 }
 
 .balance-hero p {
@@ -1611,6 +1614,22 @@ button {
   color: #8b929d;
   font-size: 18px;
   font-weight: 600;
+}
+
+.balance-hero i {
+  display: block;
+  width: min(230px, 100%);
+  height: 1px;
+  margin: 14px 0 10px;
+  background: #eeeeef;
+}
+
+.balance-hero small {
+  display: block;
+  color: #8b929d;
+  font-size: 10px;
+  line-height: 1.25;
+  font-weight: 400;
 }
 
 .balance-hero img {
@@ -1634,8 +1653,11 @@ button {
   grid-template-columns: 48px 1fr auto 20px;
   gap: 16px;
   align-items: center;
+  margin: 0;
   padding: 12px 8px;
-  border-bottom: 1px solid #eeeeef;
+  border: 1px solid transparent;
+  border-bottom-color: #eeeeef;
+  border-radius: 13px;
   background: #ffffff;
   color: #06162c;
   text-align: left;
@@ -1644,8 +1666,7 @@ button {
 .payment-option.checked {
   border: 1px solid #ff8b53;
   border-radius: 13px;
-  margin-bottom: 5px;
-  padding-inline: 26px;
+  background: #fef7f4;
 }
 
 .payment-option strong {
@@ -1675,10 +1696,10 @@ button {
 }
 
 .input-box {
-  height: 54px;
+  height: 66px;
   border: 1px solid #eeeeef;
   border-radius: 13px;
-  padding: 10px 14px;
+  padding: 10px 14px 16px;
   position: relative;
   background: #ffffff;
   cursor: text;
@@ -1993,6 +2014,12 @@ button {
   line-height: 1;
 }
 
+.referral-earn-head strong span {
+  color: #8b929d;
+  font-size: 18px;
+  font-weight: 600;
+}
+
 .referral-earn-head > span {
   min-height: 28px;
   padding: 7px 10px;
@@ -2276,6 +2303,12 @@ button {
   margin-top: 12px;
   font-size: 30px;
   font-weight: 650;
+}
+
+.referral-earn-head strong span {
+  color: #8b929d;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .referral-earn-head div > span {
@@ -2648,7 +2681,7 @@ button {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(2, 18, 39, 0.58);
+  background: rgba(0, 0, 0, 0.5);
   animation: bonusBackdropIn 180ms ease-out both;
   overscroll-behavior: none;
   touch-action: none;
@@ -2747,7 +2780,7 @@ button {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(2, 18, 39, 0.58);
+  background: rgba(0, 0, 0, 0.5);
   overscroll-behavior: none;
   touch-action: none;
 }
@@ -3782,12 +3815,12 @@ button {
 .checkout-card .primary-button {
   min-height: 55px;
   border-radius: 14px;
-  font-size: 17px;
-  font-weight: 450;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .checkout-card .primary-button span {
-  font-weight: 300;
+  font-weight: 400;
 }
 
 .checkout-card small {

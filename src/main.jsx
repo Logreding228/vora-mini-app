@@ -492,9 +492,9 @@ function BottomNav({ navigate, activeScreen, mainData }) {
   };
 
   const nav = [
-    { icon: Home, label: 'Главная', route: hasActiveSubscription(mainData) ? 'home-active' : 'trial-start', section: 'home' },
-    { icon: BookOpen, label: 'Подписка', route: 'tariff-home', section: 'subscription' },
     { icon: Users, label: 'Бонусы', route: 'referral', section: 'bonus' },
+    { icon: BookOpen, label: 'Подписка', route: 'tariff-home', section: 'subscription' },
+    { icon: Home, label: 'Главная', route: hasActiveSubscription(mainData) ? 'home-active' : 'trial-start', section: 'home' },
     { icon: Headphones, label: 'Поддержка', route: 'support', section: 'support' },
     { icon: UserGlyph, label: 'Профиль', route: 'profile', section: 'profile' },
   ];
@@ -826,7 +826,7 @@ function TrialStart({ navigate, activeScreen }) {
         </div>
       </div>
       {paymentError && <p className="inline-error">{paymentError}</p>}
-      <PrimaryButton onClick={startTrial}>Начать за 30 ₽</PrimaryButton>
+      <PrimaryButton onClick={startTrial}>Начать за <span>30 ₽</span></PrimaryButton>
       <SectionDivider>или оформите подписку сразу</SectionDivider>
       <Card className="trial-plan-list">
         <button onClick={() => navigate('tariff-lite')}>
@@ -1266,7 +1266,7 @@ function ChangePlan({ navigate, activeScreen, mainData }) {
   return (
     <AppFrame className="change-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Смена тарифа" />
-      <PlansPair selected={currentPlan === 'lite' ? 'lite' : 'plus'} currentLite={currentPlan === 'lite'} hideIcons onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
+      <PlansPair selected={currentPlan === 'lite' ? 'lite' : 'plus'} currentLite={currentPlan === 'lite'} hideIcons onSelect={() => {}} />
       <SectionDivider>выберите действие</SectionDivider>
       {canUpgrade && (
         <>
@@ -1293,7 +1293,7 @@ function ChangePlan({ navigate, activeScreen, mainData }) {
             </div>
             <strong>{money(upgradeAmount)}</strong>
             {changeError && <p className="inline-error">{changeError}</p>}
-            <PrimaryButton onClick={upgradePlan}>Перейти на Plus&nbsp; {money(upgradeAmount)}</PrimaryButton>
+            <PrimaryButton onClick={upgradePlan}>Перейти на Plus <span>{money(upgradeAmount)}</span></PrimaryButton>
           </Card>
         </>
       )}
@@ -1337,7 +1337,6 @@ function SummaryLine({ label, value }) {
 function BalanceTopup({ navigate, activeScreen, mainData }) {
   const [selectedPayment, setSelectedPayment] = useState('device');
   const [selectedMethod, setSelectedMethod] = useState('card');
-  const [selectedCurrency, setSelectedCurrency] = useState('USDT');
   const [hwidLimit, setHwidLimit] = useState(() => Math.min(9, Math.max(1, Number(mainData.maxDevices || 0) + 1)));
   const [customAmount, setCustomAmount] = useState('');
   const [promoCode, setPromoCode] = useState('');
@@ -1370,14 +1369,14 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
     }
 
     const payload = paymentType === 'BALANCE'
-      ? { amount: Number(customAmount || 0), currency: selectedMethod === 'crypto' ? selectedCurrency : 'RUB' }
+      ? { amount: Number(customAmount || 0), currency: selectedMethod === 'crypto' ? 'USDT' : 'RUB' }
       : paymentType === 'HWID'
-        ? { hwid: hwidLimit, currency: selectedMethod === 'crypto' ? selectedCurrency : 'RUB' }
+        ? { hwid: hwidLimit, currency: selectedMethod === 'crypto' ? 'USDT' : 'RUB' }
         : {
             plan: planPayment || 'plus',
             subscription_month: 1,
             hwid: tariffCatalog[planPayment]?.devices || 3,
-            currency: selectedMethod === 'crypto' ? selectedCurrency : 'RUB',
+            currency: selectedMethod === 'crypto' ? 'USDT' : 'RUB',
           };
 
     try {
@@ -1392,17 +1391,19 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
   return (
     <AppFrame className="balance-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Баланс" action={<button className="history-button" onClick={() => navigate('balance-history')}>История</button>} />
-      <Card className="balance-hero">
+      <button className="balance-hero card" onClick={() => setSelectedPayment('balance')}>
         <div>
           <p>Основной баланс</p>
           <strong>{Number(mainData.balance || 0).toLocaleString('ru-RU')} <span>₽</span></strong>
+          <i />
+          <small>Если баланса хватит, подписка продлится автоматически</small>
         </div>
         <img src={asset('wallet')} alt="" />
         <ChevronRight size={28} />
-      </Card>
+      </button>
       <Card className="payment-card">
         <h2>Выберите, что хотите оплатить</h2>
-        <PaymentOption iconName={selectedPayment === 'device' ? 'device-add-alt' : 'device-add'} title="Докупить устройство" subtitle="Активация 1 устройства" price="75 ₽" checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} />
+        <PaymentOption iconName="device-add" title="Докупить устройство" subtitle="Активация 1 устройства" price="75 ₽" checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} />
         <PaymentOption iconName="plan-lite" title="Lite - 1 месяц" subtitle="Базовые возможности" price="300 ₽" checked={selectedPayment === 'lite'} onClick={() => setSelectedPayment('lite')} />
         <PaymentOption iconName="plan-home" title="Home - 1 месяц" subtitle="Для тех, кто за границей" price="450 ₽" checked={selectedPayment === 'home'} onClick={() => setSelectedPayment('home')} />
         <PaymentOption iconName="plan-plus" title="Plus - 1 месяц" subtitle="Максимум возможностей" price="550 ₽" checked={selectedPayment === 'plus'} onClick={() => setSelectedPayment('plus')} />
@@ -1417,13 +1418,6 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
         <MethodCard title="Банковская карта" subtitle="Visa, Mastercard, Мир" checked={selectedMethod === 'card'} onClick={() => setSelectedMethod('card')} />
         <MethodCard title="Криптовалюта" subtitle="USDT, BTC, ETH и др." checked={selectedMethod === 'crypto'} onClick={() => setSelectedMethod('crypto')} />
       </div>
-      {selectedMethod === 'crypto' && (
-        <div className="segmented-control compact">
-          {['USDT', 'TON'].map((currency) => (
-            <button key={currency} className={selectedCurrency === currency ? 'active' : ''} onClick={() => setSelectedCurrency(currency)}>{currency}</button>
-          ))}
-        </div>
-      )}
       <div className="promo">
         <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
         <div>
@@ -1545,7 +1539,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
         <div className="referral-earn-head">
           <div>
             <p>Вы заработали</p>
-            <strong>{money(earned)}</strong>
+            <strong>{Number(earned || 0).toLocaleString('ru-RU')} <span>₽</span></strong>
             <span>= {Math.floor(earned / 10)} дней подписки</span>
           </div>
           <img src={asset('referral-gift')} alt="" />
