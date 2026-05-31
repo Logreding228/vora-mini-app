@@ -177,6 +177,79 @@ function normalizeMainData(data = emptyMainData) {
   };
 }
 
+const valueByKeys = (sources, keys, fallback = '') => {
+  for (const source of sources) {
+    if (!source || typeof source !== 'object') {
+      continue;
+    }
+
+    for (const key of keys) {
+      const value = source[key];
+
+      if (value !== undefined && value !== null && value !== '') {
+        return value;
+      }
+    }
+  }
+
+  return fallback;
+};
+
+function normalizeReferralData(payload, mainData, telegramUser) {
+  const sources = [
+    payload,
+    payload?.data,
+    payload?.response,
+    payload?.referral,
+    payload?.referral_data,
+    payload?.stats,
+  ];
+  const link = valueByKeys(sources, [
+    'referral_link',
+    'ref_link',
+    'referral_url',
+    'ref_url',
+    'invite_link',
+    'link',
+    'url',
+  ]);
+  const invitedFriends = Number(valueByKeys(sources, [
+    'invited_friends',
+    'invited_count',
+    'invites_count',
+    'referrals_count',
+    'ref_count',
+    'friends_invited',
+    'first_level_count',
+  ], 0));
+  const totalFriends = Number(valueByKeys(sources, [
+    'total_friends',
+    'friends_total',
+    'friends_count',
+    'total_referrals',
+    'all_friends',
+    'active_friends',
+    'active_count',
+  ], invitedFriends));
+  const earned = Number(valueByKeys(sources, [
+    'total_earned',
+    'earned_total',
+    'earned',
+    'ref_balance',
+    'referral_balance',
+    'balance',
+    'amount',
+    'total_amount',
+  ], mainData.refBalance || 0));
+
+  return {
+    link: link || (telegramUser?.id ? `vorachoice.store/r/${telegramUser.id}` : ''),
+    invitedFriends: Number.isFinite(invitedFriends) ? invitedFriends : 0,
+    totalFriends: Number.isFinite(totalFriends) ? totalFriends : 0,
+    earned: Number.isFinite(earned) ? earned : 0,
+  };
+}
+
 function isPastDate(value) {
   if (!value) {
     return false;
@@ -971,6 +1044,8 @@ function DevicesCard({ mainData }) {
 }
 
 function DeviceSheet({ navigate }) {
+  useBodyScrollLock(true);
+
   const cameraInputRef = useRef(null);
   const [selectedSystem, setSelectedSystem] = useState('iOS');
   const [selectedConnection, setSelectedConnection] = useState('Happ');
@@ -1376,30 +1451,51 @@ function MethodCard({ title, subtitle, checked, onClick }) {
 }
 
 function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
-  const earned = Number(mainData.refBalance || 0);
+  const [referralData, setReferralData] = useState(null);
+  const referralInfo = useMemo(() => normalizeReferralData(referralData, mainData, telegramUser), [referralData, mainData, telegramUser]);
+  const earned = Number(referralInfo.earned || 0);
   const [amount, setAmount] = useState(earned ? String(Math.floor(earned)) : '');
   const [notice, setNotice] = useState('');
   const [isBonusInfoOpen, setBonusInfoOpen] = useState(false);
   const [isBonusInfoClosing, setBonusInfoClosing] = useState(false);
   const days = Math.max(0, Math.floor(Number(amount || 0) / 10));
-  const referralLink = telegramUser?.id ? `vorachoice.store/r/${telegramUser.id}` : '';
-  const displayedLink = referralLink || 'vorachoice.store/r/a123';
+  const displayedLink = referralInfo.link || 'Ссылка появится после входа через Telegram';
 
   useEffect(() => {
     setAmount(earned ? String(Math.floor(earned)) : '');
   }, [earned]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    api.referralData()
+      .then((payload) => {
+        if (isMounted) {
+          setReferralData(payload);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setReferralData(null);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const copyReferralLink = async () => {
-    if (!referralLink) {
+    if (!referralInfo.link) {
       setNotice('Ссылка появится после входа через Telegram');
       return;
     }
 
     try {
-      await navigator.clipboard.writeText(referralLink);
+      await navigator.clipboard.writeText(referralInfo.link);
       setNotice('Ссылка скопирована');
     } catch {
-      setNotice(referralLink);
+      setNotice(referralInfo.link);
     }
   };
 
@@ -1494,9 +1590,9 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
       </Card>
       <Card className="referral-stats-card">
         <h2>Статистика</h2>
-        <div className="referral-stat-row"><Users size={20} /><span>Приглашено друзей</span><strong>24</strong></div>
-        <div className="referral-stat-row active-friends"><GrowthArrowIcon /><span>Активных друзей</span><strong>18</strong></div>
-        <div className="referral-stat-row earned-total"><Wallet size={20} /><span>Всего заработано</span><strong>{money(earned || 1250)}</strong></div>
+        <div className="referral-stat-row"><Users size={20} /><span>Приглашено друзей</span><strong>{referralInfo.invitedFriends}</strong></div>
+        <div className="referral-stat-row active-friends"><GrowthArrowIcon /><span>Всего друзей</span><strong>{referralInfo.totalFriends}</strong></div>
+        <div className="referral-stat-row earned-total"><Wallet size={20} /><span>Всего заработано</span><strong>{money(earned)}</strong></div>
       </Card>
       <button className="partner-card" onClick={showApiNotice}>
         <div className="partner-card-main">
@@ -1526,6 +1622,8 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
 }
 
 function BonusInfoSheet({ closing, onClose }) {
+  useBodyScrollLock(true);
+
   return (
     <div className={closing ? 'bonus-sheet-overlay closing' : 'bonus-sheet-overlay'} role="dialog" aria-modal="true" aria-labelledby="bonus-info-title" onClick={onClose}>
       <div className="bonus-popup" onClick={(event) => event.stopPropagation()}>
@@ -1590,6 +1688,8 @@ function BonusInfoSheet({ closing, onClose }) {
 }
 
 function ImageInfoSheet({ src, alt, onClose }) {
+  useBodyScrollLock(true);
+
   return (
     <div className="image-sheet-overlay" role="dialog" aria-modal="true" onClick={onClose}>
       <div className="image-sheet" onClick={(event) => event.stopPropagation()}>
@@ -1614,6 +1714,42 @@ function BonusStep({ icon: Icon, label }) {
 
 function GiftIcon({ size = 22 }) {
   return <img className="gift-step-icon" src={asset('referral-gift')} alt="" style={{ width: size, height: size }} />;
+}
+
+function useBodyScrollLock(active) {
+  useEffect(() => {
+    if (!active) {
+      return undefined;
+    }
+
+    const scrollY = window.scrollY;
+    const { style } = document.body;
+    const previous = {
+      position: style.position,
+      top: style.top,
+      left: style.left,
+      right: style.right,
+      width: style.width,
+      overflow: style.overflow,
+    };
+
+    style.position = 'fixed';
+    style.top = `-${scrollY}px`;
+    style.left = '0';
+    style.right = '0';
+    style.width = '100%';
+    style.overflow = 'hidden';
+
+    return () => {
+      style.position = previous.position;
+      style.top = previous.top;
+      style.left = previous.left;
+      style.right = previous.right;
+      style.width = previous.width;
+      style.overflow = previous.overflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, [active]);
 }
 
 function ReferralLinkIcon() {

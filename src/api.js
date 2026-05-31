@@ -304,6 +304,7 @@ export async function authenticateTelegram(initData) {
 
 export const api = {
   mainScreen: () => request('/users/main_screen/'),
+  referralData: () => request('/users/referral_data'),
   subscriptionUrl: (client) => request('/hwid/get_subscription_url/', { query: { client } }),
   subscriptionQr: (client) => request('/hwid/get_subscription_qr/', { query: { client } }),
   getHwid: () => request('/hwid/get_hwid/'),
