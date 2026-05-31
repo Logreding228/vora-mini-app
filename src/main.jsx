@@ -195,7 +195,7 @@ const valueByKeys = (sources, keys, fallback = '') => {
   return fallback;
 };
 
-function normalizeReferralData(payload, mainData, telegramUser) {
+function normalizeReferralData(payload, mainData) {
   const sources = [
     payload,
     payload?.data,
@@ -246,7 +246,7 @@ function normalizeReferralData(payload, mainData, telegramUser) {
   ], mainData.refBalance || 0));
 
   return {
-    link: link || (telegramUser?.id ? `vorachoice.store/r/${telegramUser.id}` : ''),
+    link: link || '',
     invitedFriends: Number.isFinite(invitedFriends) ? invitedFriends : 0,
     totalFriends: Number.isFinite(totalFriends) ? totalFriends : 0,
     earned: Number.isFinite(earned) ? earned : 0,
@@ -1470,7 +1470,8 @@ function MethodCard({ title, subtitle, checked, onClick }) {
 
 function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
   const [referralData, setReferralData] = useState(null);
-  const referralInfo = useMemo(() => normalizeReferralData(referralData, mainData, telegramUser), [referralData, mainData, telegramUser]);
+  const [referralLoaded, setReferralLoaded] = useState(false);
+  const referralInfo = useMemo(() => normalizeReferralData(referralData, mainData), [referralData, mainData]);
   const earned = Number(referralInfo.earned || 0);
   const [amount, setAmount] = useState(earned ? String(Math.floor(earned)) : '');
   const [notice, setNotice] = useState('');
@@ -1478,7 +1479,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
   const [isBonusInfoOpen, setBonusInfoOpen] = useState(false);
   const [isBonusInfoClosing, setBonusInfoClosing] = useState(false);
   const days = Math.max(0, Math.floor(Number(amount || 0) / 10));
-  const displayedLink = referralInfo.link || 'Ссылка появится после входа через Telegram';
+  const displayedLink = referralInfo.link || (referralLoaded ? 'Ссылка недоступна' : 'Загружаем ссылку');
 
   useEffect(() => {
     setAmount(earned ? String(Math.floor(earned)) : '');
@@ -1491,11 +1492,13 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
       .then((payload) => {
         if (isMounted) {
           setReferralData(payload);
+          setReferralLoaded(true);
         }
       })
       .catch(() => {
         if (isMounted) {
           setReferralData(null);
+          setReferralLoaded(true);
         }
       });
 
@@ -1506,7 +1509,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
 
   const copyReferralLink = async () => {
     if (!referralInfo.link) {
-      setCopyNotice('Ссылка появится после входа через Telegram');
+      setCopyNotice(referralLoaded ? 'Ссылка недоступна' : 'Ссылка загружается');
       return;
     }
 
