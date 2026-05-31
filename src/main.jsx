@@ -1281,7 +1281,7 @@ function ChangePlan({ navigate, activeScreen, mainData }) {
             <IconTile><Wallet size={25} /></IconTile>
             <div>
               <p>Баланс</p>
-              <strong>{money(upgradeAmount)}</strong>
+              <strong>{Number(upgradeAmount || 0).toLocaleString('ru-RU')} <span>₽</span></strong>
               <span>Выберите, чтобы списать с баланса</span>
             </div>
             <span className="radio checked" />
@@ -1477,6 +1477,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
   const earned = Number(referralInfo.earned || 0);
   const [amount, setAmount] = useState(earned ? String(Math.floor(earned)) : '');
   const [notice, setNotice] = useState('');
+  const [copyNotice, setCopyNotice] = useState('');
   const [isBonusInfoOpen, setBonusInfoOpen] = useState(false);
   const [isBonusInfoClosing, setBonusInfoClosing] = useState(false);
   const days = Math.max(0, Math.floor(Number(amount || 0) / 10));
@@ -1508,15 +1509,15 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
 
   const copyReferralLink = async () => {
     if (!referralInfo.link) {
-      setNotice('Ссылка появится после входа через Telegram');
+      setCopyNotice('Ссылка появится после входа через Telegram');
       return;
     }
 
     try {
       await navigator.clipboard.writeText(referralInfo.link);
-      setNotice('Ссылка скопирована');
+      setCopyNotice('Ссылка скопирована');
     } catch {
-      setNotice(referralInfo.link);
+      setCopyNotice(referralInfo.link);
     }
   };
 
@@ -1596,6 +1597,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
           <ReferralLinkIcon />
           <span>{displayedLink}</span>
           <button onClick={copyReferralLink} aria-label="Скопировать ссылку"><Copy size={19} /></button>
+          {copyNotice && <small>{copyNotice}</small>}
         </div>
         <p>Поделитесь ссылкой и начните зарабатывать</p>
         <div className="recurring-box">
@@ -1612,14 +1614,14 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
         <div className="referral-stat-row active-friends"><GrowthArrowIcon /><span>Всего друзей</span><strong>{referralInfo.totalFriends}</strong></div>
         <div className="referral-stat-row earned-total"><Wallet size={20} /><span>Всего заработано</span><strong>{money(earned)}</strong></div>
       </Card>
-      <button className="partner-card" onClick={showApiNotice}>
+      <div className="partner-card">
         <div className="partner-card-main">
           <IconTile tone="soft-purple"><PartnerUsersIcon /></IconTile>
           <div>
             <strong>Партнерская программа</strong>
             <p>Особые условия для крупных партнеров</p>
           </div>
-          <span>Оставить заявку</span>
+          <button onClick={showApiNotice}>Оставить заявку</button>
         </div>
         <div className="partner-fit">
           <i />
@@ -1633,7 +1635,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
           <b />
           <span>Партнерам</span>
         </div>
-      </button>
+      </div>
       {isBonusInfoOpen && <BonusInfoSheet closing={isBonusInfoClosing} onClose={closeBonusInfo} />}
     </AppFrame>
   );
@@ -1930,7 +1932,7 @@ function BalanceHistory({ navigate, activeScreen }) {
         <Stat icon={ArrowLeftRight} label="Всего транзакций" value={String(history.sym_trac ?? transactions.length)} tone="green" />
       </Card>
       <Card className="help-card">
-        <IconTile><Headphones size={28} /></IconTile>
+        <IconTile><HeadphonesGlyph /></IconTile>
         <div>
           <h3>Нужна помощь?</h3>
           <p>Напишите нам, мы всегда на связи</p>
