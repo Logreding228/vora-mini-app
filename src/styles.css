@@ -1493,7 +1493,7 @@ button {
 }
 
 .payment-balance p,
-.payment-balance span,
+.payment-balance div > span,
 .pay-today p {
   margin: 0;
   color: #8b929d;
@@ -1601,14 +1601,15 @@ button {
 }
 
 .balance-hero strong {
-  font-size: 17px;
+  color: #06162c;
+  font-size: 32px;
   font-weight: 600;
   line-height: 1;
 }
 
 .balance-hero strong span {
-  color: #06162c;
-  font-size: 17px;
+  color: #8b929d;
+  font-size: 18px;
   font-weight: 600;
 }
 

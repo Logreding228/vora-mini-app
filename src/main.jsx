@@ -1280,7 +1280,7 @@ function ChangePlan({ navigate, activeScreen, mainData }) {
           <Card className="payment-balance">
             <IconTile><Wallet size={25} /></IconTile>
             <div>
-              <p>Баланс</p>
+              <p>Основной баланс</p>
               <strong>{Number(upgradeAmount || 0).toLocaleString('ru-RU')} <span>₽</span></strong>
               <span>Выберите, чтобы списать с баланса</span>
             </div>
@@ -1395,7 +1395,7 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
       <Card className="balance-hero">
         <div>
           <p>Основной баланс</p>
-          <strong>{Number(mainData.balance || 0).toLocaleString('ru-RU')}<span>₽</span></strong>
+          <strong>{Number(mainData.balance || 0).toLocaleString('ru-RU')} <span>₽</span></strong>
         </div>
         <img src={asset('wallet')} alt="" />
         <ChevronRight size={28} />
