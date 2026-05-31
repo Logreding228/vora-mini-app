@@ -1047,6 +1047,7 @@ function DeviceSheet({ navigate }) {
   useBodyScrollLock(true);
 
   const cameraInputRef = useRef(null);
+  const swipeDismiss = useSwipeDismiss(() => navigate('home-active'));
   const [selectedSystem, setSelectedSystem] = useState('iOS');
   const [selectedConnection, setSelectedConnection] = useState('Happ');
   const [systemsExpanded, setSystemsExpanded] = useState(false);
@@ -1078,8 +1079,10 @@ function DeviceSheet({ navigate }) {
 
   return (
     <div className="modal-layer" onClick={() => navigate('home-active')}>
-      <div className="bottom-sheet" onClick={(event) => event.stopPropagation()}>
-        <span className="sheet-grip" />
+      <div className="bottom-sheet" ref={swipeDismiss.sheetRef} onClick={(event) => event.stopPropagation()}>
+        <div className="sheet-drag-zone" {...swipeDismiss.handleProps}>
+          <span className="sheet-grip" />
+        </div>
         <button className="sheet-close" onClick={() => navigate('home-active')} aria-label="Закрыть">
           <X size={22} />
         </button>
@@ -1623,11 +1626,14 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
 
 function BonusInfoSheet({ closing, onClose }) {
   useBodyScrollLock(true);
+  const swipeDismiss = useSwipeDismiss(onClose);
 
   return (
     <div className={closing ? 'bonus-sheet-overlay closing' : 'bonus-sheet-overlay'} role="dialog" aria-modal="true" aria-labelledby="bonus-info-title" onClick={onClose}>
-      <div className="bonus-popup" onClick={(event) => event.stopPropagation()}>
-        <span className="sheet-grip" />
+      <div className="bonus-popup" ref={swipeDismiss.sheetRef} onClick={(event) => event.stopPropagation()}>
+        <div className="sheet-drag-zone" {...swipeDismiss.handleProps}>
+          <span className="sheet-grip" />
+        </div>
         <button className="bonus-popup-close" onClick={onClose} aria-label="Закрыть">
           <X size={20} />
         </button>
@@ -1689,11 +1695,14 @@ function BonusInfoSheet({ closing, onClose }) {
 
 function ImageInfoSheet({ src, alt, onClose }) {
   useBodyScrollLock(true);
+  const swipeDismiss = useSwipeDismiss(onClose);
 
   return (
     <div className="image-sheet-overlay" role="dialog" aria-modal="true" onClick={onClose}>
-      <div className="image-sheet" onClick={(event) => event.stopPropagation()}>
-        <span className="sheet-grip" />
+      <div className="image-sheet" ref={swipeDismiss.sheetRef} onClick={(event) => event.stopPropagation()}>
+        <div className="sheet-drag-zone" {...swipeDismiss.handleProps}>
+          <span className="sheet-grip" />
+        </div>
         <button className="bonus-popup-close" onClick={onClose} aria-label="Закрыть">
           <X size={20} />
         </button>
@@ -1750,6 +1759,105 @@ function useBodyScrollLock(active) {
       window.scrollTo(0, scrollY);
     };
   }, [active]);
+}
+
+function useSwipeDismiss(onClose) {
+  const sheetRef = useRef(null);
+  const startYRef = useRef(0);
+  const currentYRef = useRef(0);
+  const pointerIdRef = useRef(null);
+  const isDraggingRef = useRef(false);
+
+  const resetSheet = () => {
+    const sheet = sheetRef.current;
+
+    if (!sheet) {
+      return;
+    }
+
+    sheet.style.transition = 'transform 180ms ease, opacity 180ms ease';
+    sheet.style.transform = 'translate3d(0, 0, 0)';
+    sheet.style.opacity = '1';
+    window.setTimeout(() => {
+      if (sheetRef.current === sheet) {
+        sheet.style.transition = '';
+        sheet.style.transform = '';
+        sheet.style.opacity = '';
+      }
+    }, 190);
+  };
+
+  const clearSheet = () => {
+    const sheet = sheetRef.current;
+
+    if (!sheet) {
+      return;
+    }
+
+    sheet.style.transition = '';
+    sheet.style.transform = '';
+    sheet.style.opacity = '';
+  };
+
+  const finishDrag = () => {
+    if (!isDraggingRef.current) {
+      return;
+    }
+
+    const shouldClose = currentYRef.current > 72;
+    isDraggingRef.current = false;
+    pointerIdRef.current = null;
+
+    if (shouldClose) {
+      clearSheet();
+      onClose();
+      return;
+    }
+
+    resetSheet();
+  };
+
+  return {
+    sheetRef,
+    handleProps: {
+      onPointerDown: (event) => {
+        if (event.pointerType === 'mouse' && event.button !== 0) {
+          return;
+        }
+
+        isDraggingRef.current = true;
+        pointerIdRef.current = event.pointerId;
+        startYRef.current = event.clientY;
+        currentYRef.current = 0;
+
+        const sheet = sheetRef.current;
+
+        if (sheet) {
+          sheet.style.transition = 'none';
+        }
+
+        event.currentTarget.setPointerCapture?.(event.pointerId);
+      },
+      onPointerMove: (event) => {
+        if (!isDraggingRef.current || pointerIdRef.current !== event.pointerId) {
+          return;
+        }
+
+        const deltaY = Math.max(0, event.clientY - startYRef.current);
+        const sheet = sheetRef.current;
+        currentYRef.current = deltaY;
+
+        if (sheet) {
+          sheet.style.transform = `translate3d(0, ${deltaY}px, 0)`;
+          sheet.style.opacity = String(Math.max(0.76, 1 - deltaY / 360));
+        }
+
+        event.preventDefault();
+      },
+      onPointerUp: finishDrag,
+      onPointerCancel: finishDrag,
+    },
+  };
 }
 
 function ReferralLinkIcon() {

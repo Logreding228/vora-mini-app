@@ -1277,6 +1277,19 @@ button {
   background: #c7cbd0;
 }
 
+.sheet-drag-zone {
+  position: relative;
+  z-index: 1;
+  margin: -12px -16px 0;
+  padding: 12px 16px 1px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.sheet-drag-zone:active {
+  cursor: grabbing;
+}
+
 .bottom-sheet h2 {
   margin: 0 0 28px;
   font-size: 21px;
