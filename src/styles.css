@@ -2370,12 +2370,12 @@ button {
 .invite-card h2 {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .invite-card h2 button {
-  width: 17px;
-  height: 17px;
+  width: 12px;
+  height: 12px;
   display: grid;
   place-items: center;
   background: transparent;
