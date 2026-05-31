@@ -652,7 +652,7 @@ function PlansPair({ currentLite = false, selected = 'plus', onSelect, includeHo
           price={tariffCatalog.lite.monthPrice}
           selected={selected === 'lite'}
           current={currentLite}
-          iconName={hideIcons ? '' : selected === 'lite' ? 'plan-lite-alt' : 'plan-lite'}
+          iconName={hideIcons ? '' : 'plan-lite'}
           onClick={() => onSelect?.('lite')}
         />
         <PlanCard
@@ -663,7 +663,7 @@ function PlansPair({ currentLite = false, selected = 'plus', onSelect, includeHo
           price={tariffCatalog.plus.monthPrice}
           selected={selected === 'plus'}
           popular
-          iconName={hideIcons ? '' : selected === 'plus' ? 'plan-plus-alt' : 'plan-plus'}
+          iconName={hideIcons ? '' : 'plan-plus'}
           onClick={() => onSelect?.('plus')}
         />
       </div>
@@ -773,6 +773,7 @@ function FeatureList() {
 function TrialStart({ navigate, activeScreen }) {
   const [selectedMethod, setSelectedMethod] = useState('card');
   const [promoCode, setPromoCode] = useState('');
+  const [promoApplied, setPromoApplied] = useState(false);
   const [paymentError, setPaymentError] = useState('');
   const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
 
@@ -810,10 +811,18 @@ function TrialStart({ navigate, activeScreen }) {
         <MethodCard title="Криптовалюта" subtitle="USDT, BTC, ETH и др." checked={selectedMethod === 'crypto'} onClick={() => setSelectedMethod('crypto')} />
       </div>
       <div className="promo trial-promo">
-        <p>Есть промокод?</p>
+        <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
         <div>
-          <input value={promoCode} onChange={(event) => setPromoCode(event.target.value)} placeholder="Введите промокод" />
-          <button onClick={() => setPromoCode('')}>{promoCode ? 'Убрать' : 'Применить'}</button>
+          <input value={promoCode} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); }} placeholder="Введите промокод" />
+          <button onClick={() => {
+            if (promoApplied) {
+              setPromoCode('');
+              setPromoApplied(false);
+              return;
+            }
+
+            setPromoApplied(Boolean(promoCode.trim()));
+          }} disabled={!promoApplied && !promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
         </div>
       </div>
       {paymentError && <p className="inline-error">{paymentError}</p>}
@@ -828,7 +837,7 @@ function TrialStart({ navigate, activeScreen }) {
           </div>
         </button>
         <button onClick={() => navigate('tariff-plus')}>
-          <IconTile tone="tariff-image plus"><AssetIcon name="plan-plus-alt" /></IconTile>
+          <IconTile tone="tariff-image plus"><AssetIcon name="plan-plus" /></IconTile>
           <div>
             <strong>Plus</strong>
             <p>от 550 ₽</p>
@@ -1331,6 +1340,7 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
   const [selectedCurrency, setSelectedCurrency] = useState('USDT');
   const [hwidLimit, setHwidLimit] = useState(() => Math.min(9, Math.max(1, Number(mainData.maxDevices || 0) + 1)));
   const [customAmount, setCustomAmount] = useState('');
+  const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
   const [paymentError, setPaymentError] = useState('');
   const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
@@ -1393,9 +1403,9 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
       <Card className="payment-card">
         <h2>Выберите, что хотите оплатить</h2>
         <PaymentOption iconName={selectedPayment === 'device' ? 'device-add-alt' : 'device-add'} title="Докупить устройство" subtitle="Активация 1 устройства" price="75 ₽" checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} />
-        <PaymentOption iconName={selectedPayment === 'lite' ? 'plan-lite-alt' : 'plan-lite'} title="Lite - 1 месяц" subtitle="Базовые возможности" price="300 ₽" checked={selectedPayment === 'lite'} onClick={() => setSelectedPayment('lite')} />
-        <PaymentOption iconName={selectedPayment === 'home' ? 'plan-home-alt' : 'plan-home'} title="Home - 1 месяц" subtitle="Для тех, кто за границей" price="450 ₽" checked={selectedPayment === 'home'} onClick={() => setSelectedPayment('home')} />
-        <PaymentOption iconName={selectedPayment === 'plus' ? 'plan-plus-alt' : 'plan-plus'} title="Plus - 1 месяц" subtitle="Максимум возможностей" price="550 ₽" checked={selectedPayment === 'plus'} onClick={() => setSelectedPayment('plus')} />
+        <PaymentOption iconName="plan-lite" title="Lite - 1 месяц" subtitle="Базовые возможности" price="300 ₽" checked={selectedPayment === 'lite'} onClick={() => setSelectedPayment('lite')} />
+        <PaymentOption iconName="plan-home" title="Home - 1 месяц" subtitle="Для тех, кто за границей" price="450 ₽" checked={selectedPayment === 'home'} onClick={() => setSelectedPayment('home')} />
+        <PaymentOption iconName="plan-plus" title="Plus - 1 месяц" subtitle="Максимум возможностей" price="550 ₽" checked={selectedPayment === 'plus'} onClick={() => setSelectedPayment('plus')} />
         <SectionDivider>или ввести сумму вручную</SectionDivider>
         <div className={selectedPayment === 'balance' ? 'input-box selected' : 'input-box'} onClick={() => setSelectedPayment('balance')}>
           <span>Сумма пополнения</span>
@@ -1417,8 +1427,16 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
       <div className="promo">
         <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
         <div>
-          <input placeholder="Введите промокод" />
-          <button onClick={() => setPromoApplied((value) => !value)}>{promoApplied ? 'Убрать' : 'Применить'}</button>
+          <input value={promoCode} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); }} placeholder="Введите промокод" />
+          <button onClick={() => {
+            if (promoApplied) {
+              setPromoCode('');
+              setPromoApplied(false);
+              return;
+            }
+
+            setPromoApplied(Boolean(promoCode.trim()));
+          }} disabled={!promoApplied && !promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
         </div>
       </div>
       {paymentError && <p className="inline-error">{paymentError}</p>}
@@ -1521,10 +1539,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
 
   return (
     <AppFrame className="referral-screen" navigate={navigate} activeScreen={activeScreen}>
-      <PageTitle
-        title="Реферальная программа"
-        action={<button className="square-action" onClick={openBonusInfo} aria-label="Как работают бонусы"><CircleHelp size={24} /></button>}
-      />
+      <PageTitle title="Реферальная программа" />
       <Card className="referral-earn-card">
         <div className="referral-earn-head">
           <div>
@@ -1563,7 +1578,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
         {notice && <p className="inline-error neutral">{notice}</p>}
       </Card>
       <Card className="invite-card">
-        <h2>Приглашайте друзей <button onClick={openBonusInfo} aria-label="Как работают бонусы"><CircleHelp size={14} /></button></h2>
+        <h2>Приглашайте друзей <button onClick={openBonusInfo} aria-label="Как работают бонусы"><BonusQuestionIcon /></button></h2>
         <p>и продлевайте подписку бонусами</p>
         <div className="bonus-grid">
           <div>
@@ -1629,7 +1644,7 @@ function BonusInfoSheet({ closing, onClose }) {
   const swipeDismiss = useSwipeDismiss(onClose);
 
   return (
-    <div className={closing ? 'bonus-sheet-overlay closing' : 'bonus-sheet-overlay'} role="dialog" aria-modal="true" aria-labelledby="bonus-info-title" onClick={onClose}>
+    <div className={closing ? 'bonus-sheet-overlay closing' : 'bonus-sheet-overlay'} role="dialog" aria-modal="true" aria-label="Как работают бонусы" onClick={onClose}>
       <div className="bonus-popup" ref={swipeDismiss.sheetRef} onClick={(event) => event.stopPropagation()}>
         <div className="sheet-drag-zone" {...swipeDismiss.handleProps}>
           <span className="sheet-grip" />
@@ -1637,57 +1652,7 @@ function BonusInfoSheet({ closing, onClose }) {
         <button className="bonus-popup-close" onClick={onClose} aria-label="Закрыть">
           <X size={20} />
         </button>
-        <h1 id="bonus-info-title">Как работают бонусы</h1>
-        <p>Приглашайте друзей и получайте бонусы с их оплат подписки</p>
-        <div className="bonus-steps">
-          <BonusStep icon={Link} label="Пригласите друга" />
-          <BonusStep icon={Wallet} label="Друг оплачивает подписку" />
-          <BonusStep icon={GiftIcon} label="Вы получаете до 10%" />
-        </div>
-        <div className="bonus-capabilities">
-          <strong>₽</strong>
-          <span>Бонусы можно:</span>
-          <p>Конвертировать в дни подписки</p>
-          <p>Вывести средства</p>
-        </div>
-        <Card className="bonus-level-card">
-          <div className="bonus-level-head">
-            <h2>Начисления по срокам и уровням</h2>
-            <span>1 уровень</span>
-          </div>
-          <div className="bonus-table">
-            <span />
-            <b>1 месяц</b>
-            <b>6 месяцев</b>
-            <b>12 месяцев</b>
-            <p>1 уровень<br /><small>Ваши друзья</small></p>
-            <strong>10%</strong>
-            <strong>7%</strong>
-            <strong>5%</strong>
-            <p>2 уровень<br /><small>Их друзья</small></p>
-            <strong>3%</strong>
-            <strong>2%</strong>
-            <strong>1%</strong>
-          </div>
-          <div className="recurring-box compact">
-            <CalendarDays size={20} />
-            <div>
-              <strong>Начисления рекуррентные</strong>
-              <p>Бонусы начисляются с каждого продления подписки другом</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="bonus-example-card">
-          <div className="bonus-level-head">
-            <h2>Пример бонусов с тарифа Plus</h2>
-            <span>1 уровень</span>
-          </div>
-          <div className="bonus-example-grid">
-            <p>550 ₽ → <strong>55 ₽</strong></p>
-            <p>2 970 ₽ → <strong>207 ₽</strong></p>
-            <p>5 610 ₽ → <strong>561 ₽</strong></p>
-          </div>
-        </Card>
+        <img className="bonus-popup-image" src={asset('bonus-info-popup')} alt="Как работают бонусы" />
       </div>
     </div>
   );
@@ -1723,6 +1688,14 @@ function BonusStep({ icon: Icon, label }) {
 
 function GiftIcon({ size = 22 }) {
   return <img className="gift-step-icon" src={asset('referral-gift')} alt="" style={{ width: size, height: size }} />;
+}
+
+function BonusQuestionIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <path d="M6 3.55556V3.86111M6 6V8.44444M6 11.5C9.03759 11.5 11.5 9.03759 11.5 6C11.5 2.96244 9.03759 0.5 6 0.5C2.96244 0.5 0.5 2.96244 0.5 6C0.5 9.03759 2.96244 11.5 6 11.5Z" stroke="#FF7A2F" strokeOpacity="0.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
 function useBodyScrollLock(active) {
@@ -2264,8 +2237,16 @@ function TariffScreen({ selected, navigate, activeScreen }) {
       <div className="promo">
         <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
         <div>
-          <input value={promoCode} onChange={(event) => setPromoCode(event.target.value)} placeholder="Введите промокод" />
-          <button onClick={() => setPromoApplied((value) => !value)} disabled={!promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
+          <input value={promoCode} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); }} placeholder="Введите промокод" />
+          <button onClick={() => {
+            if (promoApplied) {
+              setPromoCode('');
+              setPromoApplied(false);
+              return;
+            }
+
+            setPromoApplied(Boolean(promoCode.trim()));
+          }} disabled={!promoApplied && !promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
         </div>
       </div>
       <Card className="checkout-card">
