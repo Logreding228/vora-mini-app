@@ -214,6 +214,7 @@ function normalizeReferralData(payload, mainData, telegramUser) {
     'url',
   ]);
   const invitedFriends = Number(valueByKeys(sources, [
+    'referrals',
     'invited_friends',
     'invited_count',
     'invites_count',
@@ -223,6 +224,7 @@ function normalizeReferralData(payload, mainData, telegramUser) {
     'first_level_count',
   ], 0));
   const totalFriends = Number(valueByKeys(sources, [
+    'active_referrals',
     'total_friends',
     'friends_total',
     'friends_count',
@@ -232,6 +234,7 @@ function normalizeReferralData(payload, mainData, telegramUser) {
     'active_count',
   ], invitedFriends));
   const earned = Number(valueByKeys(sources, [
+    'total_balance',
     'total_earned',
     'earned_total',
     'earned',
@@ -1605,7 +1608,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
       <Card className="referral-stats-card">
         <h2>Статистика</h2>
         <div className="referral-stat-row"><Users size={20} /><span>Приглашено друзей</span><strong>{referralInfo.invitedFriends}</strong></div>
-        <div className="referral-stat-row active-friends"><GrowthArrowIcon /><span>Всего друзей</span><strong>{referralInfo.totalFriends}</strong></div>
+        <div className="referral-stat-row active-friends"><GrowthArrowIcon /><span>Активных друзей</span><strong>{referralInfo.totalFriends}</strong></div>
         <div className="referral-stat-row earned-total"><Wallet size={20} /><span>Всего заработано</span><strong>{money(earned)}</strong></div>
       </Card>
       <div className="partner-card">
