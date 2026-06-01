@@ -194,7 +194,39 @@ const valueByKeys = (sources, keys, fallback = '') => {
   return fallback;
 };
 
+const valueDeepByKeys = (payload, keys, fallback = '') => {
+  const queue = [payload];
+  const seen = new Set();
+
+  while (queue.length) {
+    const source = queue.shift();
+
+    if (!source || typeof source !== 'object' || seen.has(source)) {
+      continue;
+    }
+
+    seen.add(source);
+
+    for (const key of keys) {
+      const value = source[key];
+
+      if (value !== undefined && value !== null && value !== '') {
+        return value;
+      }
+    }
+
+    Object.values(source).forEach((value) => {
+      if (value && typeof value === 'object') {
+        queue.push(value);
+      }
+    });
+  }
+
+  return fallback;
+};
+
 function normalizeReferralData(payload, mainData) {
+  const stringPayload = typeof payload === 'string' ? payload.trim() : '';
   const sources = [
     payload,
     payload?.data,
@@ -203,15 +235,19 @@ function normalizeReferralData(payload, mainData) {
     payload?.referral_data,
     payload?.stats,
   ];
-  const link = valueByKeys(sources, [
+  const linkKeys = [
     'referral_link',
     'ref_link',
     'referral_url',
     'ref_url',
     'invite_link',
+    'invite_url',
+    'start_link',
+    'telegram_link',
     'link',
     'url',
-  ]);
+  ];
+  const link = stringPayload || valueByKeys(sources, linkKeys) || valueDeepByKeys(payload, linkKeys);
   const invitedFriends = Number(valueByKeys(sources, [
     'referrals',
     'invited_friends',
@@ -221,7 +257,16 @@ function normalizeReferralData(payload, mainData) {
     'ref_count',
     'friends_invited',
     'first_level_count',
-  ], 0));
+  ], valueDeepByKeys(payload, [
+    'referrals',
+    'invited_friends',
+    'invited_count',
+    'invites_count',
+    'referrals_count',
+    'ref_count',
+    'friends_invited',
+    'first_level_count',
+  ], 0)));
   const totalFriends = Number(valueByKeys(sources, [
     'active_referrals',
     'total_friends',
@@ -231,7 +276,16 @@ function normalizeReferralData(payload, mainData) {
     'all_friends',
     'active_friends',
     'active_count',
-  ], invitedFriends));
+  ], valueDeepByKeys(payload, [
+    'active_referrals',
+    'total_friends',
+    'friends_total',
+    'friends_count',
+    'total_referrals',
+    'all_friends',
+    'active_friends',
+    'active_count',
+  ], invitedFriends)));
   const earned = Number(valueByKeys(sources, [
     'total_balance',
     'total_earned',
@@ -242,7 +296,17 @@ function normalizeReferralData(payload, mainData) {
     'balance',
     'amount',
     'total_amount',
-  ], mainData.refBalance || 0));
+  ], valueDeepByKeys(payload, [
+    'total_balance',
+    'total_earned',
+    'earned_total',
+    'earned',
+    'ref_balance',
+    'referral_balance',
+    'balance',
+    'amount',
+    'total_amount',
+  ], mainData.refBalance || 0)));
 
   return {
     link: link || '',
@@ -1490,6 +1554,7 @@ function MethodCard({ title, subtitle, checked, onClick }) {
 function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
   const [referralData, setReferralData] = useState(null);
   const [referralLoaded, setReferralLoaded] = useState(false);
+  const [referralError, setReferralError] = useState('');
   const referralInfo = useMemo(() => normalizeReferralData(referralData, mainData), [referralData, mainData]);
   const earned = Number(referralInfo.earned || 0);
   const [amount, setAmount] = useState(earned ? String(Math.floor(earned)) : '');
@@ -1498,7 +1563,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
   const [isBonusInfoOpen, setBonusInfoOpen] = useState(false);
   const [isBonusInfoClosing, setBonusInfoClosing] = useState(false);
   const days = Math.max(0, Math.floor(Number(amount || 0) / 10));
-  const displayedLink = referralInfo.link || (referralLoaded ? 'Ссылка недоступна' : 'Загружаем ссылку');
+  const displayedLink = referralInfo.link || (referralLoaded ? referralError || 'Ссылка недоступна' : 'Загружаем ссылку');
 
   useEffect(() => {
     setAmount(earned ? String(Math.floor(earned)) : '');
@@ -1512,12 +1577,14 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
         if (isMounted) {
           setReferralData(payload);
           setReferralLoaded(true);
+          setReferralError('');
         }
       })
-      .catch(() => {
+      .catch((error) => {
         if (isMounted) {
           setReferralData(null);
           setReferralLoaded(true);
+          setReferralError(getUiError(error));
         }
       });
 
