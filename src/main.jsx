@@ -35,7 +35,6 @@ import {
   Trash2,
   Users,
   Wallet,
-  X,
 } from 'lucide-react';
 import { api, ApiError, authenticateTelegram } from './api.js';
 import { getDisplayName, initTelegramApp } from './telegram.js';
@@ -305,6 +304,14 @@ function getUiError(error) {
   return message || 'Запрос не выполнен. Попробуйте еще раз.';
 }
 
+function keepFocusedFieldVisible(event) {
+  const element = event.currentTarget;
+
+  window.setTimeout(() => {
+    element.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, 260);
+}
+
 const screens = [
   { id: 'home-active', label: 'Главный экран', component: HomeActive },
   { id: 'home-popup', label: 'Поп-ап', component: HomePopup },
@@ -451,11 +458,6 @@ function AppHeader({ navigate, activeScreen }) {
         </button>
       )}
       <Logo />
-      {canClose && (
-        <button className="close-screen" onClick={() => navigate('home-active')} aria-label="Закрыть">
-          <X size={22} />
-        </button>
-      )}
     </header>
   );
 }
@@ -601,7 +603,7 @@ function PlanCard({ name, description, devices, extra, price, selected, popular,
       <p className="plan-description">{description}</p>
       {price && (
         <div className="plan-price compact-price">
-          <strong>{price}</strong>
+          <strong>{price} ₽</strong>
           <span>/мес</span>
         </div>
       )}
@@ -780,6 +782,24 @@ function TrialStart({ navigate, activeScreen }) {
   const [paymentError, setPaymentError] = useState('');
   const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
 
+  const applyPromo = () => {
+    if (promoApplied) {
+      setPromoCode('');
+      setPromoApplied(false);
+      return;
+    }
+
+    setPromoApplied(Boolean(promoCode.trim()));
+  };
+
+  const submitPromoWithEnter = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      applyPromo();
+      event.currentTarget.blur();
+    }
+  };
+
   const startTrial = async () => {
     try {
       setPaymentError('');
@@ -816,16 +836,8 @@ function TrialStart({ navigate, activeScreen }) {
       <div className="promo trial-promo">
         <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
         <div>
-          <input value={promoCode} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); }} placeholder="Введите промокод" />
-          <button onClick={() => {
-            if (promoApplied) {
-              setPromoCode('');
-              setPromoApplied(false);
-              return;
-            }
-
-            setPromoApplied(Boolean(promoCode.trim()));
-          }} disabled={!promoApplied && !promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
+          <input value={promoCode} onFocus={keepFocusedFieldVisible} onKeyDown={submitPromoWithEnter} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); }} placeholder="Введите промокод" enterKeyHint="done" />
+          <button onClick={applyPromo} disabled={!promoApplied && !promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
         </div>
       </div>
       {paymentError && <p className="inline-error">{paymentError}</p>}
@@ -1095,9 +1107,6 @@ function DeviceSheet({ navigate }) {
         <div className="sheet-drag-zone" {...swipeDismiss.handleProps}>
           <span className="sheet-grip" />
         </div>
-        <button className="sheet-close" onClick={() => navigate('home-active')} aria-label="Закрыть">
-          <X size={22} />
-        </button>
         <h2>Подключить новое устройство</h2>
         <StepTitle number="1" title="Операционная система" />
         <Card className="option-list system-option-list">
@@ -1354,6 +1363,24 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
       ? Number(customAmount || 0)
       : tariffCatalog[planPayment]?.monthPrice || 0;
 
+  const applyPromo = () => {
+    if (promoApplied) {
+      setPromoCode('');
+      setPromoApplied(false);
+      return;
+    }
+
+    setPromoApplied(Boolean(promoCode.trim()));
+  };
+
+  const submitPromoWithEnter = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      applyPromo();
+      event.currentTarget.blur();
+    }
+  };
+
   useEffect(() => {
     if (selectedPayment === 'device') {
       setHwidLimit((value) => Math.max(value, Math.min(9, Number(mainData.maxDevices || 0) + 1)));
@@ -1424,16 +1451,8 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
       <div className="promo">
         <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
         <div>
-          <input value={promoCode} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); }} placeholder="Введите промокод" />
-          <button onClick={() => {
-            if (promoApplied) {
-              setPromoCode('');
-              setPromoApplied(false);
-              return;
-            }
-
-            setPromoApplied(Boolean(promoCode.trim()));
-          }} disabled={!promoApplied && !promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
+          <input value={promoCode} onFocus={keepFocusedFieldVisible} onKeyDown={submitPromoWithEnter} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); }} placeholder="Введите промокод" enterKeyHint="done" />
+          <button onClick={applyPromo} disabled={!promoApplied && !promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
         </div>
       </div>
       {paymentError && <p className="inline-error">{paymentError}</p>}
@@ -1523,6 +1542,15 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
 
   const showApiNotice = () => {
     setNotice('Функция скоро будет доступна');
+  };
+
+  const openPartnerTicket = () => {
+    try {
+      sessionStorage.setItem('ticket_subject', 'Заявка на партнерку');
+    } catch {
+    }
+
+    navigate('ticket-create');
   };
 
   const openBonusInfo = () => {
@@ -1621,7 +1649,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
             <strong>Партнерская программа</strong>
             <p>Особые условия для крупных партнеров</p>
           </div>
-          <button onClick={showApiNotice}>Оставить заявку</button>
+          <button onClick={openPartnerTicket}>Оставить заявку</button>
         </div>
         <div className="partner-fit">
           <i />
@@ -1651,9 +1679,6 @@ function BonusInfoSheet({ closing, onClose }) {
         <div className="sheet-drag-zone" {...swipeDismiss.handleProps}>
           <span className="sheet-grip" />
         </div>
-        <button className="bonus-popup-close" onClick={onClose} aria-label="Закрыть">
-          <X size={20} />
-        </button>
         <img className="bonus-popup-image" src={asset('bonus-info-popup')} alt="Как работают бонусы" />
       </div>
     </div>
@@ -1670,9 +1695,6 @@ function ImageInfoSheet({ src, alt, onClose }) {
         <div className="sheet-drag-zone" {...swipeDismiss.handleProps}>
           <span className="sheet-grip" />
         </div>
-        <button className="bonus-popup-close" onClick={onClose} aria-label="Закрыть">
-          <X size={20} />
-        </button>
         <img src={src} alt={alt} />
       </div>
     </div>
@@ -2053,9 +2075,22 @@ function TicketsScreen({ navigate, activeScreen }) {
 }
 
 function CreateTicket({ navigate, activeScreen }) {
-  const [subject, setSubject] = useState('');
+  const [subject, setSubject] = useState(() => {
+    try {
+      return sessionStorage.getItem('ticket_subject') || '';
+    } catch {
+      return '';
+    }
+  });
   const [description, setDescription] = useState('');
   const [fileName, setFileName] = useState('');
+
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem('ticket_subject');
+    } catch {
+    }
+  }, []);
 
   return (
     <AppFrame className="create-ticket" navigate={navigate} activeScreen={activeScreen}>
@@ -2179,6 +2214,24 @@ function TariffScreen({ selected, navigate, activeScreen }) {
   const maxDeviceCount = tariff.devices + tariff.extraDevices;
   const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
 
+  const applyPromo = () => {
+    if (promoApplied) {
+      setPromoCode('');
+      setPromoApplied(false);
+      return;
+    }
+
+    setPromoApplied(Boolean(promoCode.trim()));
+  };
+
+  const submitPromoWithEnter = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      applyPromo();
+      event.currentTarget.blur();
+    }
+  };
+
   useEffect(() => {
     setDeviceCount(tariff.devices);
   }, [selected]);
@@ -2239,16 +2292,8 @@ function TariffScreen({ selected, navigate, activeScreen }) {
       <div className="promo">
         <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
         <div>
-          <input value={promoCode} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); }} placeholder="Введите промокод" />
-          <button onClick={() => {
-            if (promoApplied) {
-              setPromoCode('');
-              setPromoApplied(false);
-              return;
-            }
-
-            setPromoApplied(Boolean(promoCode.trim()));
-          }} disabled={!promoApplied && !promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
+          <input value={promoCode} onFocus={keepFocusedFieldVisible} onKeyDown={submitPromoWithEnter} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); }} placeholder="Введите промокод" enterKeyHint="done" />
+          <button onClick={applyPromo} disabled={!promoApplied && !promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
         </div>
       </div>
       <Card className="checkout-card">

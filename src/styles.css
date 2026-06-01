@@ -65,7 +65,7 @@ button {
 
 .content {
   width: min(100%, 430px);
-  margin: -10px auto 0;
+  margin: -18px auto 0;
   padding: 0 16px 28px;
 }
 
@@ -125,12 +125,13 @@ button {
 }
 
 .page-title {
-  min-height: 92px;
+  min-height: 78px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding-top: 18px;
+  padding-top: 0;
+  padding-bottom: 18px;
 }
 
 .page-title h1,
@@ -3872,6 +3873,30 @@ button {
   margin: 6px 0 0;
   color: #9ca3ad;
   font-size: 13px;
+}
+
+.screen .page-title {
+  min-height: 78px;
+  align-items: flex-start;
+  padding-top: 0;
+  padding-bottom: 18px;
+}
+
+.referral-screen .page-title {
+  min-height: 68px;
+  padding-bottom: 12px;
+}
+
+.plan-card,
+.period-card,
+.payment-option,
+.method-card,
+.radio {
+  transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.promo {
+  scroll-margin-bottom: 180px;
 }
 
 @media (max-width: 720px) {
