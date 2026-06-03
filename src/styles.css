@@ -3899,6 +3899,57 @@ button {
   scroll-margin-bottom: 180px;
 }
 
+.debug-auth-panel {
+  position: fixed;
+  z-index: 20;
+  left: 12px;
+  right: 12px;
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  max-height: 42vh;
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid rgba(255, 113, 45, 0.28);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 16px 42px rgba(6, 22, 44, 0.16);
+}
+
+.debug-auth-panel button {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 10px;
+  background: #ff712d;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.debug-auth-panel button:disabled {
+  opacity: 0.65;
+}
+
+.debug-auth-panel strong {
+  display: block;
+  margin-top: 9px;
+  color: #06162c;
+  font-size: 11px;
+}
+
+.debug-auth-panel pre {
+  max-height: 110px;
+  margin: 5px 0 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border-radius: 8px;
+  padding: 8px;
+  background: #f7f7f8;
+  color: #596371;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
 @media (max-width: 720px) {
   .phone {
     width: 100%;

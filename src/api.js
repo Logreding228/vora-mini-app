@@ -302,6 +302,18 @@ export async function authenticateTelegram(initData) {
   return authenticateWithInitData();
 }
 
+export async function debugAuthenticateTelegram(initData) {
+  if (!apiBaseUrl || !initData) {
+    throw new ApiError('Нет initData для проверки', 0);
+  }
+
+  return rawRequest(telegramAuthPath, {
+    method: 'POST',
+    body: { initData },
+    token: '',
+  });
+}
+
 export const api = {
   mainScreen: () => request('/users/main_screen/'),
   referralData: () => request('/users/referral_data'),
