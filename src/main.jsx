@@ -23,6 +23,7 @@ import {
   Menu,
   MessageCircle,
   Monitor,
+  Minus,
   MoreVertical,
   Paperclip,
   Plus,
@@ -36,7 +37,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-import { api, ApiError, authenticateTelegram, debugAuthenticateTelegram } from './api.js';
+import { api, ApiError, authenticateTelegram } from './api.js';
 import { getDisplayName, initTelegramApp } from './telegram.js';
 import './styles.css';
 
@@ -422,7 +423,6 @@ function App() {
   const [telegramUser, setTelegramUser] = useState(null);
   const [mainData, setMainData] = useState(() => normalizeMainData(emptyMainData));
   const [apiNotice, setApiNotice] = useState('');
-  const [debugAuth, setDebugAuth] = useState({ initData: '', result: '', loading: false });
   const screen = useMemo(() => screens.find((item) => item.id === activeScreen) || screens[0], [activeScreen]);
   const Screen = screen.component;
 
@@ -487,45 +487,6 @@ function App() {
     });
   };
 
-  const runDebugAuth = async () => {
-    const telegram = initTelegramApp();
-    const currentInitData = telegram.initData || '';
-
-    setDebugAuth({
-      initData: currentInitData || 'initData пустая или недоступна',
-      result: 'Запрашиваем /auth/auth/telegram...',
-      loading: true,
-    });
-
-    if (!currentInitData) {
-      setDebugAuth({
-        initData: 'initData пустая или недоступна',
-        result: 'Откройте mini app внутри Telegram WebView. В обычном браузере initData не будет.',
-        loading: false,
-      });
-      return;
-    }
-
-    try {
-      const payload = await debugAuthenticateTelegram(currentInitData);
-      setDebugAuth({
-        initData: currentInitData,
-        result: JSON.stringify(payload, null, 2),
-        loading: false,
-      });
-    } catch (error) {
-      setDebugAuth({
-        initData: currentInitData,
-        result: JSON.stringify({
-          status: error instanceof ApiError ? error.status : 0,
-          message: getUiError(error),
-          payload: error instanceof ApiError ? error.payload : null,
-        }, null, 2),
-        loading: false,
-      });
-    }
-  };
-
   window.__voraGoBack = goBack;
   window.__voraCanGoBack = screenHistory.length > 0;
 
@@ -535,27 +496,8 @@ function App() {
         <div className={activeScreen.startsWith('tariff-') ? 'page-transition no-page-animation' : 'page-transition'} key={activeScreen}>
           <Screen navigate={navigate} activeScreen={activeScreen} mainData={mainData} telegramUser={telegramUser} apiNotice={apiNotice} />
         </div>
-        <DebugAuthPanel debugAuth={debugAuth} onRun={runDebugAuth} />
         <BottomNav navigate={navigate} activeScreen={activeScreen} mainData={mainData} />
       </main>
-    </div>
-  );
-}
-
-function DebugAuthPanel({ debugAuth, onRun }) {
-  return (
-    <div className="debug-auth-panel">
-      <button onClick={onRun} disabled={debugAuth.loading}>
-        {debugAuth.loading ? 'Проверяем...' : 'Debug: get initData'}
-      </button>
-      {(debugAuth.initData || debugAuth.result) && (
-        <div>
-          <strong>initData</strong>
-          <pre>{debugAuth.initData}</pre>
-          <strong>/auth/auth/telegram</strong>
-          <pre>{debugAuth.result}</pre>
-        </div>
-      )}
     </div>
   );
 }
@@ -2406,9 +2348,13 @@ function TariffScreen({ selected, navigate, activeScreen }) {
           <span>+75 ₽ за дополнительное устройство</span>
         </div>
         <div className="stepper">
-          <button disabled={deviceCount <= tariff.devices} onClick={() => setDeviceCount((value) => Math.max(tariff.devices, value - 1))} aria-label="Уменьшить количество устройств">-</button>
+          <button disabled={deviceCount <= tariff.devices} onClick={() => setDeviceCount((value) => Math.max(tariff.devices, value - 1))} aria-label="Уменьшить количество устройств">
+            <Minus size={18} strokeWidth={2.4} aria-hidden="true" />
+          </button>
           <strong>{deviceCount}</strong>
-          <button disabled={deviceCount >= maxDeviceCount} onClick={() => setDeviceCount((value) => Math.min(maxDeviceCount, value + 1))} aria-label="Увеличить количество устройств">+</button>
+          <button disabled={deviceCount >= maxDeviceCount} onClick={() => setDeviceCount((value) => Math.min(maxDeviceCount, value + 1))} aria-label="Увеличить количество устройств">
+            <Plus size={18} strokeWidth={2.4} aria-hidden="true" />
+          </button>
         </div>
       </Card>
       <div className="payment-methods tariff-methods">
