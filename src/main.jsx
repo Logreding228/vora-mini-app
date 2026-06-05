@@ -2406,9 +2406,9 @@ function TariffScreen({ selected, navigate, activeScreen }) {
           <span>+75 ₽ за дополнительное устройство</span>
         </div>
         <div className="stepper">
-          <button disabled={deviceCount <= tariff.devices} onClick={() => setDeviceCount((value) => Math.max(tariff.devices, value - 1))}>-</button>
+          <button disabled={deviceCount <= tariff.devices} onClick={() => setDeviceCount((value) => Math.max(tariff.devices, value - 1))} aria-label="Уменьшить количество устройств">-</button>
           <strong>{deviceCount}</strong>
-          <button disabled={deviceCount >= maxDeviceCount} onClick={() => setDeviceCount((value) => Math.min(maxDeviceCount, value + 1))}>+</button>
+          <button disabled={deviceCount >= maxDeviceCount} onClick={() => setDeviceCount((value) => Math.min(maxDeviceCount, value + 1))} aria-label="Увеличить количество устройств">+</button>
         </div>
       </Card>
       <div className="payment-methods tariff-methods">
