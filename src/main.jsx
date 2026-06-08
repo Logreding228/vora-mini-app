@@ -1536,11 +1536,11 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
         <div>
           <p>Основной баланс</p>
           <strong>{Number(mainData.balance || 0).toLocaleString('ru-RU')} <span>₽</span></strong>
-          <i />
-          <small>Если баланса хватит, подписка продлится автоматически</small>
         </div>
         <img src={asset('wallet')} alt="" />
         <ChevronRight size={28} />
+        <i />
+        <small><span aria-hidden="true">✓</span>Если баланса хватит, подписка продлится автоматически</small>
       </button>
       <Card className="payment-card">
         <h2>Выберите, что хотите оплатить</h2>
