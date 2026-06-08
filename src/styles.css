@@ -1859,6 +1859,7 @@ button svg,
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   border: 1px solid #f0f0f1;
   border-radius: 14px;
   background: #ffffff;
@@ -1867,25 +1868,37 @@ button svg,
   box-shadow: 0 10px 28px rgba(7, 20, 38, 0.035);
 }
 
+.method-card > div {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .method-card.checked {
   border-color: #f47a3d;
   background: #fef7f4;
 }
 
 .method-card strong {
-  font-size: 11px;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 10px;
   line-height: 100%;
   font-weight: 600;
   letter-spacing: 0;
+  text-align: left;
 }
 
 .method-card p {
   margin: 4px 0 0;
   color: #596371;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 8px;
   line-height: 100%;
   font-weight: 500;
   letter-spacing: 0;
+  text-align: left;
 }
 
 .promo {
