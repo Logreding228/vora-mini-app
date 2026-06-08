@@ -85,18 +85,18 @@ button svg,
 .app-header {
   position: relative;
   width: min(100%, 430px);
-  height: 110px;
+  height: calc(118px + var(--app-safe-area-top));
   margin: 0 auto;
-  padding: 14px 16px 4px;
+  padding: 20px 16px 4px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
 }
 
 .close-screen {
   position: absolute;
   right: 20px;
-  top: calc(63px + var(--app-safe-area-top));
+  top: calc(68px + var(--app-safe-area-top));
   width: 39px;
   height: 39px;
   border-radius: 13px;
@@ -113,7 +113,7 @@ button svg,
 .back-screen {
   position: absolute;
   left: 20px;
-  top: calc(63px + var(--app-safe-area-top));
+  top: calc(68px + var(--app-safe-area-top));
   width: 39px;
   height: 39px;
   border-radius: 13px;
@@ -3970,8 +3970,8 @@ button svg,
   }
 
   .app-header {
-    height: 110px;
-    padding-top: 18px;
+    height: calc(118px + var(--app-safe-area-top));
+    padding-top: 22px;
   }
 
   .bottom-nav {
