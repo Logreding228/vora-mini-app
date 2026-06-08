@@ -61,7 +61,7 @@ button {
   position: relative;
   min-height: 100vh;
   background: #f7f7f8;
-  padding-bottom: calc(116px + var(--keyboard-offset, 0px));
+  padding-bottom: 116px;
 }
 
 .content {
@@ -199,7 +199,7 @@ button {
   position: fixed;
   z-index: 6;
   left: 50%;
-  bottom: calc(max(14px, env(safe-area-inset-bottom)) + var(--keyboard-offset, 0px));
+  bottom: max(14px, env(safe-area-inset-bottom));
   width: min(430px, calc(100vw - 28px));
   height: 76px;
   margin: 0;
@@ -213,7 +213,12 @@ button {
   transform: translateX(-50%);
   backdrop-filter: blur(16px);
   overflow: visible;
-  will-change: bottom;
+}
+
+.bottom-nav.keyboard-open {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
 }
 
 .nav-indicator {

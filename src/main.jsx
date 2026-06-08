@@ -539,7 +539,7 @@ function BottomNav({ navigate, activeScreen, mainData }) {
   const navRef = useRef(null);
   const itemRefs = useRef([]);
   const [indicatorStyle, setIndicatorStyle] = useState({ width: 0, transform: 'translate3d(0, 0, 0)' });
-  const [keyboardOffset, setKeyboardOffset] = useState(0);
+  const [isKeyboardActive, setIsKeyboardActive] = useState(false);
 
   const activeSectionByScreen = {
     'home-active': 'home',
@@ -591,41 +591,41 @@ function BottomNav({ navigate, activeScreen, mainData }) {
     return () => window.removeEventListener('resize', updateIndicator);
   }, [activeIndex]);
 
-  useLayoutEffect(() => {
-    const visualViewport = window.visualViewport;
+  useEffect(() => {
+    const isTextField = (element) => {
+      if (!element) {
+        return false;
+      }
 
-    if (!visualViewport) {
-      return undefined;
-    }
+      const tagName = element.tagName?.toLowerCase();
+      return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || element.isContentEditable;
+    };
+    let blurTimer = 0;
 
-    let frame = 0;
-
-    const syncKeyboardOffset = () => {
-      window.cancelAnimationFrame(frame);
-      frame = window.requestAnimationFrame(() => {
-        const nextOffset = Math.max(0, window.innerHeight - visualViewport.height - visualViewport.offsetTop);
-        const roundedOffset = Math.round(nextOffset);
-        document.documentElement.style.setProperty('--keyboard-offset', `${roundedOffset}px`);
-        setKeyboardOffset(roundedOffset);
-      });
+    const handleFocusIn = (event) => {
+      window.clearTimeout(blurTimer);
+      setIsKeyboardActive(isTextField(event.target));
     };
 
-    syncKeyboardOffset();
-    visualViewport.addEventListener('resize', syncKeyboardOffset);
-    visualViewport.addEventListener('scroll', syncKeyboardOffset);
-    window.addEventListener('resize', syncKeyboardOffset);
+    const handleFocusOut = () => {
+      window.clearTimeout(blurTimer);
+      blurTimer = window.setTimeout(() => {
+        setIsKeyboardActive(isTextField(document.activeElement));
+      }, 80);
+    };
+
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
 
     return () => {
-      window.cancelAnimationFrame(frame);
-      document.documentElement.style.removeProperty('--keyboard-offset');
-      visualViewport.removeEventListener('resize', syncKeyboardOffset);
-      visualViewport.removeEventListener('scroll', syncKeyboardOffset);
-      window.removeEventListener('resize', syncKeyboardOffset);
+      window.clearTimeout(blurTimer);
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
     };
   }, []);
 
   return (
-    <nav className="bottom-nav" ref={navRef} style={{ '--keyboard-offset': `${keyboardOffset}px` }}>
+    <nav className={isKeyboardActive ? 'bottom-nav keyboard-open' : 'bottom-nav'} ref={navRef}>
       <span className="nav-indicator" style={indicatorStyle} />
       {nav.map(({ icon: Icon, label, route, section }, index) => (
         <button
