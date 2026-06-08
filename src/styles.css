@@ -1654,7 +1654,7 @@ button svg,
 .balance-screen .page-title {
   min-height: auto;
   padding-bottom: 0;
-  margin-bottom: 4px;
+  margin-bottom: 18px;
   align-items: center;
 }
 
@@ -4016,6 +4016,13 @@ button svg,
   align-items: flex-start;
   padding-top: 0;
   padding-bottom: 18px;
+}
+
+.balance-screen .page-title {
+  min-height: auto;
+  padding-bottom: 0;
+  margin-bottom: 18px;
+  align-items: center;
 }
 
 .referral-screen .page-title {
