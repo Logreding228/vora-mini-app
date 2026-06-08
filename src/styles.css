@@ -991,7 +991,6 @@ button svg,
   right: 28px;
   width: 93px;
   height: 71px;
-  object-fit: contain;
   transform: translateY(-50%);
 }
 

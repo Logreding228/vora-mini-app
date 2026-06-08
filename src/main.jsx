@@ -1076,7 +1076,7 @@ function SubscriptionSummary({ muted: sheetMuted = false, navigate, mainData }) 
         <h2>{planName}</h2>
         <p>{subscriptionState.description}</p>
       </div>
-      <img src={asset('shield-small')} alt="" />
+      <img src={asset('shield-card')} alt="" />
       <div className="metrics">
         <div className="metric-card device-metric">
           <IconTile tone="plain"><Monitor size={22} /></IconTile>
