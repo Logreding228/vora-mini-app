@@ -3904,6 +3904,23 @@ button {
   padding-bottom: 12px;
 }
 
+.tariff-screen .page-title,
+.referral-screen .page-title {
+  min-height: 78px;
+  align-items: flex-start;
+  padding-bottom: 18px;
+}
+
+.referral-screen .content {
+  display: block;
+}
+
+.referral-screen .invite-card,
+.referral-screen .referral-stats-card,
+.referral-screen .partner-card {
+  margin-top: 18px;
+}
+
 .plan-card,
 .period-card,
 .payment-option,
