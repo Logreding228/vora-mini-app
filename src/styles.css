@@ -987,9 +987,10 @@ button svg,
 
 .subscription-card > img {
   position: absolute;
-  top: 32px;
+  top: 58px;
   right: 28px;
   width: 90px;
+  transform: translateY(-50%);
 }
 
 .metrics {
