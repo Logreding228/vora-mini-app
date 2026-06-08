@@ -204,6 +204,7 @@ button svg,
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   background: var(--orange-button-gradient);
   color: #ffffff;
   font-size: 14px;
@@ -356,13 +357,20 @@ button svg,
 }
 
 .features-card > p {
-  margin: 7px 0 12px;
+  width: 326px;
+  max-width: 100%;
+  height: 12px;
+  margin: 7px auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #a0a6af;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 10px;
   line-height: 100%;
   font-weight: 500;
   letter-spacing: 0;
+  text-align: center;
 }
 
 .feature-row {
@@ -3946,6 +3954,10 @@ button svg,
 
 .referral-screen .content {
   display: block;
+}
+
+.referral-screen .page-title + .referral-earn-card {
+  margin-top: 18px;
 }
 
 .referral-screen .invite-card,

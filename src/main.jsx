@@ -600,17 +600,25 @@ function BottomNav({ navigate, activeScreen, mainData }) {
       const tagName = element.tagName?.toLowerCase();
       return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || element.isContentEditable;
     };
+    const canOpenMobileKeyboard = () => {
+      const hasCoarsePointer = window.matchMedia?.('(pointer: coarse)').matches;
+      const isSmallViewport = window.matchMedia?.('(max-width: 720px)').matches;
+      const webAppPlatform = window.Telegram?.WebApp?.platform || '';
+      const isTelegramMobile = /ios|android|iphone|ipad/i.test(webAppPlatform);
+
+      return Boolean((hasCoarsePointer && isSmallViewport) || isTelegramMobile);
+    };
     let blurTimer = 0;
 
     const handleFocusIn = (event) => {
       window.clearTimeout(blurTimer);
-      setIsKeyboardActive(isTextField(event.target));
+      setIsKeyboardActive(canOpenMobileKeyboard() && isTextField(event.target));
     };
 
     const handleFocusOut = () => {
       window.clearTimeout(blurTimer);
       blurTimer = window.setTimeout(() => {
-        setIsKeyboardActive(isTextField(document.activeElement));
+        setIsKeyboardActive(canOpenMobileKeyboard() && isTextField(document.activeElement));
       }, 80);
     };
 
