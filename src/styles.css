@@ -3186,8 +3186,11 @@ button svg,
   min-width: 0;
   display: block;
   margin-top: 10px;
-  font-size: 16px;
-  line-height: 1.12;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 100%;
+  font-weight: 600;
+  letter-spacing: 0;
   overflow-wrap: anywhere;
 }
 
@@ -3196,8 +3199,11 @@ button svg,
   min-width: 0;
   margin: 0;
   color: #596371;
-  font-size: 13px;
-  line-height: 1.24;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+  line-height: 100%;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .support-card > svg:last-child {
@@ -4033,11 +4039,11 @@ button svg,
 
   .support-card strong {
     font-size: 14px;
-    line-height: 1.08;
+    line-height: 100%;
   }
 
   .support-card p {
-    font-size: 11.5px;
+    font-size: 12px;
   }
 
   .support-card > svg:last-child {
