@@ -12,6 +12,7 @@ export function initTelegramApp() {
 
   webApp.ready();
   webApp.expand();
+  syncSafeArea(webApp);
 
   const initData = webApp.initData || initDataFromUrl;
 
@@ -20,6 +21,23 @@ export function initTelegramApp() {
     user: webApp.initDataUnsafe?.user || getUserFromInitData(initData) || null,
     initData,
   };
+}
+
+function syncSafeArea(webApp) {
+  const applySafeArea = () => {
+    setSafeAreaVariable('--tg-safe-area-top', webApp.safeAreaInset?.top);
+    setSafeAreaVariable('--tg-content-safe-area-top', webApp.contentSafeAreaInset?.top);
+  };
+
+  applySafeArea();
+  webApp.onEvent?.('safeAreaChanged', applySafeArea);
+  webApp.onEvent?.('contentSafeAreaChanged', applySafeArea);
+  window.addEventListener('resize', applySafeArea);
+}
+
+function setSafeAreaVariable(name, value) {
+  const numberValue = Number(value || 0);
+  document.documentElement.style.setProperty(name, `${Math.max(0, numberValue)}px`);
 }
 
 function getInitDataFromUrl() {
