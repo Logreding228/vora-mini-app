@@ -1652,7 +1652,10 @@ button svg,
 }
 
 .balance-screen .page-title {
+  min-height: auto;
+  padding-bottom: 0;
   margin-bottom: 18px;
+  align-items: center;
 }
 
 .balance-hero {
