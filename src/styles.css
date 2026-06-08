@@ -1484,14 +1484,15 @@ button svg,
 }
 
 .change-card {
-  margin-top: 24px;
-  padding: 22px 12px;
+  margin-top: 18px;
+  padding: 22px 14px;
   text-align: left;
 }
 
 .change-card h2 {
-  margin: 20px 0;
-  font-size: 18px;
+  margin: 20px 0 18px;
+  font-size: 20px;
+  line-height: 1.08;
 }
 
 .change-card h2 span {
@@ -1499,7 +1500,7 @@ button svg,
 }
 
 .change-card h3 {
-  margin: 0 0 20px;
+  margin: 0 0 18px;
   font-size: 18px;
 }
 
@@ -1507,15 +1508,17 @@ button svg,
 .summary-line {
   display: grid;
   grid-template-columns: 1fr auto auto auto;
-  gap: 16px;
+  gap: 14px;
   align-items: center;
-  min-height: 31px;
+  min-height: 34px;
   font-size: 14px;
 }
 
 .change-row strong,
 .summary-line strong {
+  color: #06162c;
   font-size: 15px;
+  line-height: 1;
 }
 
 .change-row span,
@@ -1524,10 +1527,11 @@ button svg,
 }
 
 .limit-text {
-  margin: 4px 0 18px;
+  margin: 4px 0 14px;
   text-align: right;
   color: #8b929d;
   font-size: 12px;
+  line-height: 1;
 }
 
 .payment-balance {
@@ -1590,12 +1594,22 @@ button svg,
   color: #8058ff;
 }
 
+.change-card .thin-line {
+  margin: 14px 0 18px;
+}
+
+.change-card .primary-button,
+.change-card .secondary-button {
+  margin-top: 18px;
+}
+
 .notice-box {
   min-height: 96px;
   padding: 14px;
   display: grid;
   grid-template-columns: 30px 1fr;
   gap: 12px;
+  margin-bottom: 14px;
   border-radius: 13px;
   background: #f4eefc;
   color: #8058ff;

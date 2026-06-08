@@ -1330,11 +1330,22 @@ function ChangePlan({ navigate, activeScreen, mainData }) {
   const [changeError, setChangeError] = useState('');
   const [upgradeUnavailable, setUpgradeUnavailable] = useState(false);
   const currentPlan = mainData.plan || '';
-  const canUpgrade = currentPlan !== 'plus' && !upgradeUnavailable;
+  const [selectedPlan, setSelectedPlan] = useState(() => (currentPlan === 'plus' ? 'lite' : 'plus'));
+  const canUpgrade = currentPlan !== 'plus' && selectedPlan === 'plus' && !upgradeUnavailable;
+  const canDowngrade = currentPlan === 'plus' && selectedPlan === 'lite';
+  const currentPrice = tariffCatalog[currentPlan]?.monthPrice || tariffCatalog.lite.monthPrice;
+  const selectedPrice = tariffCatalog[selectedPlan]?.monthPrice || tariffCatalog.plus.monthPrice;
+  const currentDevices = tariffCatalog[currentPlan]?.devices || tariffCatalog.lite.devices;
+  const selectedDevices = tariffCatalog[selectedPlan]?.devices || tariffCatalog.plus.devices;
+  const remainingDays = mainData.expiredAt ? Math.max(0, Math.ceil((new Date(mainData.expiredAt).getTime() - Date.now()) / 86400000)) : 20;
+  const downgradeDate = dateRu(mainData.expiredAt, 'после окончания периода');
 
   useEffect(() => {
-    if (!canUpgrade) {
-      setUpgradeAmount('0');
+    setSelectedPlan(currentPlan === 'plus' ? 'lite' : 'plus');
+  }, [currentPlan]);
+
+  useEffect(() => {
+    if (currentPlan === 'plus') {
       setChangeError('');
       return;
     }
@@ -1385,50 +1396,44 @@ function ChangePlan({ navigate, activeScreen, mainData }) {
   return (
     <AppFrame className="change-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Смена тарифа" />
-      <PlansPair selected={currentPlan === 'lite' ? 'lite' : 'plus'} currentLite={currentPlan === 'lite'} hideIcons onSelect={() => {}} />
+      <PlansPair selected={selectedPlan} currentLite={currentPlan === 'lite'} hideIcons onSelect={setSelectedPlan} />
       <SectionDivider>выберите действие</SectionDivider>
       {canUpgrade && (
-        <>
-          <Card className="change-card">
+        <Card className="change-card upgrade">
             <span className="status-pill green">Апгрейд</span>
             <h2>Вы переходите на <span>Plus</span></h2>
+            <ChangeRow title="Цена" from={money(currentPrice)} to={money(selectedPrice)} />
+            <ChangeRow title="Устройства" from={currentDevices} to={selectedDevices} />
+            <p className="limit-text">Можно докупить до 6 устройств</p>
             <div className="thin-line" />
-            <h3>Доплата за переход</h3>
-            <SummaryLine label="К оплате" value={money(upgradeAmount)} />
-          </Card>
-          <Card className="payment-balance">
-            <IconTile><Wallet size={25} /></IconTile>
-            <div>
-              <p>Основной баланс</p>
-              <strong>{Number(upgradeAmount || 0).toLocaleString('ru-RU')} <span>₽</span></strong>
-              <span>Выберите, чтобы списать с баланса</span>
-            </div>
-            <span className="radio checked" />
-          </Card>
-          <Card className="pay-today">
-            <div>
-              <h2>К оплате сегодня</h2>
-              <p>С учётом баланса</p>
-            </div>
-            <strong>{money(upgradeAmount)}</strong>
+            <h3>Расчет платежа</h3>
+            <SummaryLine label="Осталось по текущему тарифу" value={`${remainingDays} ${pluralRu(remainingDays, 'день', 'дня', 'дней')}`} />
+            <SummaryLine label="Стоимость в месяц" value={money(selectedPrice)} />
+            <SummaryLine label={`С учетом остатка (${remainingDays} ${pluralRu(remainingDays, 'день', 'дня', 'дней')})`} value={`~${money(upgradeAmount)}`} />
             {changeError && <p className="inline-error">{changeError}</p>}
             <PrimaryButton onClick={upgradePlan}>Перейти на Plus <span>{money(upgradeAmount)}</span></PrimaryButton>
           </Card>
-        </>
       )}
-      <Card className="change-card downgrade">
-        <span className="status-pill purple">Даунгрейд</span>
-        <h2>Вы переходите на <span>Lite</span></h2>
-        <div className="notice-box">
-          <CalendarDays size={24} />
-          <div>
-            <p>Переход на Lite</p>
-            <strong>Plus → Lite</strong>
-            <span>Срок подписки сохраняется</span>
+      {canDowngrade && (
+        <Card className="change-card downgrade">
+          <span className="status-pill purple">Даунгрейд</span>
+          <h2>Вы переходите на <span>Lite</span></h2>
+          <div className="notice-box">
+            <CalendarDays size={24} />
+            <div>
+              <p>Смена тарифа будет запланирована</p>
+              <strong>{downgradeDate}</strong>
+              <span>До этой даты у вас останется тариф Plus со всеми его преимуществами.</span>
+            </div>
           </div>
-        </div>
-        <button className="secondary-button purple" onClick={downgradePlan}>Запланировать переход на Lite</button>
-      </Card>
+          <ChangeRow title="Цена" from={money(currentPrice)} to={money(selectedPrice)} />
+          <ChangeRow title="Устройства" from={currentDevices} to={selectedDevices} />
+          <p className="limit-text">Можно докупить до 3 устройств</p>
+          {changeError && <p className="inline-error">{changeError}</p>}
+          <button className="secondary-button purple" onClick={downgradePlan}>Запланировать переход на Lite</button>
+        </Card>
+      )}
+      {selectedPlan === currentPlan && <p className="empty-state">Выберите другой тариф для смены подписки</p>}
     </AppFrame>
   );
 }
