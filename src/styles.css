@@ -1660,7 +1660,7 @@ button svg,
   min-height: 124px;
   padding: 24px 18px 18px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 71px 24px;
+  grid-template-columns: minmax(0, 1fr) 82px 24px;
   column-gap: 14px;
   align-items: center;
   color: #06162c;
@@ -1736,8 +1736,8 @@ button svg,
 }
 
 .balance-hero img {
-  width: 71px;
-  height: 77px;
+  width: 82px;
+  height: 82px;
   object-fit: contain;
 }
 
