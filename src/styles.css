@@ -87,7 +87,7 @@ button svg,
   width: min(100%, 430px);
   height: calc(132px + var(--app-safe-area-top));
   margin: 0 auto;
-  padding: calc(22px + var(--app-safe-area-top)) 16px 4px;
+  padding: calc(16px + var(--app-safe-area-top)) 16px 4px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -3971,7 +3971,7 @@ button svg,
 
   .app-header {
     height: calc(132px + var(--app-safe-area-top));
-    padding-top: calc(24px + var(--app-safe-area-top));
+    padding-top: calc(18px + var(--app-safe-area-top));
   }
 
   .bottom-nav {
