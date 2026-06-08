@@ -1331,8 +1331,8 @@ function ChangePlan({ navigate, activeScreen, mainData }) {
   const [upgradeUnavailable, setUpgradeUnavailable] = useState(false);
   const currentPlan = mainData.plan || '';
   const [selectedPlan, setSelectedPlan] = useState(() => (currentPlan === 'plus' ? 'lite' : 'plus'));
-  const canUpgrade = currentPlan !== 'plus' && selectedPlan === 'plus' && !upgradeUnavailable;
-  const canDowngrade = currentPlan === 'plus' && selectedPlan === 'lite';
+  const showUpgrade = selectedPlan === 'plus';
+  const showDowngrade = selectedPlan === 'lite';
   const currentPrice = tariffCatalog[currentPlan]?.monthPrice || tariffCatalog.lite.monthPrice;
   const selectedPrice = tariffCatalog[selectedPlan]?.monthPrice || tariffCatalog.plus.monthPrice;
   const currentDevices = tariffCatalog[currentPlan]?.devices || tariffCatalog.lite.devices;
@@ -1370,7 +1370,7 @@ function ChangePlan({ navigate, activeScreen, mainData }) {
   }, [currentPlan]);
 
   const upgradePlan = async () => {
-    if (!canUpgrade) {
+    if (upgradeUnavailable) {
       return;
     }
 
@@ -1398,7 +1398,7 @@ function ChangePlan({ navigate, activeScreen, mainData }) {
       <PageTitle title="Смена тарифа" />
       <PlansPair selected={selectedPlan} currentLite={currentPlan === 'lite'} hideIcons onSelect={setSelectedPlan} />
       <SectionDivider>выберите действие</SectionDivider>
-      {canUpgrade && (
+      {showUpgrade && (
         <Card className="change-card upgrade">
             <span className="status-pill green">Апгрейд</span>
             <h2>Вы переходите на <span>Plus</span></h2>
@@ -1414,7 +1414,7 @@ function ChangePlan({ navigate, activeScreen, mainData }) {
             <PrimaryButton onClick={upgradePlan}>Перейти на Plus <span>{money(upgradeAmount)}</span></PrimaryButton>
           </Card>
       )}
-      {canDowngrade && (
+      {showDowngrade && (
         <Card className="change-card downgrade">
           <span className="status-pill purple">Даунгрейд</span>
           <h2>Вы переходите на <span>Lite</span></h2>
@@ -1433,7 +1433,6 @@ function ChangePlan({ navigate, activeScreen, mainData }) {
           <button className="secondary-button purple" onClick={downgradePlan}>Запланировать переход на Lite</button>
         </Card>
       )}
-      {selectedPlan === currentPlan && <p className="empty-state">Выберите другой тариф для смены подписки</p>}
     </AppFrame>
   );
 }
