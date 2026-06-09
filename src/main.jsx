@@ -564,7 +564,7 @@ function BottomNav({ navigate, activeScreen, mainData }) {
 
   const nav = [
     { icon: Users, label: 'Бонусы', route: 'referral', section: 'bonus' },
-    { icon: BookOpen, label: 'Подписка', route: 'tariff-home', section: 'subscription' },
+    { icon: BookOpen, label: 'Подписка', route: 'tariff-plus', section: 'subscription' },
     { icon: Home, label: 'Главная', route: hasActiveSubscription(mainData) ? 'home-active' : 'trial-start', section: 'home' },
     { icon: Headphones, label: 'Поддержка', route: 'support', section: 'support' },
     { icon: UserGlyph, label: 'Профиль', route: 'profile', section: 'profile' },
@@ -966,7 +966,7 @@ function TrialStart({ navigate, activeScreen }) {
           </div>
           <span className="popular"><Sparkles size={12} />Популярный</span>
         </button>
-        <button className="choose-plan-row" onClick={() => navigate('tariff-home')}>
+        <button className="choose-plan-row" onClick={() => navigate('tariff-plus')}>
           <strong>Выбрать подписку</strong>
           <ChevronRight size={24} />
         </button>
@@ -995,8 +995,8 @@ function TrialActive({ navigate, activeScreen }) {
         <div className="progress"><i /></div>
       </Card>
       <SectionDivider>доступные тарифы</SectionDivider>
-      <PlansPair selected="home" includeHome onSelect={(plan) => navigate(tariffCatalog[plan].route)} />
-      <PrimaryButton className="outline-fill" onClick={() => navigate('tariff-home')}>Выбрать подписку</PrimaryButton>
+      <PlansPair selected="plus" includeHome onSelect={(plan) => navigate(tariffCatalog[plan].route)} />
+      <PrimaryButton className="outline-fill" onClick={() => navigate('tariff-plus')}>Выбрать подписку</PrimaryButton>
     </AppFrame>
   );
 }
@@ -1011,8 +1011,8 @@ function TrialExpired({ navigate, activeScreen }) {
         image="trial-expired"
       />
       <SectionDivider>выберите тариф для продолжения</SectionDivider>
-      <PlansPair selected="home" includeHome onSelect={(plan) => navigate(tariffCatalog[plan].route)} />
-      <PrimaryButton onClick={() => navigate('tariff-home')}>Выбрать подписку</PrimaryButton>
+      <PlansPair selected="plus" includeHome onSelect={(plan) => navigate(tariffCatalog[plan].route)} />
+      <PrimaryButton onClick={() => navigate('tariff-plus')}>Выбрать подписку</PrimaryButton>
     </AppFrame>
   );
 }
