@@ -1523,6 +1523,7 @@ button svg,
   width: 16px;
   height: 7px;
   display: block;
+  transform: translateY(-2px);
 }
 
 .limit-text {
