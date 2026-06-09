@@ -25,19 +25,29 @@ export function initTelegramApp() {
 
 function syncSafeArea(webApp) {
   const applySafeArea = () => {
-    setSafeAreaVariable('--tg-safe-area-top', webApp.safeAreaInset?.top);
-    setSafeAreaVariable('--tg-content-safe-area-top', webApp.contentSafeAreaInset?.top);
+    const safeTop = normalizeInset(webApp.safeAreaInset?.top);
+    const contentTop = normalizeInset(webApp.contentSafeAreaInset?.top);
+    const activeTop = webApp.isFullscreen ? Math.max(safeTop, contentTop) : 0;
+
+    setSafeAreaVariable('--tg-safe-area-top', safeTop);
+    setSafeAreaVariable('--tg-content-safe-area-top', contentTop);
+    setSafeAreaVariable('--tg-active-safe-area-top', activeTop);
   };
 
   applySafeArea();
   webApp.onEvent?.('safeAreaChanged', applySafeArea);
   webApp.onEvent?.('contentSafeAreaChanged', applySafeArea);
+  webApp.onEvent?.('fullscreenChanged', applySafeArea);
   window.addEventListener('resize', applySafeArea);
 }
 
 function setSafeAreaVariable(name, value) {
+  document.documentElement.style.setProperty(name, `${normalizeInset(value)}px`);
+}
+
+function normalizeInset(value) {
   const numberValue = Number(value || 0);
-  document.documentElement.style.setProperty(name, `${Math.max(0, numberValue)}px`);
+  return Math.max(0, numberValue);
 }
 
 function getInitDataFromUrl() {
