@@ -341,36 +341,27 @@ button svg,
 }
 
 .features-card h2 {
-  width: 158px;
-  height: 15px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin: 0;
   color: #071426;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 12px;
   line-height: 100%;
   font-weight: 600;
   letter-spacing: 0;
-  text-align: center;
+  text-align: left;
+  white-space: nowrap;
 }
 
 .features-card > p {
-  width: 326px;
-  max-width: 100%;
-  height: 12px;
-  margin: 7px auto 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin: 7px 0 12px;
   color: #a0a6af;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 10px;
   line-height: 100%;
   font-weight: 500;
   letter-spacing: 0;
-  text-align: center;
+  text-align: left;
+  white-space: nowrap;
 }
 
 .feature-row {
