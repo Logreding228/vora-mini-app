@@ -4017,13 +4017,13 @@ button svg,
   align-items: flex-start;
   padding-top: 0;
   padding-bottom: 0;
-  margin-bottom: 18px;
+  margin-bottom: 24px;
 }
 
 .balance-screen .page-title {
   min-height: auto;
   padding-bottom: 0;
-  margin-bottom: 18px;
+  margin-bottom: 24px;
   align-items: center;
 }
 
@@ -4037,7 +4037,7 @@ button svg,
   min-height: auto;
   align-items: flex-start;
   padding-bottom: 0;
-  margin-bottom: 18px;
+  margin-bottom: 24px;
 }
 
 .referral-screen .content {
