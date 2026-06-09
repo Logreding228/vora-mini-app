@@ -806,7 +806,7 @@ button svg,
   text-decoration-line: underline;
   text-decoration-style: dashed;
   text-decoration-color: #ff712d;
-  text-underline-offset: 4px;
+  text-underline-offset: 2px;
   cursor: pointer;
 }
 
@@ -3309,12 +3309,16 @@ button svg,
   font-size: 17px;
 }
 
-.topic-header span {
+.topic-header button {
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: #596371;
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 14px;
+  line-height: 1;
 }
 
 .ticket-tabs {

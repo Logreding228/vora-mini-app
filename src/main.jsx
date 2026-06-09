@@ -966,7 +966,7 @@ function TrialStart({ navigate, activeScreen }) {
           </div>
           <span className="popular"><Sparkles size={12} />Популярный</span>
         </button>
-        <button className="choose-plan-row" onClick={() => navigate('tariff-plus')}>
+        <button className="choose-plan-row" onClick={() => navigate('tariff-home')}>
           <strong>Выбрать подписку</strong>
           <ChevronRight size={24} />
         </button>
@@ -995,8 +995,8 @@ function TrialActive({ navigate, activeScreen }) {
         <div className="progress"><i /></div>
       </Card>
       <SectionDivider>доступные тарифы</SectionDivider>
-      <PlansPair selected="plus" onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
-      <PrimaryButton className="outline-fill" onClick={() => navigate('tariff-plus')}>Выбрать подписку</PrimaryButton>
+      <PlansPair selected="home" includeHome onSelect={(plan) => navigate(tariffCatalog[plan].route)} />
+      <PrimaryButton className="outline-fill" onClick={() => navigate('tariff-home')}>Выбрать подписку</PrimaryButton>
     </AppFrame>
   );
 }
@@ -1011,8 +1011,8 @@ function TrialExpired({ navigate, activeScreen }) {
         image="trial-expired"
       />
       <SectionDivider>выберите тариф для продолжения</SectionDivider>
-      <PlansPair selected="plus" onSelect={(plan) => navigate(plan === 'lite' ? 'tariff-lite' : 'tariff-plus')} />
-      <PrimaryButton onClick={() => navigate('tariff-plus')}>Выбрать подписку</PrimaryButton>
+      <PlansPair selected="home" includeHome onSelect={(plan) => navigate(tariffCatalog[plan].route)} />
+      <PrimaryButton onClick={() => navigate('tariff-home')}>Выбрать подписку</PrimaryButton>
     </AppFrame>
   );
 }
@@ -2092,6 +2092,7 @@ function Stat({ icon: Icon, label, value, tone = 'orange' }) {
 }
 
 function SupportScreen({ navigate, activeScreen }) {
+  const [topicsExpanded, setTopicsExpanded] = useState(true);
   const quick = [
     [AlertTriangle, 'VPN не работает - что делать?', 'Решение за 2 минуты', 'soft-orange'],
     [Download, 'Почему не скачивается приложение?', 'Доступ и установка', 'soft-blue'],
@@ -2117,8 +2118,13 @@ function SupportScreen({ navigate, activeScreen }) {
         {quick.map(([Icon, title, subtitle, tone]) => <TopicRow key={title} icon={Icon} title={title} subtitle={subtitle} tone={tone} onClick={() => navigate('tickets')} />)}
       </Card>
       <Card className="topic-list">
-        <div className="topic-header"><h2>Все темы</h2><span>Свернуть <ChevronUp size={20} /></span></div>
-        {topics.map(([Icon, title, tone]) => <TopicRow key={title} icon={Icon} title={title} tone={tone} onClick={() => navigate('tickets')} />)}
+        <div className="topic-header">
+          <h2>Все темы</h2>
+          <button onClick={() => setTopicsExpanded((value) => !value)}>
+            {topicsExpanded ? 'Свернуть' : 'Развернуть'} {topicsExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </button>
+        </div>
+        {topicsExpanded && topics.map(([Icon, title, tone]) => <TopicRow key={title} icon={Icon} title={title} tone={tone} onClick={() => navigate('tickets')} />)}
       </Card>
       <Card className="help-card">
         <IconTile><HeadphonesGlyph /></IconTile>
