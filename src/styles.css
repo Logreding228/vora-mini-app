@@ -1517,6 +1517,12 @@ button svg,
   color: #06162c;
 }
 
+.move-right {
+  width: 16px;
+  height: 7px;
+  display: block;
+}
+
 .limit-text {
   margin: 4px 0 14px;
   text-align: right;

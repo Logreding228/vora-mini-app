@@ -1442,9 +1442,17 @@ function ChangeRow({ title, from, to }) {
     <div className="change-row">
       <span>{title}</span>
       <strong>{from}</strong>
-      <ArrowRight size={24} />
+      <MoveRightIcon />
       <strong>{to}</strong>
     </div>
+  );
+}
+
+function MoveRightIcon() {
+  return (
+    <svg className="move-right" width="16" height="7" viewBox="0 0 16 7" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M12.5 6.5L15.5 3.5L12.5 0.5M15.5 3.5H0.5" stroke="#021227" strokeOpacity="0.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
