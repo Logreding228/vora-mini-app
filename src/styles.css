@@ -4013,29 +4013,31 @@ button svg,
 }
 
 .screen .page-title {
-  min-height: 78px;
+  min-height: auto;
   align-items: flex-start;
   padding-top: 0;
-  padding-bottom: 18px;
+  padding-bottom: 0;
+  margin-bottom: 18px;
 }
 
 .balance-screen .page-title {
   min-height: auto;
   padding-bottom: 0;
-  margin-bottom: 0;
+  margin-bottom: 18px;
   align-items: center;
 }
 
 .referral-screen .page-title {
-  min-height: 68px;
-  padding-bottom: 12px;
+  min-height: auto;
+  padding-bottom: 0;
 }
 
 .tariff-screen .page-title,
 .referral-screen .page-title {
-  min-height: 78px;
+  min-height: auto;
   align-items: flex-start;
-  padding-bottom: 18px;
+  padding-bottom: 0;
+  margin-bottom: 18px;
 }
 
 .referral-screen .content {
