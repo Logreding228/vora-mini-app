@@ -1780,12 +1780,12 @@ button svg,
 
 .payment-option strong {
   display: block;
-  max-width: 143px;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 14px;
   line-height: 100%;
   font-weight: 500;
   letter-spacing: -0.03em;
+  white-space: nowrap;
 }
 
 .payment-option p {
