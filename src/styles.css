@@ -1655,8 +1655,8 @@ button svg,
   min-height: 124px;
   padding: 24px 18px 18px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 82px 24px;
-  column-gap: 14px;
+  grid-template-columns: minmax(0, 1fr) 100px;
+  column-gap: 18px;
   align-items: center;
   color: #06162c;
   text-align: left;
@@ -1733,6 +1733,7 @@ button svg,
 .balance-hero img {
   width: 82px;
   height: 82px;
+  justify-self: end;
   object-fit: contain;
 }
 
@@ -1747,6 +1748,7 @@ button svg,
 }
 
 .payment-option {
+  position: relative;
   width: 100%;
   min-height: 76px;
   display: grid;
@@ -1756,11 +1758,24 @@ button svg,
   margin: 0;
   padding: 12px 8px;
   border: 1px solid transparent;
-  border-bottom-color: #eeeeef;
   border-radius: 13px;
   background: #ffffff;
   color: #06162c;
   text-align: left;
+}
+
+.payment-option.has-divider::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: -1px;
+  height: 1px;
+  background: #eeeeef;
+}
+
+.payment-option.checked::after {
+  display: none;
 }
 
 .payment-option.checked {

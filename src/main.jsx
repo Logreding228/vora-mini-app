@@ -1538,16 +1538,15 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
           <strong>{Number(mainData.balance || 0).toLocaleString('ru-RU')} <span>₽</span></strong>
         </div>
         <img src={asset('wallet')} alt="" />
-        <ChevronRight size={28} />
         <i />
         <small><span aria-hidden="true">✓</span>Если баланса хватит, подписка продлится автоматически</small>
       </button>
       <Card className="payment-card">
         <h2>Выберите, что хотите оплатить</h2>
-        <PaymentOption iconName="device-add" title="Докупить устройство" subtitle="Активация 1 устройства" price="75 ₽" checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} />
+        <PaymentOption iconName="device-add" title="Докупить устройство" subtitle="Активация 1 устройства" price="75 ₽" checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} divider={false} />
         <PaymentOption iconName="plan-lite" title="Lite - 1 месяц" subtitle="Базовые возможности" price="300 ₽" checked={selectedPayment === 'lite'} onClick={() => setSelectedPayment('lite')} />
         <PaymentOption iconName="plan-home" title="Home - 1 месяц" subtitle="Для тех, кто за границей" price="450 ₽" checked={selectedPayment === 'home'} onClick={() => setSelectedPayment('home')} />
-        <PaymentOption iconName="plan-plus" title="Plus - 1 месяц" subtitle="Максимум возможностей" price="550 ₽" checked={selectedPayment === 'plus'} onClick={() => setSelectedPayment('plus')} />
+        <PaymentOption iconName="plan-plus" title="Plus - 1 месяц" subtitle="Максимум возможностей" price="550 ₽" checked={selectedPayment === 'plus'} onClick={() => setSelectedPayment('plus')} divider={false} />
         <SectionDivider>или ввести сумму вручную</SectionDivider>
         <div className={selectedPayment === 'balance' ? 'input-box selected' : 'input-box'} onClick={() => setSelectedPayment('balance')}>
           <span>Сумма пополнения</span>
@@ -1572,9 +1571,9 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
   );
 }
 
-function PaymentOption({ iconName, title, subtitle, price, checked, onClick }) {
+function PaymentOption({ iconName, title, subtitle, price, checked, onClick, divider = true }) {
   return (
-    <button className={checked ? 'payment-option checked' : 'payment-option'} onClick={onClick}>
+    <button className={`payment-option${checked ? ' checked' : ''}${divider ? ' has-divider' : ''}`} onClick={onClick}>
       <IconTile tone="payment-image"><AssetIcon name={iconName} /></IconTile>
       <div>
         <strong>{title}</strong>
