@@ -1731,10 +1731,11 @@ button svg,
 }
 
 .balance-hero img {
-  width: 82px;
+  width: 76px;
   height: 82px;
   justify-self: end;
   object-fit: contain;
+  transform: translateY(4px);
 }
 
 .payment-card {

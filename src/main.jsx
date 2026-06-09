@@ -1543,7 +1543,7 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
       </button>
       <Card className="payment-card">
         <h2>Выберите, что хотите оплатить</h2>
-        <PaymentOption iconName="device-add" title="Докупить устройство" subtitle="Активация 1 устройства" price="75 ₽" checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} divider={false} />
+        <PaymentOption iconName="device-add" title="Докупить устройство" subtitle="Активация 1 устройства" price="75 ₽" checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} />
         <PaymentOption iconName="plan-lite" title="Lite - 1 месяц" subtitle="Базовые возможности" price="300 ₽" checked={selectedPayment === 'lite'} onClick={() => setSelectedPayment('lite')} />
         <PaymentOption iconName="plan-home" title="Home - 1 месяц" subtitle="Для тех, кто за границей" price="450 ₽" checked={selectedPayment === 'home'} onClick={() => setSelectedPayment('home')} />
         <PaymentOption iconName="plan-plus" title="Plus - 1 месяц" subtitle="Максимум возможностей" price="550 ₽" checked={selectedPayment === 'plus'} onClick={() => setSelectedPayment('plus')} divider={false} />
