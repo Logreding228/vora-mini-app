@@ -5,7 +5,6 @@ import {
   ArrowDown,
   ArrowLeft,
   ArrowLeftRight,
-  ArrowRight,
   ArrowUp,
   Bell,
   BookOpen,
@@ -1708,7 +1707,7 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
             <input value={amount} onChange={(event) => setAmount(event.target.value.replace(/[^\d]/g, ''))} inputMode="numeric" placeholder="0" />
             <b>₽</b>
           </label>
-          <ArrowRight size={22} />
+          <MoveRightIcon />
           <label>
             <span>К подписке</span>
             <input value={days} readOnly />
