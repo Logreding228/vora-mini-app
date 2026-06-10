@@ -1164,9 +1164,13 @@ button svg,
   width: 31px;
   height: 31px;
   border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: #ffffff;
   color: #4f5b68;
   box-shadow: 0 12px 28px rgba(6, 22, 44, 0.08);
+  line-height: 0;
 }
 
 .device-row {
@@ -3326,7 +3330,7 @@ button svg,
 
 .topic-header {
   min-height: 55px;
-  padding: 18px 12px 8px;
+  padding: 0 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -3344,9 +3348,14 @@ button svg,
   color: #596371;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   font-size: 14px;
   line-height: 1;
+}
+
+.topic-header button svg {
+  flex: 0 0 auto;
 }
 
 .ticket-tabs {
