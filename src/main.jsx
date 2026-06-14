@@ -479,8 +479,13 @@ function App() {
   const [telegramUser, setTelegramUser] = useState(null);
   const [mainData, setMainData] = useState(() => normalizeMainData(emptyMainData));
   const [apiNotice, setApiNotice] = useState('');
+  const activeScreenRef = useRef(activeScreen);
   const screen = useMemo(() => screens.find((item) => item.id === activeScreen) || screens[0], [activeScreen]);
   const Screen = screen.component;
+
+  useEffect(() => {
+    activeScreenRef.current = activeScreen;
+  }, [activeScreen]);
 
   useEffect(() => {
     const syncScreen = () => {
@@ -493,30 +498,100 @@ function App() {
 
   useEffect(() => {
     const telegram = initTelegramApp();
+    let isMounted = true;
+    let didAuthenticate = false;
+    let refreshTimer = 0;
+    let refreshInProgress = false;
     setTelegramUser(telegram.user);
 
-    const loadData = async () => {
-      try {
-        await authenticateTelegram(telegram.initData);
-        const data = await api.mainScreen();
-        const normalizedData = normalizeMainData(data);
-        setMainData(normalizedData);
-        if (!hasExplicitScreenHash()) {
-          const nextScreen = hasActiveTrial(normalizedData) ? 'trial-active' : hasActiveSubscription(normalizedData) ? 'home-active' : 'trial-start';
-          setActiveScreen(nextScreen);
-          window.history.replaceState(null, '', `#${nextScreen}`);
-        }
-        setApiNotice('');
-      } catch (error) {
-        setApiNotice(getUiError(error));
-        if (!hasExplicitScreenHash()) {
-          setActiveScreen('trial-start');
-          window.history.replaceState(null, '', '#trial-start');
-        }
+    const syncScreenWithData = (normalizedData, force = false) => {
+      const currentScreen = activeScreenRef.current;
+      const canSyncCurrentScreen = ['trial-start', 'trial-active', 'trial-expired', 'home-active'].includes(currentScreen);
+
+      if (!force && !canSyncCurrentScreen && hasExplicitScreenHash()) {
+        return;
+      }
+
+      const nextScreen = hasActiveTrial(normalizedData) ? 'trial-active' : hasActiveSubscription(normalizedData) ? 'home-active' : 'trial-start';
+
+      if (nextScreen !== currentScreen) {
+        setActiveScreen(nextScreen);
+        window.history.replaceState(null, '', `#${nextScreen}`);
       }
     };
 
+    const loadData = async ({ forceScreenSync = false, silent = false } = {}) => {
+      if (refreshInProgress) {
+        return;
+      }
+
+      refreshInProgress = true;
+
+      try {
+        if (!didAuthenticate) {
+          await authenticateTelegram(telegram.initData);
+          didAuthenticate = true;
+        }
+
+        const data = await api.mainScreen();
+        const normalizedData = normalizeMainData(data);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setMainData(normalizedData);
+        syncScreenWithData(normalizedData, forceScreenSync || !hasExplicitScreenHash());
+        setApiNotice('');
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        if (!silent) {
+          setApiNotice(getUiError(error));
+        }
+
+        if (!hasExplicitScreenHash() && !silent) {
+          setActiveScreen('trial-start');
+          window.history.replaceState(null, '', '#trial-start');
+        }
+      } finally {
+        refreshInProgress = false;
+      }
+    };
+
+    const refreshVisibleData = () => {
+      if (document.visibilityState !== 'hidden') {
+        loadData({ silent: true });
+      }
+    };
+    const listenTelegramEvent = (eventName) => {
+      try {
+        window.Telegram?.WebApp?.onEvent?.(eventName, refreshVisibleData);
+        return () => window.Telegram?.WebApp?.offEvent?.(eventName, refreshVisibleData);
+      } catch {
+        return () => {};
+      }
+    };
+    const removeViewportListener = listenTelegramEvent('viewportChanged');
+    const removeActivatedListener = listenTelegramEvent('activated');
+
     loadData();
+    refreshTimer = window.setInterval(refreshVisibleData, 15000);
+    window.addEventListener('focus', refreshVisibleData);
+    window.addEventListener('pageshow', refreshVisibleData);
+    document.addEventListener('visibilitychange', refreshVisibleData);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(refreshTimer);
+      window.removeEventListener('focus', refreshVisibleData);
+      window.removeEventListener('pageshow', refreshVisibleData);
+      document.removeEventListener('visibilitychange', refreshVisibleData);
+      removeViewportListener();
+      removeActivatedListener();
+    };
   }, []);
 
   const navigate = (id, options = {}) => {
