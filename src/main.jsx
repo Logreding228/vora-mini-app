@@ -143,18 +143,56 @@ const extractUrl = (payload) => {
     return payload.trim();
   }
 
-  return valueDeepByKeys(payload, [
+  const keyedUrl = valueDeepByKeys(payload, [
     'url',
     'link',
     'deeplink',
     'deep_link',
+    'deepLink',
+    'app_url',
+    'appUrl',
+    'client_url',
+    'clientUrl',
     'subscription_url',
     'subscriptionUrl',
     'connect_url',
     'connectUrl',
+    'connection_url',
+    'connectionUrl',
+    'redirect_url',
+    'redirectUrl',
     'payment_url',
     'invoice_url',
   ], '');
+
+  if (keyedUrl) {
+    return String(keyedUrl).trim();
+  }
+
+  const queue = [payload];
+  const seen = new Set();
+
+  while (queue.length) {
+    const source = queue.shift();
+
+    if (!source || typeof source !== 'object' || seen.has(source)) {
+      continue;
+    }
+
+    seen.add(source);
+
+    for (const value of Object.values(source)) {
+      if (typeof value === 'string' && /^[a-z][a-z0-9+.-]*:\/\//i.test(value.trim())) {
+        return value.trim();
+      }
+
+      if (value && typeof value === 'object') {
+        queue.push(value);
+      }
+    }
+  }
+
+  return '';
 };
 const extractQrImage = (payload) => {
   const raw = typeof payload === 'string' ? payload.trim() : valueDeepByKeys(payload, [
@@ -195,6 +233,25 @@ const openPaymentUrl = (url) => {
     window.location.href = targetUrl;
     return;
   }
+};
+const openExternalUrl = (url) => {
+  const targetUrl = extractUrl(url);
+
+  if (!targetUrl) {
+    return false;
+  }
+
+  const link = document.createElement('a');
+  link.href = targetUrl;
+  link.rel = 'noreferrer';
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  window.setTimeout(() => {
+    link.remove();
+  }, 0);
+
+  return true;
 };
 const mapClient = (connection) => (connection === 'v2RayTun' ? 'v2' : 'happ');
 const normalizeDeviceKind = (value) => {
@@ -1406,7 +1463,9 @@ function DeviceSheet({ navigate }) {
         throw new Error('Ссылка для подключения не пришла от сервера');
       }
 
-      window.location.href = url;
+      if (!openExternalUrl(url)) {
+        throw new Error('Не удалось открыть приложение клиента');
+      }
     } catch (error) {
       setConnectError(getUiError(error));
     }
