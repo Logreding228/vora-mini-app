@@ -243,17 +243,32 @@ const openExternalUrl = (url) => {
 
   const link = document.createElement('a');
   link.href = targetUrl;
+  link.target = '_blank';
   link.rel = 'noreferrer';
   link.style.display = 'none';
   document.body.appendChild(link);
   link.click();
+
+  try {
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+  } catch {
+  }
+
+  window.setTimeout(() => {
+    try {
+      window.location.assign(targetUrl);
+    } catch {
+      window.location.href = targetUrl;
+    }
+  }, 50);
+
   window.setTimeout(() => {
     link.remove();
-  }, 0);
+  }, 250);
 
   return true;
 };
-const mapClient = (connection) => (connection === 'v2RayTun' ? 'v2' : 'happ');
+const mapClient = (connection) => (connection === 'v2RayTun' ? 'v2ray' : 'happ');
 const buildClientDeepLink = (connection, url) => {
   const targetUrl = extractUrl(url);
 
@@ -1453,6 +1468,8 @@ function DeviceSheet({ navigate }) {
   const [selectedConnection, setSelectedConnection] = useState('Happ');
   const [systemsExpanded, setSystemsExpanded] = useState(false);
   const [connectError, setConnectError] = useState('');
+  const [connectUrl, setConnectUrl] = useState('');
+  const [connectLoading, setConnectLoading] = useState(false);
   const [qrImage, setQrImage] = useState('');
   const [qrLoading, setQrLoading] = useState(false);
   const [isQrOpen, setQrOpen] = useState(false);
@@ -1466,17 +1483,55 @@ function DeviceSheet({ navigate }) {
   ];
   const client = mapClient(selectedConnection);
 
-  const connectDevice = async () => {
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadConnectUrl = async () => {
+      try {
+        setConnectError('');
+        setConnectUrl('');
+        setConnectLoading(true);
+        const payload = await api.subscriptionUrl(client);
+        const url = buildClientDeepLink(selectedConnection, payload);
+
+        if (isMounted) {
+          setConnectUrl(url);
+          if (!url) {
+            setConnectError('Ссылка для подключения не пришла от сервера');
+          }
+        }
+      } catch (error) {
+        if (isMounted) {
+          setConnectUrl('');
+          setConnectError(getUiError(error));
+        }
+      } finally {
+        if (isMounted) {
+          setConnectLoading(false);
+        }
+      }
+    };
+
+    loadConnectUrl();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [client, selectedConnection]);
+
+  const connectDevice = () => {
     try {
       setConnectError('');
-      const payload = await api.subscriptionUrl(client);
-      const url = buildClientDeepLink(selectedConnection, payload);
 
-      if (!url) {
+      if (connectLoading) {
+        throw new Error('Ссылка еще загружается, нажмите еще раз через секунду');
+      }
+
+      if (!connectUrl) {
         throw new Error('Ссылка для подключения не пришла от сервера');
       }
 
-      if (!openExternalUrl(url)) {
+      if (!openExternalUrl(connectUrl)) {
         throw new Error('Не удалось открыть приложение клиента');
       }
     } catch (error) {
@@ -1498,8 +1553,7 @@ function DeviceSheet({ navigate }) {
         return;
       }
 
-      const urlPayload = await api.subscriptionUrl(client);
-      const url = buildClientDeepLink(selectedConnection, urlPayload) || buildClientDeepLink(selectedConnection, qrPayload);
+      const url = connectUrl || buildClientDeepLink(selectedConnection, qrPayload);
 
       if (!url) {
         throw new Error('QR-код не пришел от сервера');
@@ -1541,7 +1595,7 @@ function DeviceSheet({ navigate }) {
         </Card>
         {connectError && <p className="inline-error">{connectError}</p>}
         <ActionRow icon={CircleHelp} title="Нужна помощь?" subtitle="Краткая инструкция здесь" onClick={() => navigate('support')} />
-        <PrimaryButton onClick={connectDevice}>Подключить</PrimaryButton>
+        <PrimaryButton onClick={connectDevice}>{connectLoading ? 'Готовим подключение' : 'Подключить'}</PrimaryButton>
         <SectionDivider>или</SectionDivider>
         <ActionRow icon={QrCode} title="Подключить на другом устройстве" subtitle="Отсканируйте QR-код камерой устройства" onClick={showQr} />
       </div>
