@@ -307,6 +307,7 @@ const emptyMainData = {
   expired_at: '',
   plan: '',
   stage: '',
+  trialUsed: false,
   subscription_month: 1,
   hwid: {
     used: 0,
@@ -338,6 +339,7 @@ function normalizeMainData(data = emptyMainData) {
     expiredAt: data.expired_at || emptyMainData.expired_at,
     plan,
     stage,
+    trialUsed: Boolean(data.trial_used ?? data.is_trial_used ?? data.trialUsed ?? data.had_trial ?? data.has_trial),
     subscriptionMonth: data.subscription_month || data.last_subscription_month || 1,
     usedDevices: Number(hwid.used ?? hwid.current ?? hwid.count ?? hwidResponse.used ?? hwidResponse.count ?? devices.length ?? 0),
     maxDevices: Number(data.device_limit ?? data.hwid_limit ?? hwid.limit ?? hwid.max ?? hwid.device_limit ?? hwidResponse.limit ?? hwidResponse.max ?? planDeviceLimit),
@@ -496,6 +498,32 @@ function hasActiveTrial(mainData) {
   return hasActiveSubscription(mainData) && (mainData.plan === 'trial' || mainData.stage === 'trial');
 }
 
+function hasExpiredAccess(mainData) {
+  return Boolean(
+    mainData.trialUsed ||
+    mainData.plan === 'trial' ||
+    mainData.stage === 'trial' ||
+    ['expired', 'ended', 'finish', 'finished'].includes(mainData.status) ||
+    (mainData.expiredAt && isPastDate(mainData.expiredAt))
+  );
+}
+
+function getDefaultHomeScreen(mainData) {
+  if (hasActiveTrial(mainData)) {
+    return 'trial-active';
+  }
+
+  if (hasActiveSubscription(mainData)) {
+    return 'home-active';
+  }
+
+  if (mainData.loaded && hasExpiredAccess(mainData)) {
+    return 'trial-expired';
+  }
+
+  return 'trial-start';
+}
+
 function getUiError(error) {
   const message = error instanceof ApiError ? error.message : error?.message || '';
 
@@ -598,7 +626,7 @@ function App() {
         return;
       }
 
-      const nextScreen = hasActiveTrial(normalizedData) ? 'trial-active' : hasActiveSubscription(normalizedData) ? 'home-active' : 'trial-start';
+      const nextScreen = getDefaultHomeScreen(normalizedData);
 
       if (nextScreen !== currentScreen) {
         setActiveScreen(nextScreen);
@@ -795,7 +823,7 @@ function BottomNav({ navigate, activeScreen, mainData }) {
   const nav = [
     { icon: Users, label: 'Бонусы', route: 'referral', section: 'bonus' },
     { icon: BookOpen, label: 'Подписка', route: 'tariff-plus', section: 'subscription' },
-    { icon: Home, label: 'Главная', route: hasActiveSubscription(mainData) ? 'home-active' : 'trial-start', section: 'home' },
+    { icon: Home, label: 'Главная', route: getDefaultHomeScreen(mainData), section: 'home' },
     { icon: Headphones, label: 'Поддержка', route: 'support', section: 'support' },
     { icon: UserGlyph, label: 'Профиль', route: 'profile', section: 'profile' },
   ];
