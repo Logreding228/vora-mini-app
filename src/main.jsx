@@ -254,6 +254,19 @@ const openExternalUrl = (url) => {
   return true;
 };
 const mapClient = (connection) => (connection === 'v2RayTun' ? 'v2' : 'happ');
+const buildClientDeepLink = (connection, url) => {
+  const targetUrl = extractUrl(url);
+
+  if (!targetUrl) {
+    return '';
+  }
+
+  if (connection === 'v2RayTun' && !/^v2raytun:\/\//i.test(targetUrl)) {
+    return `v2raytun://import/${encodeURIComponent(targetUrl)}`;
+  }
+
+  return targetUrl;
+};
 const normalizeDeviceKind = (value) => {
   const name = String(value || '').toLowerCase();
 
@@ -1457,7 +1470,7 @@ function DeviceSheet({ navigate }) {
     try {
       setConnectError('');
       const payload = await api.subscriptionUrl(client);
-      const url = extractUrl(payload);
+      const url = buildClientDeepLink(selectedConnection, payload);
 
       if (!url) {
         throw new Error('Ссылка для подключения не пришла от сервера');
@@ -1486,7 +1499,7 @@ function DeviceSheet({ navigate }) {
       }
 
       const urlPayload = await api.subscriptionUrl(client);
-      const url = extractUrl(urlPayload) || extractUrl(qrPayload);
+      const url = buildClientDeepLink(selectedConnection, urlPayload) || buildClientDeepLink(selectedConnection, qrPayload);
 
       if (!url) {
         throw new Error('QR-код не пришел от сервера');
