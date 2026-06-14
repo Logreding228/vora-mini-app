@@ -131,6 +131,12 @@ function buildUrl(path, query) {
 }
 
 async function parseResponse(response) {
+  const contentType = response.headers.get('content-type') || '';
+
+  if (/^image\//i.test(contentType)) {
+    return URL.createObjectURL(await response.blob());
+  }
+
   const text = await response.text();
 
   if (!text) {

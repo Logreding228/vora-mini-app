@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import QRCode from 'qrcode';
 import {
   AlertTriangle,
   ArrowDown,
@@ -107,14 +108,92 @@ const formatDateTime = (value) => {
     minute: '2-digit',
   }).format(new Date(value));
 };
-const openPaymentUrl = (url) => {
-  if (typeof url === 'string' && url) {
-    window.location.href = url;
-    return;
+const valueDeepByKeys = (payload, keys, fallback = '') => {
+  const queue = [payload];
+  const seen = new Set();
+
+  while (queue.length) {
+    const source = queue.shift();
+
+    if (!source || typeof source !== 'object' || seen.has(source)) {
+      continue;
+    }
+
+    seen.add(source);
+
+    for (const key of keys) {
+      const value = source[key];
+
+      if (value !== undefined && value !== null && value !== '') {
+        return value;
+      }
+    }
+
+    Object.values(source).forEach((value) => {
+      if (value && typeof value === 'object') {
+        queue.push(value);
+      }
+    });
   }
 
-  if (url?.url || url?.payment_url || url?.invoice_url) {
-    window.location.href = url.url || url.payment_url || url.invoice_url;
+  return fallback;
+};
+const extractUrl = (payload) => {
+  if (typeof payload === 'string') {
+    return payload.trim();
+  }
+
+  return valueDeepByKeys(payload, [
+    'url',
+    'link',
+    'deeplink',
+    'deep_link',
+    'subscription_url',
+    'subscriptionUrl',
+    'connect_url',
+    'connectUrl',
+    'payment_url',
+    'invoice_url',
+  ], '');
+};
+const extractQrImage = (payload) => {
+  const raw = typeof payload === 'string' ? payload.trim() : valueDeepByKeys(payload, [
+    'qr',
+    'qrcode',
+    'qr_code',
+    'qrCode',
+    'image',
+    'image_base64',
+    'base64',
+    'data',
+    'url',
+    'link',
+  ], '');
+
+  if (!raw) {
+    return '';
+  }
+
+  if (/^(data:image\/|blob:)/i.test(raw) || /^https?:\/\/.+\.(png|jpe?g|webp|svg)(\?|#|$)/i.test(raw)) {
+    return raw;
+  }
+
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) {
+    return '';
+  }
+
+  if (/^<svg[\s>]/i.test(raw)) {
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(raw)}`;
+  }
+
+  return `data:image/png;base64,${raw.replace(/^data:image\/\w+;base64,/, '')}`;
+};
+const openPaymentUrl = (url) => {
+  const targetUrl = extractUrl(url);
+
+  if (targetUrl) {
+    window.location.href = targetUrl;
+    return;
   }
 };
 const mapClient = (connection) => (connection === 'v2RayTun' ? 'v2' : 'happ');
@@ -142,6 +221,7 @@ const emptyMainData = {
   ref_balance: '0.00',
   expired_at: '',
   plan: '',
+  stage: '',
   subscription_month: 1,
   hwid: {
     used: 0,
@@ -153,6 +233,9 @@ const emptyMainData = {
 function normalizeMainData(data = emptyMainData) {
   const hwid = data.hwid || {};
   const hwidResponse = hwid.response || {};
+  const plan = String(data.plan || data.tariff || data.subscription_plan || emptyMainData.plan).toLowerCase();
+  const stage = String(data.stage || data.stage_notification || data.subscription_stage || '').toLowerCase();
+  const planDeviceLimit = tariffCatalog[plan]?.devices || (plan === 'trial' ? tariffCatalog.plus.devices : emptyMainData.hwid.limit);
   const rawDevices = Array.isArray(hwid.devices) ? hwid.devices : Array.isArray(hwidResponse.devices) ? hwidResponse.devices : Array.isArray(hwid) ? hwid : [];
   const devices = rawDevices.length ? rawDevices.map((device, index) => ({
     id: device.hwid || device.id || device.uuid || `device-${index}`,
@@ -168,10 +251,11 @@ function normalizeMainData(data = emptyMainData) {
     balance: data.balance ?? emptyMainData.balance,
     refBalance: data.ref_balance ?? emptyMainData.ref_balance,
     expiredAt: data.expired_at || emptyMainData.expired_at,
-    plan: String(data.plan || data.tariff || emptyMainData.plan).toLowerCase(),
+    plan,
+    stage,
     subscriptionMonth: data.subscription_month || data.last_subscription_month || 1,
-    usedDevices: Number(hwid.used ?? hwid.current ?? hwid.count ?? hwidResponse.total ?? devices.length ?? 0),
-    maxDevices: Number(hwid.limit ?? hwid.max ?? hwid.total ?? hwidResponse.limit ?? Math.max(2, devices.length)),
+    usedDevices: Number(hwid.used ?? hwid.current ?? hwid.count ?? hwidResponse.used ?? hwidResponse.count ?? devices.length ?? 0),
+    maxDevices: Number(data.device_limit ?? data.hwid_limit ?? hwid.limit ?? hwid.max ?? hwid.device_limit ?? hwidResponse.limit ?? hwidResponse.max ?? planDeviceLimit),
     devices,
   };
 }
@@ -189,37 +273,6 @@ const valueByKeys = (sources, keys, fallback = '') => {
         return value;
       }
     }
-  }
-
-  return fallback;
-};
-
-const valueDeepByKeys = (payload, keys, fallback = '') => {
-  const queue = [payload];
-  const seen = new Set();
-
-  while (queue.length) {
-    const source = queue.shift();
-
-    if (!source || typeof source !== 'object' || seen.has(source)) {
-      continue;
-    }
-
-    seen.add(source);
-
-    for (const key of keys) {
-      const value = source[key];
-
-      if (value !== undefined && value !== null && value !== '') {
-        return value;
-      }
-    }
-
-    Object.values(source).forEach((value) => {
-      if (value && typeof value === 'object') {
-        queue.push(value);
-      }
-    });
   }
 
   return fallback;
@@ -354,6 +407,10 @@ function hasActiveSubscription(mainData) {
   return mainData.status === 'active' && !isPastDate(mainData.expiredAt);
 }
 
+function hasActiveTrial(mainData) {
+  return hasActiveSubscription(mainData) && (mainData.plan === 'trial' || mainData.stage === 'trial');
+}
+
 function getUiError(error) {
   const message = error instanceof ApiError ? error.message : error?.message || '';
 
@@ -445,7 +502,7 @@ function App() {
         const normalizedData = normalizeMainData(data);
         setMainData(normalizedData);
         if (!hasExplicitScreenHash()) {
-          const nextScreen = hasActiveSubscription(normalizedData) ? 'home-active' : 'trial-start';
+          const nextScreen = hasActiveTrial(normalizedData) ? 'trial-active' : hasActiveSubscription(normalizedData) ? 'home-active' : 'trial-start';
           setActiveScreen(nextScreen);
           window.history.replaceState(null, '', `#${nextScreen}`);
         }
@@ -975,11 +1032,55 @@ function TrialStart({ navigate, activeScreen }) {
 }
 
 function TrialActive({ navigate, activeScreen }) {
+  const [selectedMethod, setSelectedMethod] = useState('card');
+  const [promoCode, setPromoCode] = useState('');
+  const [promoApplied, setPromoApplied] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
+  const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
+
+  const applyPromo = () => {
+    if (promoApplied) {
+      setPromoCode('');
+      setPromoApplied(false);
+      return;
+    }
+
+    setPromoApplied(Boolean(promoCode.trim()));
+  };
+
+  const submitPromoWithEnter = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      applyPromo();
+      event.currentTarget.blur();
+    }
+  };
+
+  const buyPlus = async () => {
+    try {
+      setPaymentError('');
+      const url = await api.createInvoice({
+        provider,
+        type: 'SUBSCRIPTION',
+        payload: {
+          plan: 'plus',
+          subscription_month: 1,
+          hwid: tariffCatalog.plus.devices,
+          currency: selectedMethod === 'crypto' ? 'USDT' : 'RUB',
+          promo_code: promoApplied ? promoCode.trim() : undefined,
+        },
+      });
+      openPaymentUrl(url);
+    } catch (error) {
+      setPaymentError(getUiError(error));
+    }
+  };
+
   return (
     <AppFrame className="trial-screen compact" navigate={navigate} activeScreen={activeScreen}>
       <HeroOffer
         title="Доступ активен"
-        accent="Пробный доступ"
+        accent="24 часа за 30₽"
         subtitle="Полный доступ ко всем возможностям тарифа"
         image="trial-clock"
       />
@@ -995,7 +1096,19 @@ function TrialActive({ navigate, activeScreen }) {
       </Card>
       <SectionDivider>доступные тарифы</SectionDivider>
       <PlansPair selected="plus" includeHome onSelect={(plan) => navigate(tariffCatalog[plan].route)} />
-      <PrimaryButton className="outline-fill" onClick={() => navigate('tariff-plus')}>Выбрать подписку</PrimaryButton>
+      <div className="payment-methods trial-methods">
+        <MethodCard title="Банковская карта" subtitle="Visa, Mastercard, Мир" checked={selectedMethod === 'card'} onClick={() => setSelectedMethod('card')} />
+        <MethodCard title="Криптовалюта" subtitle="USDT, BTC, ETH и др." checked={selectedMethod === 'crypto'} onClick={() => setSelectedMethod('crypto')} />
+      </div>
+      <div className="promo trial-promo">
+        <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
+        <div>
+          <input value={promoCode} onFocus={keepFocusedFieldVisible} onKeyDown={submitPromoWithEnter} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); }} placeholder="Введите промокод" enterKeyHint="done" />
+          <button onClick={applyPromo} disabled={!promoApplied && !promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
+        </div>
+      </div>
+      {paymentError && <p className="inline-error">{paymentError}</p>}
+      <PrimaryButton onClick={buyPlus}>Подключить за <span>550 ₽</span></PrimaryButton>
     </AppFrame>
   );
 }
@@ -1176,13 +1289,13 @@ function DevicesCard({ mainData }) {
 function DeviceSheet({ navigate }) {
   useBodyScrollLock(true);
 
-  const cameraInputRef = useRef(null);
   const swipeDismiss = useSwipeDismiss(() => navigate('home-active'));
   const [selectedSystem, setSelectedSystem] = useState('iOS');
   const [selectedConnection, setSelectedConnection] = useState('Happ');
   const [systemsExpanded, setSystemsExpanded] = useState(false);
   const [connectError, setConnectError] = useState('');
-  const [scanFileName, setScanFileName] = useState('');
+  const [qrImage, setQrImage] = useState('');
+  const [qrLoading, setQrLoading] = useState(false);
   const systems = [
     ['iOS', 'apple'],
     ['Android', 'android'],
@@ -1196,15 +1309,44 @@ function DeviceSheet({ navigate }) {
   const connectDevice = async () => {
     try {
       setConnectError('');
-      const url = await api.subscriptionUrl(client);
-      openPaymentUrl(url);
+      const payload = await api.subscriptionUrl(client);
+      const url = extractUrl(payload);
+
+      if (!url) {
+        throw new Error('Ссылка для подключения не пришла от сервера');
+      }
+
+      window.location.href = url;
     } catch (error) {
       setConnectError(getUiError(error));
     }
   };
 
   const showQr = async () => {
-    cameraInputRef.current?.click();
+    try {
+      setConnectError('');
+      setQrLoading(true);
+      const qrPayload = await api.subscriptionQr(client);
+      const qrSource = extractQrImage(qrPayload);
+
+      if (qrSource && !/^data:image\/png;base64,https?:/i.test(qrSource)) {
+        setQrImage(qrSource);
+        return;
+      }
+
+      const urlPayload = await api.subscriptionUrl(client);
+      const url = extractUrl(urlPayload) || extractUrl(qrPayload);
+
+      if (!url) {
+        throw new Error('QR-код не пришел от сервера');
+      }
+
+      setQrImage(await QRCode.toDataURL(url, { margin: 1, width: 280 }));
+    } catch (error) {
+      setConnectError(getUiError(error));
+    } finally {
+      setQrLoading(false);
+    }
   };
 
   return (
@@ -1233,12 +1375,15 @@ function DeviceSheet({ navigate }) {
           <RadioRow title="v2RayTun" subtitle="Ручная настройка" checked={selectedConnection === 'v2RayTun'} icon="v2ray" onClick={() => setSelectedConnection('v2RayTun')} />
         </Card>
         {connectError && <p className="inline-error">{connectError}</p>}
-        {scanFileName && <p className="inline-error neutral">Камера открыта: {scanFileName}</p>}
         <ActionRow icon={CircleHelp} title="Нужна помощь?" subtitle="Краткая инструкция здесь" onClick={() => navigate('support')} />
         <PrimaryButton onClick={connectDevice}>Подключить</PrimaryButton>
         <SectionDivider>или</SectionDivider>
         <ActionRow icon={QrCode} title="Подключить на другом устройстве" subtitle="Отсканируйте QR-код камерой устройства" onClick={showQr} />
-        <input className="camera-input" ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={(event) => setScanFileName(event.target.files?.[0]?.name || '')} />
+        {(qrLoading || qrImage) && (
+          <Card className="qr-card">
+            {qrLoading ? <p>Готовим QR-код</p> : <img src={qrImage} alt="QR-код подключения" />}
+          </Card>
+        )}
       </div>
     </div>
   );
@@ -1885,6 +2030,34 @@ function useSwipeDismiss(onClose) {
   const pointerIdRef = useRef(null);
   const isDraggingRef = useRef(false);
 
+  const beginDrag = (clientY, pointerId = null) => {
+    isDraggingRef.current = true;
+    pointerIdRef.current = pointerId;
+    startYRef.current = clientY;
+    currentYRef.current = 0;
+
+    const sheet = sheetRef.current;
+
+    if (sheet) {
+      sheet.style.transition = 'none';
+    }
+  };
+
+  const moveDrag = (clientY) => {
+    if (!isDraggingRef.current) {
+      return;
+    }
+
+    const deltaY = Math.max(0, clientY - startYRef.current);
+    const sheet = sheetRef.current;
+    currentYRef.current = deltaY;
+
+    if (sheet) {
+      sheet.style.transform = `translate3d(0, ${deltaY}px, 0)`;
+      sheet.style.opacity = String(Math.max(0.76, 1 - deltaY / 360));
+    }
+  };
+
   const resetSheet = () => {
     const sheet = sheetRef.current;
 
@@ -1942,17 +2115,7 @@ function useSwipeDismiss(onClose) {
           return;
         }
 
-        isDraggingRef.current = true;
-        pointerIdRef.current = event.pointerId;
-        startYRef.current = event.clientY;
-        currentYRef.current = 0;
-
-        const sheet = sheetRef.current;
-
-        if (sheet) {
-          sheet.style.transition = 'none';
-        }
-
+        beginDrag(event.clientY, event.pointerId);
         event.currentTarget.setPointerCapture?.(event.pointerId);
       },
       onPointerMove: (event) => {
@@ -1960,19 +2123,20 @@ function useSwipeDismiss(onClose) {
           return;
         }
 
-        const deltaY = Math.max(0, event.clientY - startYRef.current);
-        const sheet = sheetRef.current;
-        currentYRef.current = deltaY;
-
-        if (sheet) {
-          sheet.style.transform = `translate3d(0, ${deltaY}px, 0)`;
-          sheet.style.opacity = String(Math.max(0.76, 1 - deltaY / 360));
-        }
-
+        moveDrag(event.clientY);
         event.preventDefault();
       },
       onPointerUp: finishDrag,
       onPointerCancel: finishDrag,
+      onTouchStart: (event) => {
+        beginDrag(event.touches[0]?.clientY || 0);
+      },
+      onTouchMove: (event) => {
+        moveDrag(event.touches[0]?.clientY || 0);
+        event.preventDefault();
+      },
+      onTouchEnd: finishDrag,
+      onTouchCancel: finishDrag,
     },
   };
 }
