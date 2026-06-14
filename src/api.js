@@ -158,6 +158,54 @@ function getErrorMessage(payload) {
   return payload?.detail || payload?.message || (typeof payload === 'string' ? payload : 'Запрос не выполнен');
 }
 
+function normalizePaymentType(type) {
+  const values = {
+    BALANCE: 'balance',
+    SUBSCRIPTION: 'subscription',
+    HWID: 'hwid',
+    TRIAL: 'trial',
+    PLAN_UPGRADE: 'plan_upgrade',
+  };
+
+  return values[type] || String(type || '').toLowerCase();
+}
+
+function uppercasePaymentType(type) {
+  const values = {
+    balance: 'BALANCE',
+    subscription: 'SUBSCRIPTION',
+    hwid: 'HWID',
+    trial: 'TRIAL',
+    plan_upgrade: 'PLAN_UPGRADE',
+  };
+  const normalizedType = normalizePaymentType(type);
+
+  return values[normalizedType] || String(type || '').toUpperCase();
+}
+
+async function createTypedInvoice({ provider, type, payload }) {
+  const path = `/pay/create_invoice/${provider}`;
+
+  try {
+    return await request(path, {
+      method: 'POST',
+      query: { type: normalizePaymentType(type) },
+      body: payload,
+    });
+  } catch (error) {
+    if (error instanceof ApiError && [400, 422, 500].includes(error.status)) {
+      return request(path, {
+        method: 'POST',
+        query: { type: uppercasePaymentType(type) },
+        body: payload,
+        retry: false,
+      });
+    }
+
+    throw error;
+  }
+}
+
 function isTelegramAuthError(error) {
   return error instanceof ApiError && (error.status === 401 || error.status === 403) && /hash|auth|token|signature/i.test(error.message);
 }
@@ -318,14 +366,11 @@ export const api = {
   history: (type) => request('/users/history_pay_screen', { query: { type } }),
   upgradePrice: () => request('/users/upgrade_plan_price/'),
   downgradePlan: () => request('/users/downgrade_plan/', { method: 'POST' }),
-  createInvoice: ({ provider, type, payload }) => request(`/pay/create_invoice/${provider}`, {
-    method: 'POST',
-    query: { type },
-    body: payload,
-  }),
-  createTrialInvoice: ({ provider, currency }) => request(`/pay/create_invoice/trial/${provider}`, {
-    method: 'POST',
-    query: provider === 'heleket' ? { currency } : undefined,
+  createInvoice: createTypedInvoice,
+  createTrialInvoice: ({ provider, currency }) => createTypedInvoice({
+    provider,
+    type: 'trial',
+    payload: { plan: 'trial', amount: 30, currency: currency || 'RUB' },
   }),
   createUpgradeInvoice: ({ provider, currency }) => request(`/pay/create_invoice/upgrade/${provider}`, {
     method: 'POST',

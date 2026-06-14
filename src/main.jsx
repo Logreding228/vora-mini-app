@@ -1296,6 +1296,7 @@ function DeviceSheet({ navigate }) {
   const [connectError, setConnectError] = useState('');
   const [qrImage, setQrImage] = useState('');
   const [qrLoading, setQrLoading] = useState(false);
+  const [isQrOpen, setQrOpen] = useState(false);
   const systems = [
     ['iOS', 'apple'],
     ['Android', 'android'],
@@ -1325,6 +1326,8 @@ function DeviceSheet({ navigate }) {
   const showQr = async () => {
     try {
       setConnectError('');
+      setQrImage('');
+      setQrOpen(true);
       setQrLoading(true);
       const qrPayload = await api.subscriptionQr(client);
       const qrSource = extractQrImage(qrPayload);
@@ -1343,6 +1346,7 @@ function DeviceSheet({ navigate }) {
 
       setQrImage(await QRCode.toDataURL(url, { margin: 1, width: 280 }));
     } catch (error) {
+      setQrOpen(false);
       setConnectError(getUiError(error));
     } finally {
       setQrLoading(false);
@@ -1379,12 +1383,19 @@ function DeviceSheet({ navigate }) {
         <PrimaryButton onClick={connectDevice}>Подключить</PrimaryButton>
         <SectionDivider>или</SectionDivider>
         <ActionRow icon={QrCode} title="Подключить на другом устройстве" subtitle="Отсканируйте QR-код камерой устройства" onClick={showQr} />
-        {(qrLoading || qrImage) && (
-          <Card className="qr-card">
-            {qrLoading ? <p>Готовим QR-код</p> : <img src={qrImage} alt="QR-код подключения" />}
-          </Card>
-        )}
       </div>
+      {isQrOpen && (
+        <div className="qr-modal-overlay" onClick={(event) => { event.stopPropagation(); setQrOpen(false); }}>
+          <div className="qr-modal" onClick={(event) => event.stopPropagation()}>
+            <button type="button" onClick={() => setQrOpen(false)} aria-label="Закрыть QR-код"><ArrowLeft size={20} /></button>
+            <h3>QR-код подключения</h3>
+            <p>Откройте камеру на другом устройстве и отсканируйте код</p>
+            <div className="qr-modal-box">
+              {qrLoading ? <span>Готовим QR-код</span> : <img src={qrImage} alt="QR-код подключения" />}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
