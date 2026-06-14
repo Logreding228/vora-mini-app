@@ -479,6 +479,7 @@ function App() {
   const [telegramUser, setTelegramUser] = useState(null);
   const [mainData, setMainData] = useState(() => normalizeMainData(emptyMainData));
   const [apiNotice, setApiNotice] = useState('');
+  const [isInitialDataReady, setInitialDataReady] = useState(false);
   const activeScreenRef = useRef(activeScreen);
   const screen = useMemo(() => screens.find((item) => item.id === activeScreen) || screens[0], [activeScreen]);
   const Screen = screen.component;
@@ -543,6 +544,7 @@ function App() {
         setMainData(normalizedData);
         syncScreenWithData(normalizedData, forceScreenSync || !hasExplicitScreenHash());
         setApiNotice('');
+        setInitialDataReady(true);
       } catch (error) {
         if (!isMounted) {
           return;
@@ -555,6 +557,10 @@ function App() {
         if (!hasExplicitScreenHash() && !silent) {
           setActiveScreen('trial-start');
           window.history.replaceState(null, '', '#trial-start');
+        }
+
+        if (!silent) {
+          setInitialDataReady(true);
         }
       } finally {
         refreshInProgress = false;
@@ -624,10 +630,18 @@ function App() {
   return (
     <div className="workspace">
       <main className="phone">
-        <div className={activeScreen.startsWith('tariff-') ? 'page-transition no-page-animation' : 'page-transition'} key={activeScreen}>
-          <Screen navigate={navigate} activeScreen={activeScreen} mainData={mainData} telegramUser={telegramUser} apiNotice={apiNotice} />
-        </div>
-        <BottomNav navigate={navigate} activeScreen={activeScreen} mainData={mainData} />
+        {isInitialDataReady ? (
+          <>
+            <div className={activeScreen.startsWith('tariff-') ? 'page-transition no-page-animation' : 'page-transition'} key={activeScreen}>
+              <Screen navigate={navigate} activeScreen={activeScreen} mainData={mainData} telegramUser={telegramUser} apiNotice={apiNotice} />
+            </div>
+            <BottomNav navigate={navigate} activeScreen={activeScreen} mainData={mainData} />
+          </>
+        ) : (
+          <div className="initial-loader">
+            <img src={asset('logo')} alt="VORA" />
+          </div>
+        )}
       </main>
     </div>
   );
