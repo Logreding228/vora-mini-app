@@ -45,6 +45,7 @@ const asset = (name) => `${import.meta.env.BASE_URL}assets/${name}.png`;
 const money = (value, fallback = '0') => `${Number(value ?? fallback).toLocaleString('ru-RU')} ₽`;
 let trialPrice = null;
 let devicePrice = 75;
+let planPricingDebug = {};
 const compactMoney = (value) => `${Number(value).toLocaleString('ru-RU')}₽`;
 const trialPriceText = () => (trialPrice === null ? '...' : compactMoney(trialPrice));
 const trialMoneyText = () => (trialPrice === null ? 'Цена загружается' : money(trialPrice));
@@ -181,12 +182,28 @@ const applyPlanPricing = (plan, payload) => {
 const loadPlanPricing = async () => {
   const plans = ['trial', 'lite', 'home', 'plus'];
   const results = await Promise.allSettled(plans.map((plan) => api.plan(plan)));
+  const debug = {};
 
   results.forEach((result, index) => {
+    const plan = plans[index];
+
     if (result.status === 'fulfilled') {
-      applyPlanPricing(plans[index], result.value);
+      debug[plan] = {
+        status: 'fulfilled',
+        payload: result.value,
+      };
+      applyPlanPricing(plan, result.value);
+    } else {
+      debug[plan] = {
+        status: 'rejected',
+        error: result.reason instanceof ApiError
+          ? { status: result.reason.status, message: result.reason.message, payload: result.reason.payload }
+          : { message: result.reason?.message || String(result.reason) },
+      };
     }
   });
+
+  planPricingDebug = debug;
 };
 const extractUrl = (payload) => {
   if (typeof payload === 'string') {
@@ -909,6 +926,24 @@ function MainScreenDebug({ rawMainData, mainData, activeScreen }) {
     normalized_limit: mainData.maxDevices,
     normalized_devices_length: mainData.devices.length,
   };
+  const pricingDebug = {
+    normalized: {
+      trialPrice,
+      trialPriceText: trialPriceText(),
+      trialMoneyText: trialMoneyText(),
+      devicePrice,
+      lite: tariffCatalog.lite.monthPrice,
+      home: tariffCatalog.home.monthPrice,
+      plus: tariffCatalog.plus.monthPrice,
+      liteDevices: tariffCatalog.lite.devices,
+      homeDevices: tariffCatalog.home.devices,
+      plusDevices: tariffCatalog.plus.devices,
+      liteExtraDevices: tariffCatalog.lite.extraDevices,
+      homeExtraDevices: tariffCatalog.home.extraDevices,
+      plusExtraDevices: tariffCatalog.plus.extraDevices,
+    },
+    raw: planPricingDebug,
+  };
 
   return (
     <section className="main-debug-panel">
@@ -926,6 +961,10 @@ function MainScreenDebug({ rawMainData, mainData, activeScreen }) {
         <p><span>expired_at</span><strong>{mainData.expiredAt || 'empty'}</strong></p>
       </div>
       <pre>{JSON.stringify(deviceDebug, null, 2)}</pre>
+      <details open>
+        <summary>pricing debug</summary>
+        <pre>{JSON.stringify(pricingDebug, null, 2)}</pre>
+      </details>
       <details>
         <summary>raw main_screen</summary>
         <pre>{JSON.stringify(rawMainData, null, 2)}</pre>
