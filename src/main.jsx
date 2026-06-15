@@ -43,16 +43,11 @@ import './styles.css';
 
 const asset = (name) => `${import.meta.env.BASE_URL}assets/${name}.png`;
 const money = (value, fallback = '0') => `${Number(value ?? fallback).toLocaleString('ru-RU')} ₽`;
-const runtimeConfig = window.__VORA_CONFIG__ || {};
-const numberFromConfig = (runtimeKey, envKey, fallback) => {
-  const value = runtimeConfig[runtimeKey] ?? import.meta.env[envKey] ?? fallback;
-  const number = Number(value);
-
-  return Number.isFinite(number) ? number : fallback;
-};
-let trialPrice = numberFromConfig('TRIAL_PRICE', 'VITE_TRIAL_PRICE', 30);
+let trialPrice = null;
 let devicePrice = 75;
 const compactMoney = (value) => `${Number(value).toLocaleString('ru-RU')}₽`;
+const trialPriceText = () => (trialPrice === null ? '...' : compactMoney(trialPrice));
+const trialMoneyText = () => (trialPrice === null ? 'Цена загружается' : money(trialPrice));
 const pluralRu = (value, one, few, many) => {
   const mod10 = value % 10;
   const mod100 = value % 100;
@@ -154,9 +149,20 @@ const numberDeepByKeys = (payload, keys, fallback) => {
 
   return Number.isFinite(number) ? number : fallback;
 };
+const nullableNumberDeepByKeys = (payload, keys) => {
+  const value = valueDeepByKeys(payload, keys, null);
+
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number : null;
+};
 const applyPlanPricing = (plan, payload) => {
   if (plan === 'trial') {
-    trialPrice = numberDeepByKeys(payload, ['price', 'amount', 'total', 'month_price', 'monthly_price'], trialPrice);
+    trialPrice = nullableNumberDeepByKeys(payload, ['price', 'amount', 'total', 'month_price', 'monthly_price']);
     return;
   }
 
@@ -1215,6 +1221,12 @@ function TrialStart({ navigate, activeScreen }) {
   const startTrial = async () => {
     try {
       setPaymentError('');
+
+      if (trialPrice === null) {
+        setPaymentError('Цена пробного периода еще не пришла от сервера');
+        return;
+      }
+
       const url = await api.createTrialInvoice({
         provider,
         currency: selectedMethod === 'crypto' ? 'USDT' : undefined,
@@ -1230,7 +1242,7 @@ function TrialStart({ navigate, activeScreen }) {
     <AppFrame className="trial-screen" navigate={navigate} activeScreen={activeScreen}>
       <HeroOffer
         title="Попробуйте VORA"
-        accent={`24 часа за ${compactMoney(trialPrice)}`}
+        accent={`24 часа за ${trialPriceText()}`}
         subtitle="Полный доступ ко всем возможностям тарифа"
         image="trial-check"
       />
@@ -1254,7 +1266,7 @@ function TrialStart({ navigate, activeScreen }) {
         </div>
       </div>
       {paymentError && <p className="inline-error">{paymentError}</p>}
-      <PrimaryButton onClick={startTrial}>Начать за <span>{money(trialPrice)}</span></PrimaryButton>
+      <PrimaryButton onClick={startTrial}>Начать за <span>{trialMoneyText()}</span></PrimaryButton>
       <SectionDivider>или оформите подписку сразу</SectionDivider>
       <Card className="trial-plan-list">
         <button onClick={() => navigate('tariff-lite')}>
@@ -1330,7 +1342,7 @@ function TrialActive({ navigate, activeScreen }) {
     <AppFrame className="trial-screen compact" navigate={navigate} activeScreen={activeScreen}>
       <HeroOffer
         title="Доступ активен"
-        accent={`24 часа за ${compactMoney(trialPrice)}`}
+        accent={`24 часа за ${trialPriceText()}`}
         subtitle="Полный доступ ко всем возможностям тарифа"
         image="trial-clock"
       />
