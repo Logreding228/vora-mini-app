@@ -125,6 +125,12 @@ button svg,
   line-height: 0;
 }
 
+/* В компактном режиме прижимаем кнопку закрытия к логотипу */
+.is-compact .close-screen {
+  top: 36px;
+  transform: translateY(0);
+}
+
 .back-screen {
   position: absolute;
   left: 20px;
@@ -140,6 +146,12 @@ button svg,
   box-shadow: 0 12px 34px rgba(6, 22, 44, 0.05);
   transform: translateY(-50%);
   line-height: 0;
+}
+
+/* В компактном режиме прижимаем стрелку к логотипу */
+.is-compact .back-screen {
+  top: 36px;
+  transform: translateY(0);
 }
 
 .brand {

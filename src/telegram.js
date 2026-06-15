@@ -32,6 +32,15 @@ function syncSafeArea(webApp) {
     setSafeAreaVariable('--tg-safe-area-top', safeTop);
     setSafeAreaVariable('--tg-content-safe-area-top', contentTop);
     setSafeAreaVariable('--tg-active-safe-area-top', activeTop);
+    
+    // Добавляем класс для определения режима fullscreen
+    if (webApp.isFullscreen) {
+      document.documentElement.classList.add('is-fullscreen');
+      document.documentElement.classList.remove('is-compact');
+    } else {
+      document.documentElement.classList.add('is-compact');
+      document.documentElement.classList.remove('is-fullscreen');
+    }
   };
 
   applySafeArea();
