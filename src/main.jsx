@@ -376,7 +376,7 @@ function normalizeMainData(data = emptyMainData) {
   const stage = String(data.stage || data.stage_notification || data.subscription_stage || '').toLowerCase();
   const subscriptionKind = String(data.subscription_type || data.access_type || data.type || data.kind || '').toLowerCase();
   const trialUsed = booleanFromApi(data.trial_used ?? data.is_trial_used ?? data.trialUsed ?? data.had_trial ?? data.has_trial);
-  const isTrialFlag = booleanFromApi(data.is_trial ?? data.trial_active ?? data.is_trial_active);
+  const isTrialFlag = booleanFromApi(data.trial ?? data.is_trial ?? data.trial_active ?? data.is_trial_active);
   const isTrial = Boolean(
     isTrialFlag ||
     plan === 'trial' ||
