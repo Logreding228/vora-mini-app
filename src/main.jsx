@@ -356,6 +356,7 @@ const emptyMainData = {
   ref_balance: '0.00',
   expired_at: '',
   plan: '',
+  screen: '',
   stage: '',
   isTrial: false,
   trialUsed: false,
@@ -373,6 +374,7 @@ function normalizeMainData(data = emptyMainData) {
   const hwid = data.hwid || {};
   const hwidResponse = hwid.response || {};
   const plan = String(data.plan || data.tariff || data.subscription_plan || emptyMainData.plan).toLowerCase();
+  const screen = String(data.screen || emptyMainData.screen).toLowerCase();
   const stage = String(data.stage || data.stage_notification || data.subscription_stage || '').toLowerCase();
   const subscriptionKind = String(data.subscription_type || data.access_type || data.type || data.kind || '').toLowerCase();
   const trialUsed = booleanFromApi(data.trial_used ?? data.is_trial_used ?? data.trialUsed ?? data.had_trial ?? data.has_trial);
@@ -401,6 +403,7 @@ function normalizeMainData(data = emptyMainData) {
     refBalance: data.ref_balance ?? emptyMainData.ref_balance,
     expiredAt: data.expired_at || emptyMainData.expired_at,
     plan,
+    screen,
     stage,
     isTrial,
     trialUsed,
@@ -613,7 +616,23 @@ function hasExpiredAccess(mainData) {
   );
 }
 
+function getBackendHomeScreen(mainData) {
+  const screenMap = {
+    first: 'trial-start',
+    second: 'trial-active',
+    buy: 'trial-expired',
+  };
+
+  return screenMap[mainData.screen] || '';
+}
+
 function getDefaultHomeScreen(mainData) {
+  const backendScreen = getBackendHomeScreen(mainData);
+
+  if (backendScreen) {
+    return backendScreen;
+  }
+
   if (hasActiveTrial(mainData)) {
     return 'trial-active';
   }
@@ -900,6 +919,7 @@ function MainScreenDebug({ rawMainData, mainData, activeScreen }) {
       <div className="debug-grid">
         <p><span>Экран факт</span><strong>{activeScreen}</strong></p>
         <p><span>Экран по данным</span><strong>{defaultScreen}</strong></p>
+        <p><span>screen API</span><strong>{mainData.screen || 'empty'}</strong></p>
         <p><span>status</span><strong>{mainData.status || 'empty'}</strong></p>
         <p><span>trial</span><strong>{String(mainData.isTrial)}</strong></p>
         <p><span>plan</span><strong>{mainData.plan || 'empty'}</strong></p>
