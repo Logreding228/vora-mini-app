@@ -897,6 +897,146 @@ button svg,
   color: #ff712d;
 }
 
+.trial-active-screen .content {
+  margin-top: -58px;
+  padding-bottom: 110px;
+}
+
+.trial-active-screen .hero-offer h1 {
+  font-size: 23px;
+  font-weight: 600;
+}
+
+.trial-active-screen .hero-offer strong {
+  margin-top: 8px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.trial-active-screen .hero-offer p {
+  width: 210px;
+  margin-top: 8px;
+  color: #586473;
+  font-size: 12px;
+  line-height: 1.15;
+  font-weight: 500;
+}
+
+.trial-active-screen .hero-offer img {
+  width: 154px;
+  height: 132px;
+  margin-top: 23px;
+  object-fit: contain;
+}
+
+.trial-active-screen .timer-card {
+  margin-top: 17px;
+  padding: 18px 12px 15px;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(7, 20, 38, 0.055);
+}
+
+.trial-active-screen .timer-card p {
+  margin-bottom: 12px;
+  color: #596371;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.trial-active-screen .timer-card strong {
+  font-size: 31px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.trial-active-screen .timer-labels {
+  gap: 20px;
+  margin-top: 13px;
+  font-size: 12px;
+}
+
+.trial-active-screen .progress {
+  margin-top: 15px;
+}
+
+.trial-active-screen .section-divider {
+  margin: 16px 0;
+}
+
+.trial-active-screen .plans-pair {
+  gap: 8px;
+}
+
+.trial-active-screen .plan-card {
+  min-height: 207px;
+  padding: 25px 11px 15px;
+  border-radius: 14px;
+}
+
+.trial-active-screen .plan-card h3 {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.trial-active-screen .popular {
+  font-size: 7px;
+}
+
+.trial-active-screen .plan-description {
+  margin: 11px 0 20px;
+  min-height: 40px;
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.trial-active-screen .plan-devices {
+  gap: 8px;
+}
+
+.trial-active-screen .plan-devices svg {
+  width: 22px;
+  height: 22px;
+}
+
+.trial-active-screen .plan-devices strong {
+  font-size: 11px;
+}
+
+.trial-active-screen .thin-line {
+  margin: 13px 0;
+}
+
+.trial-active-screen .plan-price {
+  gap: 6px;
+}
+
+.trial-active-screen .plan-price strong {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.trial-active-screen .plan-price span {
+  font-size: 13px;
+}
+
+.trial-active-screen .trial-methods {
+  margin-top: 18px;
+  gap: 8px;
+}
+
+.trial-active-screen .trial-methods .method-card {
+  min-height: 55px;
+  padding: 10px 10px;
+}
+
+.trial-active-screen .trial-promo {
+  margin-top: 18px;
+}
+
+.trial-active-screen .primary-button {
+  margin-top: 18px;
+}
+
 .timer-labels {
   display: flex;
   justify-content: center;

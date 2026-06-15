@@ -357,6 +357,7 @@ const emptyMainData = {
   expired_at: '',
   plan: '',
   stage: '',
+  isTrial: false,
   trialUsed: false,
   subscription_month: 1,
   hwid: {
@@ -366,11 +367,23 @@ const emptyMainData = {
   },
 };
 
+const booleanFromApi = (value) => value === true || value === 1 || String(value).toLowerCase() === 'true';
+
 function normalizeMainData(data = emptyMainData) {
   const hwid = data.hwid || {};
   const hwidResponse = hwid.response || {};
   const plan = String(data.plan || data.tariff || data.subscription_plan || emptyMainData.plan).toLowerCase();
   const stage = String(data.stage || data.stage_notification || data.subscription_stage || '').toLowerCase();
+  const subscriptionKind = String(data.subscription_type || data.access_type || data.type || data.kind || '').toLowerCase();
+  const trialUsed = booleanFromApi(data.trial_used ?? data.is_trial_used ?? data.trialUsed ?? data.had_trial ?? data.has_trial);
+  const isTrialFlag = booleanFromApi(data.is_trial ?? data.trial_active ?? data.is_trial_active);
+  const isTrial = Boolean(
+    isTrialFlag ||
+    plan === 'trial' ||
+    stage === 'trial' ||
+    subscriptionKind === 'trial' ||
+    (trialUsed && !['lite', 'plus', 'home'].includes(plan))
+  );
   const planDeviceLimit = tariffCatalog[plan]?.devices || (plan === 'trial' ? tariffCatalog.plus.devices : emptyMainData.hwid.limit);
   const rawDevices = Array.isArray(hwid.devices) ? hwid.devices : Array.isArray(hwidResponse.devices) ? hwidResponse.devices : Array.isArray(hwid) ? hwid : [];
   const devices = rawDevices.length ? rawDevices.map((device, index) => ({
@@ -389,7 +402,8 @@ function normalizeMainData(data = emptyMainData) {
     expiredAt: data.expired_at || emptyMainData.expired_at,
     plan,
     stage,
-    trialUsed: Boolean(data.trial_used ?? data.is_trial_used ?? data.trialUsed ?? data.had_trial ?? data.has_trial),
+    isTrial,
+    trialUsed,
     subscriptionMonth: data.subscription_month || data.last_subscription_month || 1,
     usedDevices: Number(hwid.used ?? hwid.current ?? hwid.count ?? hwidResponse.used ?? hwidResponse.count ?? devices.length ?? 0),
     maxDevices: Number(data.device_limit ?? data.hwid_limit ?? hwid.limit ?? hwid.max ?? hwid.device_limit ?? hwidResponse.limit ?? hwidResponse.max ?? planDeviceLimit),
@@ -586,7 +600,7 @@ function hasActiveSubscription(mainData) {
 }
 
 function hasActiveTrial(mainData) {
-  return hasActiveSubscription(mainData) && (mainData.plan === 'trial' || mainData.stage === 'trial');
+  return hasActiveSubscription(mainData) && mainData.isTrial;
 }
 
 function hasExpiredAccess(mainData) {
@@ -1385,7 +1399,7 @@ function TrialActive({ navigate, activeScreen, mainData }) {
   };
 
   return (
-    <AppFrame className="trial-screen compact" navigate={navigate} activeScreen={activeScreen}>
+    <AppFrame className="trial-screen compact trial-active-screen" navigate={navigate} activeScreen={activeScreen}>
       <HeroOffer
         title="Доступ активен"
         accent={`24 часа за ${trialPriceText()}`}
