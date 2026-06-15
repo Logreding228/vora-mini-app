@@ -923,8 +923,8 @@ button svg,
 }
 
 .trial-active-screen .hero-offer img {
-  width: min(570px, 100%);
-  height: 459px;
+  width: 285px;
+  height: 224px;
   margin-top: 25px;
   object-fit: contain;
 }
