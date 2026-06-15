@@ -1294,11 +1294,13 @@ function TrialStart({ navigate, activeScreen }) {
 }
 
 function TrialActive({ navigate, activeScreen }) {
+  const [selectedPlan, setSelectedPlan] = useState('plus');
   const [selectedMethod, setSelectedMethod] = useState('card');
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
   const [paymentError, setPaymentError] = useState('');
   const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
+  const selectedTariff = tariffCatalog[selectedPlan];
 
   const applyPromo = () => {
     if (promoApplied) {
@@ -1318,16 +1320,16 @@ function TrialActive({ navigate, activeScreen }) {
     }
   };
 
-  const buyPlus = async () => {
+  const buySubscription = async () => {
     try {
       setPaymentError('');
       const url = await api.createInvoice({
         provider,
         type: 'SUBSCRIPTION',
         payload: {
-          plan: 'plus',
+          plan: selectedPlan,
           subscription_month: 1,
-          hwid: tariffCatalog.plus.devices,
+          hwid: selectedTariff.devices,
           currency: selectedMethod === 'crypto' ? 'USDT' : 'RUB',
           promo_code: promoApplied ? promoCode.trim() : undefined,
         },
@@ -1357,7 +1359,7 @@ function TrialActive({ navigate, activeScreen }) {
         <div className="progress"><i /></div>
       </Card>
       <SectionDivider>доступные тарифы</SectionDivider>
-      <PlansPair selected="plus" includeHome onSelect={(plan) => navigate(tariffCatalog[plan].route)} />
+      <PlansPair selected={selectedPlan} onSelect={setSelectedPlan} />
       <div className="payment-methods trial-methods">
         <MethodCard title="Банковская карта" subtitle="Visa, Mastercard, Мир" checked={selectedMethod === 'card'} onClick={() => setSelectedMethod('card')} />
         <MethodCard title="Криптовалюта" subtitle="USDT, BTC, ETH и др." checked={selectedMethod === 'crypto'} onClick={() => setSelectedMethod('crypto')} />
@@ -1370,12 +1372,58 @@ function TrialActive({ navigate, activeScreen }) {
         </div>
       </div>
       {paymentError && <p className="inline-error">{paymentError}</p>}
-      <PrimaryButton onClick={buyPlus}>Подключить за <span>{money(tariffCatalog.plus.monthPrice)}</span></PrimaryButton>
+      <PrimaryButton onClick={buySubscription}>Подключить за <span>{money(selectedTariff.monthPrice)}</span></PrimaryButton>
     </AppFrame>
   );
 }
 
 function TrialExpired({ navigate, activeScreen }) {
+  const [selectedPlan, setSelectedPlan] = useState('plus');
+  const [selectedMethod, setSelectedMethod] = useState('card');
+  const [promoCode, setPromoCode] = useState('');
+  const [promoApplied, setPromoApplied] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
+  const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
+  const selectedTariff = tariffCatalog[selectedPlan];
+
+  const applyPromo = () => {
+    if (promoApplied) {
+      setPromoCode('');
+      setPromoApplied(false);
+      return;
+    }
+
+    setPromoApplied(Boolean(promoCode.trim()));
+  };
+
+  const submitPromoWithEnter = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      applyPromo();
+      event.currentTarget.blur();
+    }
+  };
+
+  const buySubscription = async () => {
+    try {
+      setPaymentError('');
+      const url = await api.createInvoice({
+        provider,
+        type: 'SUBSCRIPTION',
+        payload: {
+          plan: selectedPlan,
+          subscription_month: 1,
+          hwid: selectedTariff.devices,
+          currency: selectedMethod === 'crypto' ? 'USDT' : 'RUB',
+          promo_code: promoApplied ? promoCode.trim() : undefined,
+        },
+      });
+      openPaymentUrl(url);
+    } catch (error) {
+      setPaymentError(getUiError(error));
+    }
+  };
+
   return (
     <AppFrame className="trial-screen compact" navigate={navigate} activeScreen={activeScreen}>
       <HeroOffer
@@ -1385,8 +1433,20 @@ function TrialExpired({ navigate, activeScreen }) {
         image="trial-expired"
       />
       <SectionDivider>выберите тариф для продолжения</SectionDivider>
-      <PlansPair selected="plus" includeHome onSelect={(plan) => navigate(tariffCatalog[plan].route)} />
-      <PrimaryButton onClick={() => navigate('tariff-plus')}>Выбрать подписку</PrimaryButton>
+      <PlansPair selected={selectedPlan} onSelect={setSelectedPlan} />
+      <div className="payment-methods trial-methods">
+        <MethodCard title="Банковская карта" subtitle="Visa, Mastercard, Мир" checked={selectedMethod === 'card'} onClick={() => setSelectedMethod('card')} />
+        <MethodCard title="Криптовалюта" subtitle="USDT, BTC, ETH и др." checked={selectedMethod === 'crypto'} onClick={() => setSelectedMethod('crypto')} />
+      </div>
+      <div className="promo trial-promo">
+        <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
+        <div>
+          <input value={promoCode} onFocus={keepFocusedFieldVisible} onKeyDown={submitPromoWithEnter} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); }} placeholder="Введите промокод" enterKeyHint="done" />
+          <button onClick={applyPromo} disabled={!promoApplied && !promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
+        </div>
+      </div>
+      {paymentError && <p className="inline-error">{paymentError}</p>}
+      <PrimaryButton onClick={buySubscription}>Подключить за <span>{money(selectedTariff.monthPrice)}</span></PrimaryButton>
     </AppFrame>
   );
 }
