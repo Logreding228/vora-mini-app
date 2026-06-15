@@ -359,6 +359,7 @@ export async function authenticateTelegram(initData) {
 export const api = {
   mainScreen: () => request('/users/main_screen/'),
   referralData: () => request('/users/referral_data'),
+  plan: (plan) => request('/pay/plans', { query: { plan } }),
   subscriptionUrl: (client) => request('/hwid/get_subscription_url/', { query: { client } }),
   subscriptionQr: (client) => request('/hwid/get_subscription_qr/', { query: { client } }),
   getHwid: () => request('/hwid/get_hwid/'),
@@ -367,10 +368,10 @@ export const api = {
   upgradePrice: () => request('/users/upgrade_plan_price/'),
   downgradePlan: () => request('/users/downgrade_plan/', { method: 'POST' }),
   createInvoice: createTypedInvoice,
-  createTrialInvoice: ({ provider, currency }) => createTypedInvoice({
+  createTrialInvoice: ({ provider, currency, amount }) => createTypedInvoice({
     provider,
     type: 'trial',
-    payload: { plan: 'trial', amount: 30, currency: currency || 'RUB' },
+    payload: { plan: 'trial', amount, currency: currency || 'RUB' },
   }),
   createUpgradeInvoice: ({ provider, currency }) => request(`/pay/create_invoice/upgrade/${provider}`, {
     method: 'POST',

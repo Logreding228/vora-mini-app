@@ -43,6 +43,9 @@ import './styles.css';
 
 const asset = (name) => `${import.meta.env.BASE_URL}assets/${name}.png`;
 const money = (value, fallback = '0') => `${Number(value ?? fallback).toLocaleString('ru-RU')} ₽`;
+let trialPrice = 30;
+let devicePrice = 75;
+const compactMoney = (value) => `${Number(value).toLocaleString('ru-RU')}₽`;
 const pluralRu = (value, one, few, many) => {
   const mod10 = value % 10;
   const mod100 = value % 100;
@@ -137,6 +140,39 @@ const valueDeepByKeys = (payload, keys, fallback = '') => {
   }
 
   return fallback;
+};
+const numberDeepByKeys = (payload, keys, fallback) => {
+  const value = valueDeepByKeys(payload, keys, fallback);
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number : fallback;
+};
+const applyPlanPricing = (plan, payload) => {
+  if (plan === 'trial') {
+    trialPrice = numberDeepByKeys(payload, ['price', 'amount', 'total', 'month_price', 'monthly_price'], trialPrice);
+    return;
+  }
+
+  const tariff = tariffCatalog[plan];
+
+  if (!tariff) {
+    return;
+  }
+
+  tariff.monthPrice = numberDeepByKeys(payload, ['price', 'amount', 'total', 'month_price', 'monthly_price'], tariff.monthPrice);
+  tariff.devices = numberDeepByKeys(payload, ['devices', 'device_limit', 'hwid', 'hwid_limit', 'limit'], tariff.devices);
+  tariff.extraDevices = numberDeepByKeys(payload, ['extra_devices', 'additional_devices', 'max_extra_devices', 'extra_hwid'], tariff.extraDevices);
+  devicePrice = numberDeepByKeys(payload, ['device_price', 'extra_device_price', 'additional_device_price', 'hwid_price'], devicePrice);
+};
+const loadPlanPricing = async () => {
+  const plans = ['trial', 'lite', 'home', 'plus'];
+  const results = await Promise.allSettled(plans.map((plan) => api.plan(plan)));
+
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      applyPlanPricing(plans[index], result.value);
+    }
+  });
 };
 const extractUrl = (payload) => {
   if (typeof payload === 'string') {
@@ -593,6 +629,7 @@ function App() {
   const [mainData, setMainData] = useState(() => normalizeMainData(emptyMainData));
   const [apiNotice, setApiNotice] = useState('');
   const [isInitialDataReady, setInitialDataReady] = useState(false);
+  const [, setPricingVersion] = useState(0);
   const activeScreenRef = useRef(activeScreen);
   const screen = useMemo(() => screens.find((item) => item.id === activeScreen) || screens[0], [activeScreen]);
   const Screen = screen.component;
@@ -644,6 +681,8 @@ function App() {
       try {
         if (!didAuthenticate) {
           await authenticateTelegram(telegram.initData);
+          await loadPlanPricing();
+          setPricingVersion((version) => version + 1);
           didAuthenticate = true;
         }
 
@@ -1171,6 +1210,7 @@ function TrialStart({ navigate, activeScreen }) {
       const url = await api.createTrialInvoice({
         provider,
         currency: selectedMethod === 'crypto' ? 'USDT' : undefined,
+        amount: trialPrice,
       });
       openPaymentUrl(url);
     } catch (error) {
@@ -1182,7 +1222,7 @@ function TrialStart({ navigate, activeScreen }) {
     <AppFrame className="trial-screen" navigate={navigate} activeScreen={activeScreen}>
       <HeroOffer
         title="Попробуйте VORA"
-        accent="24 часа за 30₽"
+        accent={`24 часа за ${compactMoney(trialPrice)}`}
         subtitle="Полный доступ ко всем возможностям тарифа"
         image="trial-check"
       />
@@ -1206,21 +1246,21 @@ function TrialStart({ navigate, activeScreen }) {
         </div>
       </div>
       {paymentError && <p className="inline-error">{paymentError}</p>}
-      <PrimaryButton onClick={startTrial}>Начать за <span>30 ₽</span></PrimaryButton>
+      <PrimaryButton onClick={startTrial}>Начать за <span>{money(trialPrice)}</span></PrimaryButton>
       <SectionDivider>или оформите подписку сразу</SectionDivider>
       <Card className="trial-plan-list">
         <button onClick={() => navigate('tariff-lite')}>
           <IconTile tone="tariff-image lite"><AssetIcon name="plan-lite" /></IconTile>
           <div>
             <strong>Lite</strong>
-            <p>от 300 ₽</p>
+            <p>от {money(tariffCatalog.lite.monthPrice)}</p>
           </div>
         </button>
         <button onClick={() => navigate('tariff-plus')}>
           <IconTile tone="tariff-image plus"><AssetIcon name="plan-plus" /></IconTile>
           <div>
             <strong>Plus</strong>
-            <p>от 550 ₽</p>
+            <p>от {money(tariffCatalog.plus.monthPrice)}</p>
           </div>
           <span className="popular"><Sparkles size={12} />Популярный</span>
         </button>
@@ -1282,7 +1322,7 @@ function TrialActive({ navigate, activeScreen }) {
     <AppFrame className="trial-screen compact" navigate={navigate} activeScreen={activeScreen}>
       <HeroOffer
         title="Доступ активен"
-        accent="24 часа за 30₽"
+        accent={`24 часа за ${compactMoney(trialPrice)}`}
         subtitle="Полный доступ ко всем возможностям тарифа"
         image="trial-clock"
       />
@@ -1310,7 +1350,7 @@ function TrialActive({ navigate, activeScreen }) {
         </div>
       </div>
       {paymentError && <p className="inline-error">{paymentError}</p>}
-      <PrimaryButton onClick={buyPlus}>Подключить за <span>550 ₽</span></PrimaryButton>
+      <PrimaryButton onClick={buyPlus}>Подключить за <span>{money(tariffCatalog.plus.monthPrice)}</span></PrimaryButton>
     </AppFrame>
   );
 }
@@ -1875,7 +1915,7 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
   const planPayment = ['lite', 'home', 'plus'].includes(selectedPayment) ? selectedPayment : '';
   const paymentType = selectedPayment === 'device' ? 'HWID' : selectedPayment === 'balance' ? 'BALANCE' : 'SUBSCRIPTION';
   const selectedAmount = selectedPayment === 'device'
-    ? 75
+    ? devicePrice
     : selectedPayment === 'balance'
       ? Number(customAmount || 0)
       : tariffCatalog[planPayment]?.monthPrice || 0;
@@ -1949,10 +1989,10 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
       </button>
       <Card className="payment-card">
         <h2>Выберите, что хотите оплатить</h2>
-        <PaymentOption iconName="device-add" title="Докупить устройство" subtitle="Активация 1 устройства" price="75 ₽" checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} />
-        <PaymentOption iconName="plan-lite" title="Lite - 1 месяц" subtitle="Базовые возможности" price="300 ₽" checked={selectedPayment === 'lite'} onClick={() => setSelectedPayment('lite')} />
-        <PaymentOption iconName="plan-home" title="Home - 1 месяц" subtitle="Для тех, кто за границей" price="450 ₽" checked={selectedPayment === 'home'} onClick={() => setSelectedPayment('home')} />
-        <PaymentOption iconName="plan-plus" title="Plus - 1 месяц" subtitle="Максимум возможностей" price="550 ₽" checked={selectedPayment === 'plus'} onClick={() => setSelectedPayment('plus')} divider={false} />
+        <PaymentOption iconName="device-add" title="Докупить устройство" subtitle="Активация 1 устройства" price={money(devicePrice)} checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} />
+        <PaymentOption iconName="plan-lite" title="Lite - 1 месяц" subtitle="Базовые возможности" price={money(tariffCatalog.lite.monthPrice)} checked={selectedPayment === 'lite'} onClick={() => setSelectedPayment('lite')} />
+        <PaymentOption iconName="plan-home" title="Home - 1 месяц" subtitle="Для тех, кто за границей" price={money(tariffCatalog.home.monthPrice)} checked={selectedPayment === 'home'} onClick={() => setSelectedPayment('home')} />
+        <PaymentOption iconName="plan-plus" title="Plus - 1 месяц" subtitle="Максимум возможностей" price={money(tariffCatalog.plus.monthPrice)} checked={selectedPayment === 'plus'} onClick={() => setSelectedPayment('plus')} divider={false} />
         <SectionDivider>или ввести сумму вручную</SectionDivider>
         <div className={selectedPayment === 'balance' ? 'input-box selected' : 'input-box'} onClick={() => setSelectedPayment('balance')}>
           <span>Сумма пополнения</span>
@@ -2750,7 +2790,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
   const periodMonthlyPrice = Math.floor(tariff.monthPrice * periodDiscounts[selectedPeriod]);
   const baseTotal = periodMonthlyPrice * periodMonths;
   const extraDevices = Math.max(0, deviceCount - tariff.devices);
-  const extraDevicesTotal = extraDevices * 75 * periodMonths;
+  const extraDevicesTotal = extraDevices * devicePrice * periodMonths;
   const discount = tariff.monthPrice * periodMonths - baseTotal;
   const total = baseTotal + extraDevicesTotal;
   const originalTotal = tariff.monthPrice * periodMonths + extraDevicesTotal;
@@ -2821,7 +2861,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
         <div>
           <h2>Устройства</h2>
           <p>Включено в тариф: {tariff.devices} {pluralRu(tariff.devices, 'устройство', 'устройства', 'устройств')}</p>
-          <span>+75 ₽ за дополнительное устройство</span>
+          <span>+{money(devicePrice)} за дополнительное устройство</span>
         </div>
         <div className="stepper">
           <button disabled={deviceCount <= tariff.devices} onClick={() => setDeviceCount((value) => Math.max(tariff.devices, value - 1))} aria-label="Уменьшить количество устройств">
