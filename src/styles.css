@@ -111,7 +111,7 @@ button svg,
 .close-screen {
   position: absolute;
   right: 20px;
-  top: calc(68px + var(--app-safe-area-top));
+  top: 36px;
   width: 39px;
   height: 39px;
   border-radius: 13px;
@@ -121,20 +121,19 @@ button svg,
   background: #ffffff;
   color: #4f5b68;
   box-shadow: 0 12px 34px rgba(6, 22, 44, 0.05);
-  transform: translateY(-50%);
   line-height: 0;
 }
 
-/* В компактном режиме прижимаем кнопку закрытия к логотипу */
-.is-compact .close-screen {
-  top: 36px;
-  transform: translateY(0);
+/* В fullscreen режиме сдвигаем вниз с учетом safe-area */
+.is-fullscreen .close-screen {
+  top: calc(68px + var(--app-safe-area-top));
+  transform: translateY(-50%);
 }
 
 .back-screen {
   position: absolute;
   left: 20px;
-  top: calc(68px + var(--app-safe-area-top));
+  top: 36px;
   width: 39px;
   height: 39px;
   border-radius: 13px;
@@ -144,14 +143,13 @@ button svg,
   background: #ffffff;
   color: #4f5b68;
   box-shadow: 0 12px 34px rgba(6, 22, 44, 0.05);
-  transform: translateY(-50%);
   line-height: 0;
 }
 
-/* В компактном режиме прижимаем стрелку к логотипу */
-.is-compact .back-screen {
-  top: 36px;
-  transform: translateY(0);
+/* В fullscreen режиме сдвигаем вниз с учетом safe-area */
+.is-fullscreen .back-screen {
+  top: calc(68px + var(--app-safe-area-top));
+  transform: translateY(-50%);
 }
 
 .brand {
