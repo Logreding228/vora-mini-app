@@ -898,7 +898,7 @@ function BottomNav({ navigate, activeScreen, mainData }) {
     'home-popup': 'home',
     'trial-start': 'home',
     'trial-active': 'subscription',
-    'trial-expired': 'subscription',
+    'trial-expired': 'home',
     'change-plan': 'subscription',
     'tariff-lite': 'subscription',
     'tariff-plus': 'subscription',
