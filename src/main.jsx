@@ -696,6 +696,7 @@ function App() {
   const [screenHistory, setScreenHistory] = useState([]);
   const [telegramUser, setTelegramUser] = useState(null);
   const [mainData, setMainData] = useState(() => normalizeMainData(emptyMainData));
+  const [rawMainData, setRawMainData] = useState(null);
   const [apiNotice, setApiNotice] = useState('');
   const [isInitialDataReady, setInitialDataReady] = useState(false);
   const [, setPricingVersion] = useState(0);
@@ -763,6 +764,7 @@ function App() {
         }
 
         setMainData(normalizedData);
+        setRawMainData(data);
         syncScreenWithData(normalizedData, forceScreenSync || !hasExplicitScreenHash());
         setApiNotice('');
         setInitialDataReady(true);
@@ -855,6 +857,7 @@ function App() {
           <>
             <div className={activeScreen.startsWith('tariff-') ? 'page-transition no-page-animation' : 'page-transition'} key={activeScreen}>
               <Screen navigate={navigate} activeScreen={activeScreen} mainData={mainData} telegramUser={telegramUser} apiNotice={apiNotice} />
+              <MainScreenDebug rawMainData={rawMainData} mainData={mainData} activeScreen={activeScreen} />
             </div>
             <BottomNav navigate={navigate} activeScreen={activeScreen} mainData={mainData} />
           </>
@@ -865,6 +868,49 @@ function App() {
         )}
       </main>
     </div>
+  );
+}
+
+function MainScreenDebug({ rawMainData, mainData, activeScreen }) {
+  const rawHwid = rawMainData?.hwid || {};
+  const rawHwidResponse = rawHwid.response || {};
+  const defaultScreen = getDefaultHomeScreen(mainData);
+  const rawDevices = Array.isArray(rawHwid.devices)
+    ? rawHwid.devices
+    : Array.isArray(rawHwidResponse.devices)
+      ? rawHwidResponse.devices
+      : Array.isArray(rawHwid)
+        ? rawHwid
+        : [];
+  const deviceDebug = {
+    raw_used: rawHwid.used ?? rawHwid.current ?? rawHwid.count ?? rawHwidResponse.used ?? rawHwidResponse.count ?? null,
+    raw_limit: rawMainData?.device_limit ?? rawMainData?.hwid_limit ?? rawHwid.limit ?? rawHwid.max ?? rawHwid.device_limit ?? rawHwidResponse.limit ?? rawHwidResponse.max ?? null,
+    raw_devices_length: rawDevices.length,
+    normalized_used: mainData.usedDevices,
+    normalized_limit: mainData.maxDevices,
+    normalized_devices_length: mainData.devices.length,
+  };
+
+  return (
+    <section className="main-debug-panel">
+      <div className="debug-title-row">
+        <strong>Debug main_screen</strong>
+        <span>{activeScreen}</span>
+      </div>
+      <div className="debug-grid">
+        <p><span>Экран факт</span><strong>{activeScreen}</strong></p>
+        <p><span>Экран по данным</span><strong>{defaultScreen}</strong></p>
+        <p><span>status</span><strong>{mainData.status || 'empty'}</strong></p>
+        <p><span>trial</span><strong>{String(mainData.isTrial)}</strong></p>
+        <p><span>plan</span><strong>{mainData.plan || 'empty'}</strong></p>
+        <p><span>expired_at</span><strong>{mainData.expiredAt || 'empty'}</strong></p>
+      </div>
+      <pre>{JSON.stringify(deviceDebug, null, 2)}</pre>
+      <details>
+        <summary>raw main_screen</summary>
+        <pre>{JSON.stringify(rawMainData, null, 2)}</pre>
+      </details>
+    </section>
   );
 }
 
