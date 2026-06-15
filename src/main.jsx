@@ -43,7 +43,14 @@ import './styles.css';
 
 const asset = (name) => `${import.meta.env.BASE_URL}assets/${name}.png`;
 const money = (value, fallback = '0') => `${Number(value ?? fallback).toLocaleString('ru-RU')} ₽`;
-let trialPrice = 30;
+const runtimeConfig = window.__VORA_CONFIG__ || {};
+const numberFromConfig = (runtimeKey, envKey, fallback) => {
+  const value = runtimeConfig[runtimeKey] ?? import.meta.env[envKey] ?? fallback;
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number : fallback;
+};
+let trialPrice = numberFromConfig('TRIAL_PRICE', 'VITE_TRIAL_PRICE', 30);
 let devicePrice = 75;
 const compactMoney = (value) => `${Number(value).toLocaleString('ru-RU')}₽`;
 const pluralRu = (value, one, few, many) => {
@@ -160,8 +167,9 @@ const applyPlanPricing = (plan, payload) => {
   }
 
   tariff.monthPrice = numberDeepByKeys(payload, ['price', 'amount', 'total', 'month_price', 'monthly_price'], tariff.monthPrice);
-  tariff.devices = numberDeepByKeys(payload, ['devices', 'device_limit', 'hwid', 'hwid_limit', 'limit'], tariff.devices);
-  tariff.extraDevices = numberDeepByKeys(payload, ['extra_devices', 'additional_devices', 'max_extra_devices', 'extra_hwid'], tariff.extraDevices);
+  tariff.devices = numberDeepByKeys(payload, ['devices', 'device_limit', 'hwid_base', 'base_devices', 'hwid_limit', 'limit'], numberDeepByKeys(payload?.hwid, ['base'], tariff.devices));
+  const maxDevices = numberDeepByKeys(payload, ['max_devices', 'max_hwid', 'hwid_max'], numberDeepByKeys(payload?.hwid, ['max'], tariff.devices + tariff.extraDevices));
+  tariff.extraDevices = Math.max(0, numberDeepByKeys(payload, ['extra_devices', 'additional_devices', 'max_extra_devices', 'extra_hwid'], maxDevices - tariff.devices));
   devicePrice = numberDeepByKeys(payload, ['device_price', 'extra_device_price', 'additional_device_price', 'hwid_price'], devicePrice);
 };
 const loadPlanPricing = async () => {

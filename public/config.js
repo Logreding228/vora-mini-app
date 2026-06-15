@@ -5,4 +5,5 @@ window.__VORA_CONFIG__ = {
   ACCESS_TOKEN: '',
   REFRESH_TOKEN: '',
   TELEGRAM_INIT_DATA: '',
+  TRIAL_PRICE: 1,
 };
