@@ -922,19 +922,12 @@ button svg,
   font-weight: 500;
 }
 
-.trial-active-screen .hero-offer {
-  position: relative;
-  padding-bottom: 314px; /* высота картинки */
-}
-
 .trial-active-screen .hero-offer img {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 399px;
-  height: 314px;
-  object-fit: contain;
+  width: 190px;
+  height: 153px;
+  object-fit: cover;
+  object-position: center 58%;
+  margin-top: 27px;
 }
 
 .trial-active-screen .timer-card {
