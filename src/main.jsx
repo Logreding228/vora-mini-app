@@ -511,9 +511,50 @@ function isPastDate(value) {
     return false;
   }
 
-  const date = new Date(`${value}T23:59:59`);
+  const date = parseApiDate(value, true);
 
   return !Number.isNaN(date.getTime()) && date.getTime() < Date.now();
+}
+
+function parseApiDate(value, endOfDay = false) {
+  if (!value) {
+    return new Date(NaN);
+  }
+
+  if (value instanceof Date) {
+    return value;
+  }
+
+  const text = String(value);
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(text);
+
+  return new Date(dateOnly && endOfDay ? `${text}T23:59:59` : text);
+}
+
+function getRemainingTimeParts(targetDate) {
+  const targetTime = parseApiDate(targetDate, true).getTime();
+  const remainingMs = Number.isFinite(targetTime) ? Math.max(0, targetTime - Date.now()) : 0;
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return { remainingMs, hours, minutes, seconds };
+}
+
+function useCountdown(targetDate) {
+  const [time, setTime] = useState(() => getRemainingTimeParts(targetDate));
+
+  useEffect(() => {
+    const updateTime = () => setTime(getRemainingTimeParts(targetDate));
+
+    updateTime();
+    const timer = window.setInterval(updateTime, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [targetDate]);
+
+  return time;
 }
 
 function getSubscriptionState(mainData) {
@@ -1293,7 +1334,7 @@ function TrialStart({ navigate, activeScreen }) {
   );
 }
 
-function TrialActive({ navigate, activeScreen }) {
+function TrialActive({ navigate, activeScreen, mainData }) {
   const [selectedPlan, setSelectedPlan] = useState('plus');
   const [selectedMethod, setSelectedMethod] = useState('card');
   const [promoCode, setPromoCode] = useState('');
@@ -1301,6 +1342,9 @@ function TrialActive({ navigate, activeScreen }) {
   const [paymentError, setPaymentError] = useState('');
   const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
   const selectedTariff = tariffCatalog[selectedPlan];
+  const countdown = useCountdown(mainData.expiredAt);
+  const timerProgress = Math.max(0, Math.min(100, (countdown.remainingMs / 86400000) * 100));
+  const padTime = (value) => String(value).padStart(2, '0');
 
   const applyPromo = () => {
     if (promoApplied) {
@@ -1350,13 +1394,13 @@ function TrialActive({ navigate, activeScreen }) {
       />
       <Card className="timer-card">
         <p>Осталось времени</p>
-        <strong>18:36:<span>45</span></strong>
+        <strong>{padTime(countdown.hours)} : {padTime(countdown.minutes)} : <span>{padTime(countdown.seconds)}</span></strong>
         <div className="timer-labels">
           <span>Часов</span>
           <span>Минут</span>
           <span>Секунд</span>
         </div>
-        <div className="progress"><i /></div>
+        <div className="progress"><i style={{ width: `${timerProgress}%` }} /></div>
       </Card>
       <SectionDivider>доступные тарифы</SectionDivider>
       <PlansPair selected={selectedPlan} onSelect={setSelectedPlan} />
