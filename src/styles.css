@@ -922,10 +922,18 @@ button svg,
   font-weight: 500;
 }
 
+.trial-active-screen .hero-offer {
+  position: relative;
+  padding-bottom: 314px; /* высота картинки */
+}
+
 .trial-active-screen .hero-offer img {
-  width: 285px;
-  height: 224px;
-  margin-top: 25px;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 399px;
+  height: 314px;
   object-fit: contain;
 }
 
