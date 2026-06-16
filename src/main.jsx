@@ -982,7 +982,7 @@ function BottomNav({ navigate, activeScreen, mainData }) {
     'home-active': 'home',
     'home-popup': 'home',
     'trial-start': 'home',
-    'trial-active': 'subscription',
+    'trial-active': 'home',
     'trial-expired': 'home',
     'change-plan': 'subscription',
     'tariff-lite': 'subscription',
