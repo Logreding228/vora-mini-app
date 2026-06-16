@@ -3522,6 +3522,47 @@ button svg,
   font-size: 13px;
 }
 
+.debug-card {
+  margin-top: 14px;
+  padding: 14px;
+  background: #071426;
+  color: #f7f7f8;
+  box-shadow: none;
+}
+
+.debug-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.debug-card-header strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.debug-card-header span {
+  color: #b9c1cc;
+  font-size: 11px;
+}
+
+.debug-card pre {
+  max-height: 320px;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  border-radius: 10px;
+  background: #0d1d31;
+  color: #dbe7f7;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .support-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;

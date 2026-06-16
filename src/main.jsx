@@ -1070,6 +1070,18 @@ function Card({ children, className = '' }) {
   return <section className={`card ${className}`}>{children}</section>;
 }
 
+function DebugJson({ value }) {
+  let text = '';
+
+  try {
+    text = JSON.stringify(value, null, 2);
+  } catch {
+    text = String(value);
+  }
+
+  return <pre>{text}</pre>;
+}
+
 function PrimaryButton({ children, className = '', onClick }) {
   return <button className={`primary-button ${className}`} onClick={onClick}>{children}</button>;
 }
@@ -2664,29 +2676,77 @@ function BalanceHistory({ navigate, activeScreen }) {
     payments: [],
   });
   const [historyError, setHistoryError] = useState('');
+  const [historyDebug, setHistoryDebug] = useState(null);
 
   useEffect(() => {
     const loadHistory = async () => {
+      const type = selectedType === 'income' ? 'replenishment' : 'payments';
+      const requestDebug = {
+        method: 'GET',
+        endpoint: '/users/history_pay_screen',
+        query: { type },
+        headers: { Authorization: 'Bearer <access_token>' },
+      };
+
+      setHistoryDebug({
+        selectedType,
+        request: requestDebug,
+        response: null,
+        error: null,
+        status: 'loading',
+      });
+
       try {
-        const type = selectedType === 'income' ? 'replenishment' : 'payments';
-        setHistory(await api.history(type));
+        const payload = await api.history(type);
+
+        setHistory(payload && typeof payload === 'object' ? payload : {
+          sum_pay: 0,
+          sym_trac: 0,
+          payments: [],
+        });
         setHistoryError('');
+        setHistoryDebug({
+          selectedType,
+          request: requestDebug,
+          response: payload,
+          error: null,
+        });
       } catch (error) {
         setHistoryError(getUiError(error));
+        setHistoryDebug({
+          selectedType,
+          request: requestDebug,
+          response: null,
+          error: {
+            message: getUiError(error),
+            status: error instanceof ApiError ? error.status : null,
+            payload: error instanceof ApiError ? error.payload : null,
+          },
+        });
       }
     };
 
     loadHistory();
   }, [selectedType]);
 
-  const transactions = (history.payments || []).map((item, index) => [
-    selectedType === 'income' ? 'Пополнение баланса' : 'Оплата VORA',
-    formatDateTime(item.data),
-    `${selectedType === 'income' ? '+' : '-'}${money(item.amount)}`,
-    selectedType === 'income' ? 'wallet' : 'feather',
-    item.status || 'paid',
+  const renderedTransactions = (history.payments || []).map((item, index) => ({
+    title: selectedType === 'income' ? 'Пополнение баланса' : 'Оплата VORA',
+    date: formatDateTime(item.data),
+    amount: `${selectedType === 'income' ? '+' : '-'}${money(item.amount)}`,
+    icon: selectedType === 'income' ? 'wallet' : 'feather',
+    status: item.status || 'paid',
     index,
-  ]);
+  }));
+  const historyDebugValue = historyDebug && {
+    ...historyDebug,
+    rendered: {
+      transactions: renderedTransactions,
+      summary: {
+        sum_pay: money(history.sum_pay),
+        sym_trac: String(history.sym_trac ?? renderedTransactions.length),
+      },
+    },
+  };
 
   return (
     <AppFrame className="history-screen" navigate={navigate} activeScreen={activeScreen}>
@@ -2696,9 +2756,9 @@ function BalanceHistory({ navigate, activeScreen }) {
         <button className={selectedType === 'outcome' ? 'active' : ''} onClick={() => setSelectedType('outcome')}><ArrowUp size={22} />Списания</button>
       </div>
       {historyError && <p className="inline-error">{historyError}</p>}
-      {transactions.map(([title, date, amount, type, status, index]) => (
+      {renderedTransactions.map(({ title, date, amount, icon, status, index }) => (
         <Card className="transaction-card" key={`${title}-${index}`}>
-          <IconTile tone={type === 'wallet' ? 'soft-green' : 'feather'}>{type === 'wallet' ? <Wallet size={24} /> : <span className="feather-mark" />}</IconTile>
+          <IconTile tone={icon === 'wallet' ? 'soft-green' : 'feather'}>{icon === 'wallet' ? <Wallet size={24} /> : <span className="feather-mark" />}</IconTile>
           <div>
             <strong>{title}</strong>
             <p>{date}</p>
@@ -2709,11 +2769,11 @@ function BalanceHistory({ navigate, activeScreen }) {
           </div>
         </Card>
       ))}
-      {!transactions.length && !historyError && <p className="empty-state">Операций пока нет</p>}
+      {!renderedTransactions.length && !historyError && <p className="empty-state">Операций пока нет</p>}
       <h2 className="muted-heading">Сводка</h2>
       <Card className="stats-card">
         <Stat icon={Wallet} label="Всего потрачено" value={money(history.sum_pay)} />
-        <Stat icon={ArrowLeftRight} label="Всего транзакций" value={String(history.sym_trac ?? transactions.length)} tone="green" />
+        <Stat icon={ArrowLeftRight} label="Всего транзакций" value={String(history.sym_trac ?? renderedTransactions.length)} tone="green" />
       </Card>
       <Card className="help-card">
         <IconTile><HeadphonesGlyph /></IconTile>
@@ -2722,6 +2782,13 @@ function BalanceHistory({ navigate, activeScreen }) {
           <p>Напишите нам, мы всегда на связи</p>
         </div>
         <button onClick={() => navigate('tickets')}>Написать</button>
+      </Card>
+      <Card className="debug-card">
+        <div className="debug-card-header">
+          <strong>Debug: история баланса</strong>
+          <span>{selectedType === 'income' ? 'Пополнения' : 'Списания'}</span>
+        </div>
+        <DebugJson value={historyDebugValue || { status: 'loading' }} />
       </Card>
     </AppFrame>
   );
