@@ -2722,25 +2722,10 @@ function BalanceHistory({ navigate, activeScreen }) {
     payments: [],
   });
   const [historyError, setHistoryError] = useState('');
-  const [historyDebug, setHistoryDebug] = useState(null);
 
   useEffect(() => {
     const loadHistory = async () => {
       const type = selectedType === 'income' ? 'replenishment' : 'payments';
-      const requestDebug = {
-        method: 'GET',
-        endpoint: '/users/history_pay_screen',
-        query: { type },
-        headers: { Authorization: 'Bearer <access_token>' },
-      };
-
-      setHistoryDebug({
-        selectedType,
-        request: requestDebug,
-        response: null,
-        error: null,
-        status: 'loading',
-      });
 
       try {
         const payload = await api.history(type);
@@ -2751,24 +2736,8 @@ function BalanceHistory({ navigate, activeScreen }) {
           payments: [],
         });
         setHistoryError('');
-        setHistoryDebug({
-          selectedType,
-          request: requestDebug,
-          response: payload,
-          error: null,
-        });
       } catch (error) {
         setHistoryError(getUiError(error));
-        setHistoryDebug({
-          selectedType,
-          request: requestDebug,
-          response: null,
-          error: {
-            message: getUiError(error),
-            status: error instanceof ApiError ? error.status : null,
-            payload: error instanceof ApiError ? error.payload : null,
-          },
-        });
       }
     };
 
@@ -2783,16 +2752,6 @@ function BalanceHistory({ navigate, activeScreen }) {
     status: item.status || 'paid',
     index,
   }));
-  const historyDebugValue = historyDebug && {
-    ...historyDebug,
-    rendered: {
-      transactions: renderedTransactions,
-      summary: {
-        sum_pay: money(history.sum_pay),
-        sym_trac: String(history.sym_trac ?? renderedTransactions.length),
-      },
-    },
-  };
 
   return (
     <AppFrame className="history-screen" navigate={navigate} activeScreen={activeScreen}>
@@ -2828,13 +2787,6 @@ function BalanceHistory({ navigate, activeScreen }) {
           <p>Напишите нам, мы всегда на связи</p>
         </div>
         <button onClick={() => navigate('tickets')}>Написать</button>
-      </Card>
-      <Card className="debug-card">
-        <div className="debug-card-header">
-          <strong>Debug: история баланса</strong>
-          <span>{selectedType === 'income' ? 'Пополнения' : 'Списания'}</span>
-        </div>
-        <DebugJson value={historyDebugValue || { status: 'loading' }} />
       </Card>
     </AppFrame>
   );
