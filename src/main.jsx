@@ -638,6 +638,7 @@ function getBackendHomeScreen(mainData) {
     first: 'trial-start',
     second: 'trial-active',
     buy: 'trial-expired',
+    main: 'home-active',
   };
 
   return screenMap[mainData.screen] || '';
