@@ -916,7 +916,9 @@ function AppFrame({ children, className = '', navigate, activeScreen }) {
 }
 
 function AppHeader({ navigate, activeScreen }) {
-  const canClose = activeScreen && !['home-active', 'trial-start'].includes(activeScreen);
+  // Скрываем стрелку на главной, всех экранах триала и всех экранах подписки
+  const isSubscriptionScreen = activeScreen?.startsWith('trial-') || activeScreen?.startsWith('tariff-');
+  const canClose = activeScreen && !['home-active'].includes(activeScreen) && !isSubscriptionScreen;
   const canGoBack = canClose;
 
   return (
