@@ -111,7 +111,7 @@ button svg,
 .close-screen {
   position: absolute;
   right: 20px;
-  top: 20px;
+  top: 15px;
   width: 39px;
   height: 39px;
   border-radius: 13px;
@@ -133,7 +133,7 @@ button svg,
 .back-screen {
   position: absolute;
   left: 20px;
-  top: 20px;
+  top: 15px;
   width: 39px;
   height: 39px;
   border-radius: 13px;
