@@ -1406,80 +1406,41 @@ function TrialStart({ navigate, activeScreen }) {
       {paymentError && <p className="inline-error">{paymentError}</p>}
       <PrimaryButton onClick={startTrial}>Начать за <span>{trialMoneyText()}</span></PrimaryButton>
       <SectionDivider>или оформите подписку сразу</SectionDivider>
-      <Card className="trial-plan-list">
-        <button onClick={() => navigate('tariff-lite')}>
-          <IconTile tone="tariff-image lite"><AssetIcon name="plan-lite" /></IconTile>
-          <div>
-            <strong>Lite</strong>
-            <p>от {money(tariffCatalog.lite.monthPrice)}</p>
-          </div>
-        </button>
-        <button onClick={() => navigate('tariff-plus')}>
-          <IconTile tone="tariff-image plus"><AssetIcon name="plan-plus" /></IconTile>
-          <div>
-            <strong>Plus</strong>
-            <p>от {money(tariffCatalog.plus.monthPrice)}</p>
-          </div>
-          <span className="popular"><Sparkles size={12} />Популярный</span>
-        </button>
-        <button className="choose-plan-row" onClick={() => navigate('tariff-plus')}>
-          <strong>Выбрать подписку</strong>
-          <ChevronRight size={24} />
-        </button>
-      </Card>
+      <TrialPlanList navigate={navigate} />
     </AppFrame>
   );
 }
 
+function TrialPlanList({ navigate }) {
+  return (
+    <Card className="trial-plan-list">
+      <button onClick={() => navigate('tariff-lite')}>
+        <IconTile tone="tariff-image lite"><AssetIcon name="plan-lite" /></IconTile>
+        <div>
+          <strong>Lite</strong>
+          <p>от {money(tariffCatalog.lite.monthPrice)}</p>
+        </div>
+      </button>
+      <button onClick={() => navigate('tariff-plus')}>
+        <IconTile tone="tariff-image plus"><AssetIcon name="plan-plus" /></IconTile>
+        <div>
+          <strong>Plus</strong>
+          <p>от {money(tariffCatalog.plus.monthPrice)}</p>
+        </div>
+        <span className="popular"><Sparkles size={12} />Популярный</span>
+      </button>
+      <button className="choose-plan-row" onClick={() => navigate('tariff-plus')}>
+        <strong>Выбрать подписку</strong>
+        <ChevronRight size={24} />
+      </button>
+    </Card>
+  );
+}
+
 function TrialActive({ navigate, activeScreen, mainData }) {
-  const [selectedPlan, setSelectedPlan] = useState('plus');
-  const [selectedMethod, setSelectedMethod] = useState('card');
-  const [promoCode, setPromoCode] = useState('');
-  const [promoApplied, setPromoApplied] = useState(false);
-  const [paymentError, setPaymentError] = useState('');
-  const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
-  const selectedTariff = tariffCatalog[selectedPlan];
   const countdown = useCountdown(mainData.expiredAt);
   const timerProgress = Math.max(0, Math.min(100, (countdown.remainingMs / 86400000) * 100));
   const padTime = (value) => String(value).padStart(2, '0');
-
-  const applyPromo = () => {
-    if (promoApplied) {
-      setPromoCode('');
-      setPromoApplied(false);
-      return;
-    }
-
-    setPromoApplied(Boolean(promoCode.trim()));
-  };
-
-  const submitPromoWithEnter = (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      applyPromo();
-      event.currentTarget.blur();
-    }
-  };
-
-  const buySubscription = async () => {
-    try {
-      setPaymentError('');
-      const url = await api.createInvoice({
-        provider,
-        type: 'SUBSCRIPTION',
-        payload: {
-          plan: selectedPlan,
-          subscription_month: 1,
-          hwid: selectedTariff.devices,
-          currency: selectedMethod === 'crypto' ? 'USDT' : 'RUB',
-          promo_code: promoApplied ? promoCode.trim() : undefined,
-        },
-      });
-      openPaymentUrl(url);
-    } catch (error) {
-      setPaymentError(getUiError(error));
-    }
-  };
 
   return (
     <AppFrame className="trial-screen compact trial-active-screen" navigate={navigate} activeScreen={activeScreen}>
@@ -1506,71 +1467,13 @@ function TrialActive({ navigate, activeScreen, mainData }) {
         <div className="progress"><i style={{ width: `${timerProgress}%` }} /></div>
       </Card>
       <SectionDivider>доступные тарифы</SectionDivider>
-      <PlansPair selected={selectedPlan} onSelect={setSelectedPlan} />
-      <div className="payment-methods trial-methods">
-        <MethodCard title="Банковская карта" subtitle="Visa, Mastercard, Мир" checked={selectedMethod === 'card'} onClick={() => setSelectedMethod('card')} />
-        <MethodCard title="Криптовалюта" subtitle="USDT, BTC, ETH и др." checked={selectedMethod === 'crypto'} onClick={() => setSelectedMethod('crypto')} />
-      </div>
-      <div className="promo trial-promo">
-        <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
-        <div>
-          <input value={promoCode} onFocus={keepFocusedFieldVisible} onKeyDown={submitPromoWithEnter} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); }} placeholder="Введите промокод" enterKeyHint="done" />
-          <button onClick={applyPromo} disabled={!promoApplied && !promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
-        </div>
-      </div>
-      {paymentError && <p className="inline-error">{paymentError}</p>}
-      <PrimaryButton onClick={buySubscription}>Подключить за <span>{money(selectedTariff.monthPrice)}</span></PrimaryButton>
+      <TrialPlanList navigate={navigate} />
     </AppFrame>
   );
 }
 
 function TrialExpired({ navigate, activeScreen, mainData, rawMainData }) {
-  const [selectedPlan, setSelectedPlan] = useState('plus');
-  const [selectedMethod, setSelectedMethod] = useState('card');
-  const [promoCode, setPromoCode] = useState('');
-  const [promoApplied, setPromoApplied] = useState(false);
-  const [paymentError, setPaymentError] = useState('');
-  const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
-  const selectedTariff = tariffCatalog[selectedPlan];
   const mainScreenDebug = buildMainScreenDebug(rawMainData, mainData);
-
-  const applyPromo = () => {
-    if (promoApplied) {
-      setPromoCode('');
-      setPromoApplied(false);
-      return;
-    }
-
-    setPromoApplied(Boolean(promoCode.trim()));
-  };
-
-  const submitPromoWithEnter = (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      applyPromo();
-      event.currentTarget.blur();
-    }
-  };
-
-  const buySubscription = async () => {
-    try {
-      setPaymentError('');
-      const url = await api.createInvoice({
-        provider,
-        type: 'SUBSCRIPTION',
-        payload: {
-          plan: selectedPlan,
-          subscription_month: 1,
-          hwid: selectedTariff.devices,
-          currency: selectedMethod === 'crypto' ? 'USDT' : 'RUB',
-          promo_code: promoApplied ? promoCode.trim() : undefined,
-        },
-      });
-      openPaymentUrl(url);
-    } catch (error) {
-      setPaymentError(getUiError(error));
-    }
-  };
 
   return (
     <AppFrame className="trial-screen compact" navigate={navigate} activeScreen={activeScreen}>
@@ -1581,20 +1484,7 @@ function TrialExpired({ navigate, activeScreen, mainData, rawMainData }) {
         image="trial-expired"
       />
       <SectionDivider>выберите тариф для продолжения</SectionDivider>
-      <PlansPair selected={selectedPlan} onSelect={setSelectedPlan} />
-      <div className="payment-methods trial-methods">
-        <MethodCard title="Банковская карта" subtitle="Visa, Mastercard, Мир" checked={selectedMethod === 'card'} onClick={() => setSelectedMethod('card')} />
-        <MethodCard title="Криптовалюта" subtitle="USDT, BTC, ETH и др." checked={selectedMethod === 'crypto'} onClick={() => setSelectedMethod('crypto')} />
-      </div>
-      <div className="promo trial-promo">
-        <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
-        <div>
-          <input value={promoCode} onFocus={keepFocusedFieldVisible} onKeyDown={submitPromoWithEnter} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); }} placeholder="Введите промокод" enterKeyHint="done" />
-          <button onClick={applyPromo} disabled={!promoApplied && !promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
-        </div>
-      </div>
-      {paymentError && <p className="inline-error">{paymentError}</p>}
-      <PrimaryButton onClick={buySubscription}>Подключить за <span>{money(selectedTariff.monthPrice)}</span></PrimaryButton>
+      <TrialPlanList navigate={navigate} />
       <MainScreenDebugCard value={mainScreenDebug} placement="expired" />
     </AppFrame>
   );
