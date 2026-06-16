@@ -899,11 +899,24 @@ button svg,
 }
 
 .timer-card strong {
-  display: block;
+  display: grid;
+  grid-template-columns: 2ch 0.4ch 2ch 0.4ch 2ch;
+  column-gap: 0.28em;
+  justify-content: center;
+  align-items: baseline;
   font-size: 33px;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  white-space: nowrap;
 }
 
-.timer-card strong span {
+.timer-card .timer-unit,
+.timer-card .timer-separator {
+  display: block;
+  text-align: center;
+}
+
+.timer-card .timer-seconds {
   color: #ff712d;
 }
 
@@ -1049,12 +1062,17 @@ button svg,
 }
 
 .timer-labels {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, 52px);
   justify-content: center;
-  gap: 24px;
+  gap: 0;
   margin-top: 17px;
   color: #596371;
   font-size: 14px;
+}
+
+.timer-labels span {
+  text-align: center;
 }
 
 .progress,

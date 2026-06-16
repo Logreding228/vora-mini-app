@@ -1448,7 +1448,13 @@ function TrialActive({ navigate, activeScreen, mainData }) {
       />
       <Card className="timer-card">
         <p>Осталось времени</p>
-        <strong>{padTime(countdown.hours)} : {padTime(countdown.minutes)} : <span>{padTime(countdown.seconds)}</span></strong>
+        <strong className="timer-value" aria-label={`${padTime(countdown.hours)} часов ${padTime(countdown.minutes)} минут ${padTime(countdown.seconds)} секунд`}>
+          <span className="timer-unit">{padTime(countdown.hours)}</span>
+          <span className="timer-separator">:</span>
+          <span className="timer-unit">{padTime(countdown.minutes)}</span>
+          <span className="timer-separator">:</span>
+          <span className="timer-unit timer-seconds">{padTime(countdown.seconds)}</span>
+        </strong>
         <div className="timer-labels">
           <span>Часов</span>
           <span>Минут</span>
