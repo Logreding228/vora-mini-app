@@ -3563,6 +3563,14 @@ button svg,
   overflow-wrap: anywhere;
 }
 
+.main-screen-debug {
+  margin: 14px 0;
+}
+
+.main-screen-debug.trial-debug {
+  margin-top: 16px;
+}
+
 .support-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -665,6 +665,36 @@ function getDefaultHomeScreen(mainData) {
   return 'trial-start';
 }
 
+function buildMainScreenDebug(rawMainData, mainData) {
+  const subscriptionState = getSubscriptionState(mainData);
+
+  return {
+    request: {
+      method: 'GET',
+      endpoint: '/users/main_screen/',
+      headers: { Authorization: 'Bearer <access_token>' },
+    },
+    response: rawMainData,
+    normalized: mainData,
+    decision: {
+      subscriptionState,
+      defaultScreen: getDefaultHomeScreen(mainData),
+      backendScreen: getBackendHomeScreen(mainData) || null,
+      hasActiveSubscription: hasActiveSubscription(mainData),
+      hasActiveTrial: hasActiveTrial(mainData),
+      hasExpiredAccess: hasExpiredAccess(mainData),
+      expiredAt: mainData.expiredAt,
+      expiredAtIsPast: Boolean(mainData.expiredAt && isPastDate(mainData.expiredAt)),
+      status: mainData.status,
+      plan: mainData.plan,
+      screen: mainData.screen,
+      stage: mainData.stage,
+      isTrial: mainData.isTrial,
+      trialUsed: mainData.trialUsed,
+    },
+  };
+}
+
 function getUiError(error) {
   const message = error instanceof ApiError ? error.message : error?.message || '';
 
@@ -892,7 +922,7 @@ function App() {
         {isInitialDataReady ? (
           <>
             <div className={activeScreen.startsWith('tariff-') ? 'page-transition no-page-animation' : 'page-transition'} key={activeScreen}>
-              <Screen navigate={navigate} activeScreen={activeScreen} mainData={mainData} telegramUser={telegramUser} apiNotice={apiNotice} />
+              <Screen navigate={navigate} activeScreen={activeScreen} mainData={mainData} rawMainData={rawMainData} telegramUser={telegramUser} apiNotice={apiNotice} />
             </div>
             <BottomNav navigate={navigate} activeScreen={activeScreen} mainData={mainData} />
           </>
@@ -1493,7 +1523,7 @@ function TrialActive({ navigate, activeScreen, mainData }) {
   );
 }
 
-function TrialExpired({ navigate, activeScreen }) {
+function TrialExpired({ navigate, activeScreen, mainData, rawMainData }) {
   const [selectedPlan, setSelectedPlan] = useState('plus');
   const [selectedMethod, setSelectedMethod] = useState('card');
   const [promoCode, setPromoCode] = useState('');
@@ -1501,6 +1531,7 @@ function TrialExpired({ navigate, activeScreen }) {
   const [paymentError, setPaymentError] = useState('');
   const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
   const selectedTariff = tariffCatalog[selectedPlan];
+  const mainScreenDebug = buildMainScreenDebug(rawMainData, mainData);
 
   const applyPromo = () => {
     if (promoApplied) {
@@ -1563,6 +1594,7 @@ function TrialExpired({ navigate, activeScreen }) {
       </div>
       {paymentError && <p className="inline-error">{paymentError}</p>}
       <PrimaryButton onClick={buySubscription}>Подключить за <span>{money(selectedTariff.monthPrice)}</span></PrimaryButton>
+      <MainScreenDebugCard value={mainScreenDebug} placement="expired" />
     </AppFrame>
   );
 }
@@ -1578,14 +1610,16 @@ function HeroOffer({ title, accent, subtitle, image }) {
   );
 }
 
-function HomeActive({ navigate, activeScreen, mainData, telegramUser, apiNotice }) {
+function HomeActive({ navigate, activeScreen, mainData, rawMainData, telegramUser, apiNotice }) {
   const displayName = getDisplayName(telegramUser);
   const [infoSheet, setInfoSheet] = useState('');
+  const mainScreenDebug = buildMainScreenDebug(rawMainData, mainData);
 
   return (
     <AppFrame className="home-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title={`Привет, ${displayName}!`} subtitle={apiNotice} action={<button className="square-action" onClick={() => navigate('balance-history')} aria-label="Уведомления"><Bell size={28} /></button>} />
       <SubscriptionSummary navigate={navigate} mainData={mainData} />
+      <MainScreenDebugCard value={mainScreenDebug} />
       <Card className="link-list">
         <ActionRow icon={SlidersHorizontal} title="Управление тарифом" subtitle="Сменить тариф или период" onClick={() => navigate('change-plan')} />
         <ActionRow icon={CircleHelp} title="Вопросы и ответы" subtitle="Инструкции и частые вопросы" onClick={() => navigate('support')} />
@@ -1646,6 +1680,18 @@ function SubscriptionSummary({ muted: sheetMuted = false, navigate, mainData }) 
         <BalanceMini title="Основной баланс" value={money(mainData.balance)} tone="green" onClick={() => navigate('balance-topup')} />
         <BalanceMini title="Реферальный баланс" value={money(mainData.refBalance)} tone="orange" onClick={() => navigate('referral')} />
       </div>
+    </Card>
+  );
+}
+
+function MainScreenDebugCard({ value, placement = 'home' }) {
+  return (
+    <Card className={`debug-card main-screen-debug ${placement === 'expired' ? 'trial-debug' : ''}`}>
+      <div className="debug-card-header">
+        <strong>Debug: /users/main_screen/</strong>
+        <span>{value.decision.subscriptionState.label}</span>
+      </div>
+      <DebugJson value={value} />
     </Card>
   );
 }
