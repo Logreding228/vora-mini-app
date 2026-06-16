@@ -314,6 +314,10 @@ button svg,
   text-align: center;
 }
 
+.trial-screen.compact .content {
+  padding-bottom: calc(190px + env(safe-area-inset-bottom));
+}
+
 .hero-offer {
   padding-top: 0;
 }
@@ -922,7 +926,7 @@ button svg,
 
 .trial-active-screen .content {
   margin-top: -47px;
-  padding-bottom: 110px;
+  padding-bottom: calc(190px + env(safe-area-inset-bottom));
 }
 
 .trial-active-screen .hero-offer h1 {
