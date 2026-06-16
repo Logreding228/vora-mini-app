@@ -386,6 +386,7 @@ const emptyMainData = {
 };
 
 const booleanFromApi = (value) => value === true || value === 1 || String(value).toLowerCase() === 'true';
+const valueOrEmpty = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== '') || '';
 
 function normalizeMainData(data = emptyMainData) {
   const hwid = data.hwid || {};
@@ -408,8 +409,8 @@ function normalizeMainData(data = emptyMainData) {
   const devices = rawDevices.length ? rawDevices.map((device, index) => ({
     id: device.hwid || device.id || device.uuid || `device-${index}`,
     kind: normalizeDeviceKind(device.kind || device.os || device.platform || device.type || 'windows'),
-    title: device.title || device.name || device.os || device.platform || 'Устройство',
-    model: device.model || device.device_name || device.name || device.hwid || 'Unknown',
+    title: valueOrEmpty(device.title, device.device_name, device.name, device.os, device.platform, device.kind, 'Устройство'),
+    model: valueOrEmpty(device.model, device.brand, device.vendor, device.app, device.client),
     lastSeen: device.last_seen || device.updated_at || device.online_at || '',
   })) : [];
 
@@ -1069,6 +1070,18 @@ function Card({ children, className = '' }) {
   return <section className={`card ${className}`}>{children}</section>;
 }
 
+function DebugJson({ value }) {
+  let text = '';
+
+  try {
+    text = JSON.stringify(value, null, 2);
+  } catch {
+    text = String(value);
+  }
+
+  return <pre>{text}</pre>;
+}
+
 function PrimaryButton({ children, className = '', onClick }) {
   return <button className={`primary-button ${className}`} onClick={onClick}>{children}</button>;
 }
@@ -1584,8 +1597,8 @@ function DevicesCard({ mainData }) {
               <span className={`platform ${kind}`}><PlatformIcon type={kind} /></span>
               <div>
                 <strong>{title}</strong>
-                <span>•</span>
-                <p>{model}</p>
+                {model && <span>•</span>}
+                {model && <p>{model}</p>}
                 <small>Онлайн • {formatDateTime(lastSeen)}</small>
               </div>
               <button className="delete-device" onClick={() => deleteDevice(id)} aria-label={`Удалить ${title}`}>
@@ -2481,6 +2494,8 @@ function useSwipeDismiss(onClose) {
           return;
         }
 
+        event.preventDefault();
+        event.stopPropagation();
         beginDrag(event.clientY, event.pointerId);
         event.currentTarget.setPointerCapture?.(event.pointerId);
       },
@@ -2491,18 +2506,35 @@ function useSwipeDismiss(onClose) {
 
         moveDrag(event.clientY);
         event.preventDefault();
+        event.stopPropagation();
       },
-      onPointerUp: finishDrag,
-      onPointerCancel: finishDrag,
+      onPointerUp: (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        finishDrag();
+      },
+      onPointerCancel: (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        finishDrag();
+      },
       onTouchStart: (event) => {
+        event.stopPropagation();
         beginDrag(event.touches[0]?.clientY || 0);
       },
       onTouchMove: (event) => {
         moveDrag(event.touches[0]?.clientY || 0);
         event.preventDefault();
+        event.stopPropagation();
       },
-      onTouchEnd: finishDrag,
-      onTouchCancel: finishDrag,
+      onTouchEnd: (event) => {
+        event.stopPropagation();
+        finishDrag();
+      },
+      onTouchCancel: (event) => {
+        event.stopPropagation();
+        finishDrag();
+      },
     },
   };
 }
@@ -2552,10 +2584,25 @@ function BalanceHistory({ navigate, activeScreen }) {
     payments: [],
   });
   const [historyError, setHistoryError] = useState('');
+  const [historyDebug, setHistoryDebug] = useState(null);
 
   useEffect(() => {
     const loadHistory = async () => {
       const type = selectedType === 'income' ? 'replenishment' : 'payments';
+      const requestDebug = {
+        method: 'GET',
+        endpoint: '/users/history_pay_screen',
+        query: { type },
+        headers: { Authorization: 'Bearer <access_token>' },
+      };
+
+      setHistoryDebug({
+        selectedType,
+        request: requestDebug,
+        response: null,
+        error: null,
+        status: 'loading',
+      });
 
       try {
         const payload = await api.history(type);
@@ -2566,8 +2613,24 @@ function BalanceHistory({ navigate, activeScreen }) {
           payments: [],
         });
         setHistoryError('');
+        setHistoryDebug({
+          selectedType,
+          request: requestDebug,
+          response: payload,
+          error: null,
+        });
       } catch (error) {
         setHistoryError(getUiError(error));
+        setHistoryDebug({
+          selectedType,
+          request: requestDebug,
+          response: null,
+          error: {
+            message: getUiError(error),
+            status: error instanceof ApiError ? error.status : null,
+            payload: error instanceof ApiError ? error.payload : null,
+          },
+        });
       }
     };
 
@@ -2582,6 +2645,16 @@ function BalanceHistory({ navigate, activeScreen }) {
     status: item.status || 'paid',
     index,
   }));
+  const historyDebugValue = historyDebug && {
+    ...historyDebug,
+    rendered: {
+      transactions: renderedTransactions,
+      summary: {
+        sum_pay: money(history.sum_pay),
+        sym_trac: String(history.sym_trac ?? renderedTransactions.length),
+      },
+    },
+  };
 
   return (
     <AppFrame className="history-screen" navigate={navigate} activeScreen={activeScreen}>
@@ -2617,6 +2690,13 @@ function BalanceHistory({ navigate, activeScreen }) {
           <p>Напишите нам, мы всегда на связи</p>
         </div>
         <button onClick={() => navigate('tickets')}>Написать</button>
+      </Card>
+      <Card className="debug-card">
+        <div className="debug-card-header">
+          <strong>Debug: история баланса</strong>
+          <span>{selectedType === 'income' ? 'Пополнения' : 'Списания'}</span>
+        </div>
+        <DebugJson value={historyDebugValue || { status: 'loading' }} />
       </Card>
     </AppFrame>
   );
