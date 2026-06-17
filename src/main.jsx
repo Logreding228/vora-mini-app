@@ -37,7 +37,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-import { api, ApiError, authenticateTelegram } from './api.js';
+import { api, ApiError, authenticateTelegram, getAdminSecret, saveAdminSecret } from './api.js';
 import { getDisplayName, initTelegramApp } from './telegram.js';
 import './styles.css';
 
@@ -679,6 +679,36 @@ function getUiError(error) {
   }
 
   return message || 'Запрос не выполнен. Попробуйте еще раз.';
+}
+
+function getTicketStatusMeta(status) {
+  const normalized = String(status || 'open').toLowerCase();
+  const values = {
+    open: ['Открыт', 'orange'],
+    answered: ['Отвечен', 'blue'],
+    closed: ['Закрыт', 'gray'],
+  };
+
+  return values[normalized] || [status || 'Открыт', 'purple'];
+}
+
+function saveSelectedTicket(id, isAdmin = false) {
+  try {
+    sessionStorage.setItem('selected_ticket_id', id);
+    sessionStorage.setItem('selected_ticket_admin', isAdmin ? '1' : '');
+  } catch {
+  }
+}
+
+function readSelectedTicket() {
+  try {
+    return {
+      id: sessionStorage.getItem('selected_ticket_id') || '',
+      isAdmin: sessionStorage.getItem('selected_ticket_admin') === '1',
+    };
+  } catch {
+    return { id: '', isAdmin: false };
+  }
 }
 
 function keepFocusedFieldVisible(event) {
@@ -2752,35 +2782,99 @@ function HeadphonesGlyph() {
 }
 
 function TicketsScreen({ navigate, activeScreen }) {
-  const [selectedTab, setSelectedTab] = useState('Все');
-  const tickets = [];
+  const [selectedTab, setSelectedTab] = useState('all');
+  const [mode, setMode] = useState(() => (getAdminSecret() ? 'admin' : 'user'));
+  const [adminSecret, setAdminSecret] = useState(() => getAdminSecret());
+  const [adminSecretInput, setAdminSecretInput] = useState(() => getAdminSecret());
+  const [tickets, setTickets] = useState([]);
+  const [ticketsError, setTicketsError] = useState('');
+  const [isLoadingTickets, setLoadingTickets] = useState(false);
+
+  const loadTickets = async () => {
+    try {
+      setLoadingTickets(true);
+      setTicketsError('');
+      const payload = mode === 'admin' ? await api.adminTickets(adminSecret) : await api.tickets();
+      setTickets(Array.isArray(payload) ? payload : []);
+    } catch (error) {
+      setTickets([]);
+      setTicketsError(getUiError(error));
+    } finally {
+      setLoadingTickets(false);
+    }
+  };
+
+  useEffect(() => {
+    if (mode === 'admin' && !adminSecret) {
+      setTickets([]);
+      setTicketsError('');
+      return;
+    }
+
+    loadTickets();
+  }, [adminSecret, mode]);
+
+  const saveSecret = () => {
+    setAdminSecret(saveAdminSecret(adminSecretInput));
+    setMode('admin');
+  };
+  const visibleTickets = tickets.filter((ticket) => selectedTab === 'all' || String(ticket.status || 'open').toLowerCase() === selectedTab);
+  const counts = {
+    all: tickets.length,
+    open: tickets.filter((ticket) => String(ticket.status || 'open').toLowerCase() === 'open').length,
+    answered: tickets.filter((ticket) => String(ticket.status || '').toLowerCase() === 'answered').length,
+    closed: tickets.filter((ticket) => String(ticket.status || '').toLowerCase() === 'closed').length,
+  };
+  const openTicket = (ticket) => {
+    saveSelectedTicket(ticket.id, mode === 'admin');
+    navigate('ticket-thread');
+  };
 
   return (
     <AppFrame className="tickets-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Обращения" subtitle="Круглосуточно" />
+      <div className="ticket-mode">
+        <button className={mode === 'user' ? 'active' : ''} onClick={() => setMode('user')}>Мои</button>
+        <button className={mode === 'admin' ? 'active' : ''} onClick={() => setMode('admin')}>Админ</button>
+      </div>
+      {mode === 'admin' && (
+        <Card className="admin-secret-card">
+          <label htmlFor="admin-secret">X-Admin-Secret</label>
+          <div>
+            <input id="admin-secret" value={adminSecretInput} onChange={(event) => setAdminSecretInput(event.target.value)} placeholder="Введите admin secret" type="password" />
+            <button onClick={saveSecret}>OK</button>
+          </div>
+        </Card>
+      )}
       <div className="ticket-tabs">
         {[
-          ['Все', '0'],
-          ['Новый', '0'],
-          ['В работе', '0'],
-          ['Ждем вас', '0'],
-        ].map(([label, count]) => (
-          <button key={label} className={selectedTab === label ? 'active' : ''} onClick={() => setSelectedTab(label)}>{label} <span>{count}</span></button>
+          ['all', 'Все'],
+          ['open', 'Новые'],
+          ['answered', 'Ответ'],
+          ['closed', 'Закрыты'],
+        ].map(([id, label]) => (
+          <button key={id} className={selectedTab === id ? 'active' : ''} onClick={() => setSelectedTab(id)}>{label} <span>{counts[id]}</span></button>
         ))}
       </div>
-      {tickets.map(([title, id, status, time, tone]) => (
-        <button className="ticket-card" key={`${status}-${time}`} onClick={() => navigate('ticket-thread')}>
-          <div>
-            <strong>{title}</strong>
-            <p>{id}</p>
-          </div>
-          <div>
-            <span className={`ticket-status ${tone}`}>{status}</span>
-            <p>{time}</p>
-          </div>
-        </button>
-      ))}
-      <p className="empty-state">Обращений пока нет</p>
+      {ticketsError && <p className="inline-error">{ticketsError}</p>}
+      {isLoadingTickets && <p className="empty-state">Загружаем обращения...</p>}
+      {visibleTickets.map((ticket) => {
+        const [statusLabel, tone] = getTicketStatusMeta(ticket.status);
+
+        return (
+          <button className="ticket-card" key={ticket.id} onClick={() => openTicket(ticket)}>
+            <div>
+              <strong>{ticket.subject || 'Без темы'}</strong>
+              <p>{mode === 'admin' ? `TG ${ticket.tg_id || '-'}` : ticket.id}</p>
+            </div>
+            <div>
+              <span className={`ticket-status ${tone}`}>{statusLabel}</span>
+              <p>{formatDateTime(ticket.updated_at || ticket.created_at)}</p>
+            </div>
+          </button>
+        );
+      })}
+      {!isLoadingTickets && !visibleTickets.length && !ticketsError && <p className="empty-state">Обращений пока нет</p>}
       <PrimaryButton onClick={() => navigate('ticket-create')}>Новое обращение</PrimaryButton>
     </AppFrame>
   );
@@ -2796,6 +2890,9 @@ function CreateTicket({ navigate, activeScreen }) {
   });
   const [description, setDescription] = useState('');
   const [fileName, setFileName] = useState('');
+  const [files, setFiles] = useState([]);
+  const [ticketError, setTicketError] = useState('');
+  const [isSubmitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     try {
@@ -2803,6 +2900,24 @@ function CreateTicket({ navigate, activeScreen }) {
     } catch {
     }
   }, []);
+
+  const submitTicket = async () => {
+    if (!subject.trim()) {
+      setTicketError('Введите тему обращения');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setTicketError('');
+      await api.createTicket({ subject: subject.trim(), text: description.trim(), files });
+      navigate('tickets');
+    } catch (error) {
+      setTicketError(getUiError(error));
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <AppFrame className="create-ticket" navigate={navigate} activeScreen={activeScreen}>
@@ -2821,7 +2936,7 @@ function CreateTicket({ navigate, activeScreen }) {
       <Card className="attach-card">
         <p>Прикрепить файлы</p>
         <label className="attach-drop">
-          <input type="file" onChange={(event) => setFileName(event.target.files?.[0]?.name || '')} />
+          <input type="file" multiple onChange={(event) => { const selectedFiles = Array.from(event.target.files || []); setFiles(selectedFiles); setFileName(selectedFiles.map((file) => file.name).join(', ')); }} />
           <Paperclip size={30} />
           <span>
             <strong>{fileName || 'Нажмите чтобы прикрепить файл'}</strong>
@@ -2829,30 +2944,94 @@ function CreateTicket({ navigate, activeScreen }) {
           </span>
         </label>
       </Card>
-      <PrimaryButton onClick={() => navigate('tickets')}>Вернуться к обращениям</PrimaryButton>
+      {ticketError && <p className="inline-error">{ticketError}</p>}
+      <PrimaryButton onClick={submitTicket}>{isSubmitting ? 'Создаем обращение' : 'Создать обращение'}</PrimaryButton>
     </AppFrame>
   );
 }
 
 function TicketThread({ navigate, activeScreen }) {
+  const selectedTicket = useMemo(() => readSelectedTicket(), []);
+  const [ticket, setTicket] = useState(null);
+  const [threadError, setThreadError] = useState('');
+  const [messageText, setMessageText] = useState('');
+  const [messageFiles, setMessageFiles] = useState([]);
+  const [isSending, setSending] = useState(false);
+
+  const loadTicket = async () => {
+    if (!selectedTicket.id) {
+      setThreadError('Обращение не выбрано');
+      return;
+    }
+
+    try {
+      setThreadError('');
+      setTicket(await api.ticket(selectedTicket.id, { admin: selectedTicket.isAdmin }));
+    } catch (error) {
+      setThreadError(getUiError(error));
+    }
+  };
+
+  useEffect(() => {
+    loadTicket();
+  }, [selectedTicket.id, selectedTicket.isAdmin]);
+
+  const sendMessage = async () => {
+    if (!messageText.trim() && !messageFiles.length) {
+      setThreadError('Введите сообщение или прикрепите файл');
+      return;
+    }
+
+    try {
+      setSending(true);
+      setThreadError('');
+      await api.sendTicketMessage(selectedTicket.id, {
+        text: messageText.trim(),
+        files: messageFiles,
+        admin: selectedTicket.isAdmin,
+      });
+      setMessageText('');
+      setMessageFiles([]);
+      await loadTicket();
+    } catch (error) {
+      setThreadError(getUiError(error));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const [statusLabel, statusTone] = getTicketStatusMeta(ticket?.status);
+  const messages = ticket?.messages || [];
+
   return (
     <AppFrame className="thread-screen" navigate={navigate} activeScreen={activeScreen}>
-      <PageTitle title="Обращение" subtitle={<><span>Данные обращения недоступны</span><Copy size={12} /></>} />
+      <PageTitle title={ticket?.subject || 'Обращение'} subtitle={<><span>{ticket?.id || selectedTicket.id || 'Не выбрано'}</span><Copy size={12} /></>} />
+      {selectedTicket.isAdmin && <p className="admin-thread-note">Админ-режим: ответ уйдет от поддержки</p>}
+      {threadError && <p className="inline-error">{threadError}</p>}
       <Card className="ticket-info">
-        <InfoLine icon={Headphones} title="Статус" value="Недоступно" />
-        <InfoLine icon={MoreVertical} title="Приоритет" value="Недоступно" />
-        <InfoLine icon={CalendarDays} title="Обновлен" value="Недоступно" />
+        <InfoLine icon={Headphones} title="Статус" value={statusLabel} tone={statusTone === 'orange' ? 'orange' : statusTone === 'green' ? 'green' : ''} />
+        <InfoLine icon={MoreVertical} title="Пользователь" value={ticket?.tg_id ? String(ticket.tg_id) : 'Недоступно'} />
+        <InfoLine icon={CalendarDays} title="Обновлен" value={formatDateTime(ticket?.updated_at || ticket?.created_at)} />
       </Card>
-      <div className="date-pill">Нет данных</div>
-      <ThreadMarker>Переписка пока пуста</ThreadMarker>
-      <div className="reopen-box">
-        <Sparkles size={25} />
-        <div><strong>Переписка недоступна</strong><p>Попробуйте открыть список обращений позже</p></div>
-      </div>
+      <div className="date-pill">{ticket?.created_at ? dateRu(ticket.created_at) : 'Нет данных'}</div>
+      {!messages.length && <ThreadMarker>Переписка пока пуста</ThreadMarker>}
+      {messages.map((message) => (
+        <MessageBubble
+          key={message.id || `${message.created_at}-${message.text}`}
+          author={message.is_admin ? 'Поддержка' : `Пользователь ${message.tg_id || ticket?.tg_id || ''}`}
+          time={formatDateTime(message.created_at)}
+          text={message.text}
+          files={message.files || []}
+          support={message.is_admin}
+        />
+      ))}
       <div className="message-input">
-        <button onClick={() => navigate('ticket-create')} aria-label="Прикрепить файл"><Paperclip size={23} /></button>
-        <span>Напишите сообщение...</span>
-        <button onClick={() => navigate('tickets')} aria-label="Отправить"><Send size={23} /></button>
+        <label aria-label="Прикрепить файл">
+          <input type="file" multiple onChange={(event) => setMessageFiles(Array.from(event.target.files || []))} />
+          <Paperclip size={23} />
+        </label>
+        <input value={messageText} onChange={(event) => setMessageText(event.target.value)} placeholder={messageFiles.length ? `${messageFiles.length} файл(а) выбрано` : 'Напишите сообщение...'} />
+        <button onClick={sendMessage} aria-label="Отправить" disabled={isSending}><Send size={23} /></button>
       </div>
     </AppFrame>
   );
@@ -2878,17 +3057,17 @@ function ThreadMarker({ children }) {
   );
 }
 
-function MessageBubble({ author, time, support, attachment }) {
+function MessageBubble({ author, time, text, files = [], support }) {
   return (
     <div className={support ? 'message-bubble support' : 'message-bubble'}>
       <p><span>{author}</span> • {time}</p>
-      <div>Сообщение недоступно</div>
-      {attachment && (
-        <div className="attachment">
+      <div>{text || 'Файл без текста'}</div>
+      {files.map((file, index) => (
+        <div className="attachment" key={`${file}-${index}`}>
           <Paperclip size={24} />
-          <span><strong>img.png</strong><small>1,4 МБ</small></span>
+          <span><strong>{typeof file === 'string' ? file.split('/').pop() || `file-${index + 1}` : `file-${index + 1}`}</strong><small>{typeof file === 'string' ? file : 'Вложение'}</small></span>
         </div>
-      )}
+      ))}
     </div>
   );
 }

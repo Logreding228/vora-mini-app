@@ -3666,6 +3666,66 @@ button svg,
   margin-bottom: 18px;
 }
 
+.ticket-mode {
+  height: 42px;
+  margin-bottom: 12px;
+  padding: 3px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  border-radius: 15px;
+  background: #f0f1f3;
+}
+
+.ticket-mode button {
+  border-radius: 12px;
+  background: transparent;
+  color: #596371;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ticket-mode button.active {
+  background: #ffffff;
+  color: #ff712d;
+  box-shadow: 0 8px 20px rgba(6, 22, 44, 0.07);
+}
+
+.admin-secret-card {
+  margin-bottom: 12px;
+  padding: 14px;
+  text-align: left;
+}
+
+.admin-secret-card label {
+  display: block;
+  margin-bottom: 10px;
+  color: #596371;
+  font-size: 12px;
+}
+
+.admin-secret-card div {
+  display: grid;
+  grid-template-columns: 1fr 52px;
+  gap: 8px;
+}
+
+.admin-secret-card input {
+  min-width: 0;
+  height: 40px;
+  border: 0;
+  border-radius: 12px;
+  padding: 0 12px;
+  background: #f7f7f8;
+}
+
+.admin-secret-card button {
+  border-radius: 12px;
+  background: #ff712d;
+  color: #ffffff;
+  font-weight: 700;
+}
+
 .ticket-tabs button {
   font-size: 13px;
   gap: 5px;
@@ -3862,6 +3922,13 @@ button svg,
   font-size: 24px;
 }
 
+.admin-thread-note {
+  margin: -8px 0 12px;
+  color: #ff712d;
+  font-size: 12px;
+  text-align: center;
+}
+
 .ticket-info {
   padding: 24px 12px;
 }
@@ -3971,6 +4038,28 @@ button svg,
   align-items: center;
   gap: 10px;
   padding: 8px;
+}
+
+.message-input label {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  color: #596371;
+}
+
+.message-input label input {
+  display: none;
+}
+
+.message-input input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #06162c;
+  font-size: 13px;
 }
 
 .attachment svg {

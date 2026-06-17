@@ -2,6 +2,7 @@ const runtimeConfig = window.__VORA_CONFIG__ || {};
 const apiBaseUrl = (runtimeConfig.API_BASE_URL || import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
 const telegramAuthPath = runtimeConfig.TELEGRAM_AUTH_PATH || import.meta.env.VITE_TELEGRAM_AUTH_PATH || '/auth/auth/telegram';
 const tokenRefreshPath = runtimeConfig.TOKEN_REFRESH_PATH || import.meta.env.VITE_TOKEN_REFRESH_PATH || '/auth/refresh_accessToken';
+const configuredAdminSecret = runtimeConfig.ADMIN_SECRET || import.meta.env.VITE_ADMIN_SECRET || '';
 let telegramInitData = runtimeConfig.TELEGRAM_INIT_DATA || import.meta.env.VITE_TELEGRAM_INIT_DATA || '';
 let refreshPromise = null;
 const memoryStorage = new Map();
@@ -77,6 +78,22 @@ export function getAccessToken() {
 
 export function getRefreshToken() {
   return readStorage('refresh_token') || runtimeConfig.REFRESH_TOKEN || import.meta.env.VITE_REFRESH_TOKEN || '';
+}
+
+export function getAdminSecret() {
+  return readStorage('admin_secret') || configuredAdminSecret;
+}
+
+export function saveAdminSecret(secret) {
+  const value = String(secret || '').trim();
+
+  if (value) {
+    writeStorage('admin_secret', value);
+  } else {
+    removeStorage('admin_secret');
+  }
+
+  return value;
 }
 
 export function saveTokenPair(payload) {
@@ -214,29 +231,34 @@ function telegramAuthMessage() {
   return 'Не удалось подтвердить Telegram. Закройте мини-приложение и откройте его через кнопку бота заново.';
 }
 
-async function rawRequest(path, { method = 'GET', query, body, token = getAccessToken(), initData } = {}) {
+async function rawRequest(path, { method = 'GET', query, body, token = getAccessToken(), initData, adminSecret } = {}) {
   if (!apiBaseUrl) {
     throw new ApiError('Сервис временно недоступен', 0);
   }
 
   const headers = {};
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
+  }
+
+  if (adminSecret) {
+    headers['X-Admin-Secret'] = adminSecret;
   }
 
   if (initData) {
     headers['X-Telegram-Init-Data'] = initData;
   }
 
-  if (body !== undefined) {
+  if (body !== undefined && !isFormData) {
     headers['Content-Type'] = 'application/json';
   }
 
   const response = await fetch(buildUrl(path, query), {
     method,
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body !== undefined ? isFormData ? body : JSON.stringify(body) : undefined,
   });
   const payload = await parseResponse(response);
 
@@ -346,6 +368,24 @@ async function request(path, options = {}) {
   }
 }
 
+function buildTicketForm({ subject, text, files } = {}) {
+  const form = new FormData();
+
+  if (subject) {
+    form.append('subject', subject);
+  }
+
+  if (text) {
+    form.append('text', text);
+  }
+
+  Array.from(files || []).forEach((file) => {
+    form.append('files', file);
+  });
+
+  return form;
+}
+
 export async function authenticateTelegram(initData) {
   telegramInitData = initData || telegramInitData;
 
@@ -367,6 +407,16 @@ export const api = {
   history: (type) => request('/users/history_pay_screen', { query: { type } }),
   upgradePrice: () => request('/users/upgrade_plan_price/'),
   downgradePlan: () => request('/users/downgrade_plan/', { method: 'POST' }),
+  tickets: () => request('/tickets'),
+  adminTickets: (adminSecret = getAdminSecret()) => rawRequest('/tickets/admin/all', { adminSecret, token: '' }),
+  ticket: (id, { admin = false, adminSecret = getAdminSecret() } = {}) => request(`/tickets/${id}`, admin ? { adminSecret, token: '', retry: false } : {}),
+  createTicket: ({ subject, text, files }) => request('/tickets', { method: 'POST', body: buildTicketForm({ subject, text, files }) }),
+  sendTicketMessage: (id, { text, files, admin = false, adminSecret = getAdminSecret() }) => request(`/tickets/${id}/messages`, {
+    method: 'POST',
+    body: buildTicketForm({ text, files }),
+    ...(admin ? { adminSecret, token: '', retry: false } : {}),
+  }),
+  closeTicket: (id) => request(`/tickets/${id}/close`, { method: 'POST' }),
   createInvoice: createTypedInvoice,
   createTrialInvoice: ({ provider, currency, amount }) => createTypedInvoice({
     provider,
