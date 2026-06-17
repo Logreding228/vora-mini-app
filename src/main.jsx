@@ -3063,7 +3063,7 @@ function ProfileScreen({ navigate, activeScreen, telegramUser }) {
         </div>
       </Card>
       <Card className="link-list">
-        <ActionRow icon={Wallet} title="Баланс" subtitle="Пополнения и история платежей" onClick={() => navigate('balance-history')} />
+        <ActionRow icon={Wallet} title="Баланс" subtitle="Пополнения и история платежей" onClick={() => navigate('balance-topup')} />
         <ActionRow icon={Shield} title="Безопасность" subtitle="Данные аккаунта и устройства" onClick={() => navigate('security')} />
         <ActionRow icon={Headphones} title="Поддержка" subtitle="Обращения и помощь" onClick={() => navigate('support')} />
       </Card>
@@ -3090,13 +3090,15 @@ function ProfileAvatar({ user }) {
   return <div className="profile-avatar"><UserGlyph size={30} /></div>;
 }
 
-function SecurityScreen({ navigate, activeScreen, telegramUser }) {
+function SecurityScreen({ navigate, activeScreen, mainData, telegramUser }) {
+  const devicesRoute = getDefaultHomeScreen(mainData);
+
   return (
     <AppFrame className="security-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Безопасность" subtitle="Данные аккаунта и устройства" />
       <Card className="link-list">
         <ActionRow icon={Shield} title="Telegram авторизация" subtitle={telegramUser?.username ? `Подключен @${telegramUser.username}` : 'Откройте мини-приложение через Telegram'} onClick={() => navigate('profile')} />
-        <ActionRow icon={Monitor} title="Устройства" subtitle="Посмотреть подключенные устройства" onClick={() => navigate('home-active')} />
+        <ActionRow icon={Monitor} title="Устройства" subtitle="Посмотреть подключенные устройства" onClick={() => navigate(devicesRoute)} />
         <ActionRow icon={Headphones} title="Нужна помощь?" subtitle="Написать в поддержку" onClick={() => navigate('support')} />
       </Card>
     </AppFrame>
