@@ -82,7 +82,7 @@ export function getRefreshToken() {
 export function saveTokenPair(payload) {
   const accessToken = payload?.token_access || payload?.access_token || payload?.access || payload?.token;
   const refreshToken = payload?.token_refresh || payload?.refresh_token || payload?.refresh;
-  const role = payload?.role || payload?.user?.role || (payload?.is_admin || payload?.user?.is_admin ? 'admin' : '');
+  const isAdmin = payload?.is_admin ?? payload?.user?.is_admin;
 
   if (accessToken) {
     writeStorage('access_token', accessToken);
@@ -92,15 +92,15 @@ export function saveTokenPair(payload) {
     writeStorage('refresh_token', refreshToken);
   }
 
-  if (role) {
-    writeStorage('user_role', String(role).toLowerCase());
+  if (isAdmin !== undefined && isAdmin !== null) {
+    writeStorage('is_admin', isAdmin ? 'true' : 'false');
   }
 
   return accessToken || '';
 }
 
-export function getUserRole() {
-  return readStorage('user_role') || '';
+export function isAdminUser() {
+  return readStorage('is_admin') === 'true';
 }
 
 function clearTokenPair() {

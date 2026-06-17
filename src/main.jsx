@@ -37,7 +37,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-import { api, ApiError, authenticateTelegram, getUserRole } from './api.js';
+import { api, ApiError, authenticateTelegram, isAdminUser } from './api.js';
 import { getDisplayName, initTelegramApp } from './telegram.js';
 import './styles.css';
 
@@ -764,7 +764,7 @@ function App() {
   const [screenHistory, setScreenHistory] = useState([]);
   const [telegramUser, setTelegramUser] = useState(null);
   const [mainData, setMainData] = useState(() => normalizeMainData(emptyMainData));
-  const [userRole, setUserRole] = useState(() => getUserRole());
+  const [isAdmin, setIsAdmin] = useState(() => isAdminUser());
   const [apiNotice, setApiNotice] = useState('');
   const [isInitialDataReady, setInitialDataReady] = useState(false);
   const [, setPricingVersion] = useState(0);
@@ -819,7 +819,7 @@ function App() {
       try {
         if (!didAuthenticate) {
           await authenticateTelegram(telegram.initData);
-          setUserRole(getUserRole());
+          setIsAdmin(isAdminUser());
           await loadPlanPricing();
           setPricingVersion((version) => version + 1);
           didAuthenticate = true;
@@ -924,7 +924,7 @@ function App() {
         {isInitialDataReady ? (
           <>
             <div className={activeScreen.startsWith('tariff-') ? 'page-transition no-page-animation' : 'page-transition'} key={activeScreen}>
-              <Screen navigate={navigate} activeScreen={activeScreen} mainData={mainData} telegramUser={telegramUser} userRole={userRole} apiNotice={apiNotice} />
+              <Screen navigate={navigate} activeScreen={activeScreen} mainData={mainData} telegramUser={telegramUser} isAdmin={isAdmin} apiNotice={apiNotice} />
             </div>
             <BottomNav navigate={navigate} activeScreen={activeScreen} mainData={mainData} />
           </>
@@ -2783,8 +2783,7 @@ function HeadphonesGlyph() {
   );
 }
 
-function TicketsScreen({ navigate, activeScreen, userRole }) {
-  const isAdmin = String(userRole || '').toLowerCase() === 'admin';
+function TicketsScreen({ navigate, activeScreen, isAdmin }) {
   const [selectedTab, setSelectedTab] = useState('all');
   const [mode, setMode] = useState('user');
   const [tickets, setTickets] = useState([]);
