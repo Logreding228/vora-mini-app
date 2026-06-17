@@ -1070,18 +1070,6 @@ function Card({ children, className = '' }) {
   return <section className={`card ${className}`}>{children}</section>;
 }
 
-function DebugJson({ value }) {
-  let text = '';
-
-  try {
-    text = JSON.stringify(value, null, 2);
-  } catch {
-    text = String(value);
-  }
-
-  return <pre>{text}</pre>;
-}
-
 function PrimaryButton({ children, className = '', onClick }) {
   return <button className={`primary-button ${className}`} onClick={onClick}>{children}</button>;
 }
@@ -1493,12 +1481,13 @@ function HomeActive({ navigate, activeScreen, mainData, telegramUser, apiNotice 
 
 function HomePopup({ navigate, activeScreen, mainData, telegramUser }) {
   const displayName = getDisplayName(telegramUser);
+  const isDeviceLimitReached = mainData.maxDevices > 0 && mainData.usedDevices >= mainData.maxDevices;
 
   return (
     <AppFrame className="home-screen has-sheet" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title={`Привет, ${displayName}!`} action={<button className="square-action" onClick={() => navigate('balance-history')} aria-label="Уведомления"><Bell size={28} /></button>} />
       <SubscriptionSummary muted navigate={navigate} mainData={mainData} />
-      <DeviceSheet navigate={navigate} />
+      <DeviceSheet navigate={navigate} limitReached={isDeviceLimitReached} mainData={mainData} />
     </AppFrame>
   );
 }
@@ -1507,6 +1496,7 @@ function SubscriptionSummary({ muted: sheetMuted = false, navigate, mainData }) 
   const planName = mainData.plan ? (mainData.plan === 'plus' ? 'Plus' : mainData.plan === 'lite' ? 'Lite' : mainData.plan) : 'Подписка';
   const progress = Math.min(100, Math.max(0, (mainData.usedDevices / mainData.maxDevices) * 100));
   const subscriptionState = getSubscriptionState(mainData);
+  const isDeviceLimitReached = mainData.maxDevices > 0 && mainData.usedDevices >= mainData.maxDevices;
 
   return (
     <Card className={`subscription-card subscription-${subscriptionState.tone} ${sheetMuted ? 'under-sheet' : ''}`}>
@@ -1530,7 +1520,9 @@ function SubscriptionSummary({ muted: sheetMuted = false, navigate, mainData }) 
           <strong>{dateRu(mainData.expiredAt)}</strong>
         </div>
       </div>
-      <PrimaryButton onClick={() => navigate('home-popup')}>Добавить устройство</PrimaryButton>
+      <PrimaryButton onClick={() => navigate(isDeviceLimitReached ? 'balance-topup' : 'home-popup')}>
+        {isDeviceLimitReached ? 'Докупить устройство' : 'Добавить устройство'}
+      </PrimaryButton>
       <div className="balance-strip">
         <BalanceMini title="Основной баланс" value={money(mainData.balance)} tone="green" onClick={() => navigate('balance-topup')} />
         <BalanceMini title="Реферальный баланс" value={money(mainData.refBalance)} tone="orange" onClick={() => navigate('referral')} />
@@ -1613,7 +1605,7 @@ function DevicesCard({ mainData }) {
   );
 }
 
-function DeviceSheet({ navigate }) {
+function DeviceSheet({ navigate, limitReached = false, mainData }) {
   useBodyScrollLock(true);
 
   const swipeDismiss = useSwipeDismiss(() => navigate('home-active'));
@@ -1637,6 +1629,10 @@ function DeviceSheet({ navigate }) {
   const client = mapClient(selectedConnection);
 
   useEffect(() => {
+    if (limitReached) {
+      return undefined;
+    }
+
     let isMounted = true;
 
     const loadConnectUrl = async () => {
@@ -1670,7 +1666,28 @@ function DeviceSheet({ navigate }) {
     return () => {
       isMounted = false;
     };
-  }, [client, selectedConnection]);
+  }, [client, limitReached, selectedConnection]);
+
+  if (limitReached) {
+    return (
+      <div className="modal-layer" onClick={() => navigate('home-active')}>
+        <div className="bottom-sheet" ref={swipeDismiss.sheetRef} onClick={(event) => event.stopPropagation()}>
+          <div className="sheet-drag-zone" {...swipeDismiss.handleProps}>
+            <span className="sheet-grip" />
+          </div>
+          <h2>Лимит устройств набран</h2>
+          <Card className="limit-sheet-card">
+            <IconTile tone="soft-orange"><Monitor size={24} /></IconTile>
+            <div>
+              <strong>{mainData.usedDevices} из {mainData.maxDevices} устройств</strong>
+              <p>Чтобы подключить новое устройство, докупите дополнительный слот или удалите одно из текущих устройств.</p>
+            </div>
+          </Card>
+          <PrimaryButton onClick={() => navigate('balance-topup')}>Докупить устройство</PrimaryButton>
+        </div>
+      </div>
+    );
+  }
 
   const connectDevice = () => {
     try {
@@ -2584,25 +2601,10 @@ function BalanceHistory({ navigate, activeScreen }) {
     payments: [],
   });
   const [historyError, setHistoryError] = useState('');
-  const [historyDebug, setHistoryDebug] = useState(null);
 
   useEffect(() => {
     const loadHistory = async () => {
       const type = selectedType === 'income' ? 'replenishment' : 'payments';
-      const requestDebug = {
-        method: 'GET',
-        endpoint: '/users/history_pay_screen',
-        query: { type },
-        headers: { Authorization: 'Bearer <access_token>' },
-      };
-
-      setHistoryDebug({
-        selectedType,
-        request: requestDebug,
-        response: null,
-        error: null,
-        status: 'loading',
-      });
 
       try {
         const payload = await api.history(type);
@@ -2613,24 +2615,8 @@ function BalanceHistory({ navigate, activeScreen }) {
           payments: [],
         });
         setHistoryError('');
-        setHistoryDebug({
-          selectedType,
-          request: requestDebug,
-          response: payload,
-          error: null,
-        });
       } catch (error) {
         setHistoryError(getUiError(error));
-        setHistoryDebug({
-          selectedType,
-          request: requestDebug,
-          response: null,
-          error: {
-            message: getUiError(error),
-            status: error instanceof ApiError ? error.status : null,
-            payload: error instanceof ApiError ? error.payload : null,
-          },
-        });
       }
     };
 
@@ -2645,16 +2631,6 @@ function BalanceHistory({ navigate, activeScreen }) {
     status: item.status || 'paid',
     index,
   }));
-  const historyDebugValue = historyDebug && {
-    ...historyDebug,
-    rendered: {
-      transactions: renderedTransactions,
-      summary: {
-        sum_pay: money(history.sum_pay),
-        sym_trac: String(history.sym_trac ?? renderedTransactions.length),
-      },
-    },
-  };
 
   return (
     <AppFrame className="history-screen" navigate={navigate} activeScreen={activeScreen}>
@@ -2690,13 +2666,6 @@ function BalanceHistory({ navigate, activeScreen }) {
           <p>Напишите нам, мы всегда на связи</p>
         </div>
         <button onClick={() => navigate('tickets')}>Написать</button>
-      </Card>
-      <Card className="debug-card">
-        <div className="debug-card-header">
-          <strong>Debug: история баланса</strong>
-          <span>{selectedType === 'income' ? 'Пополнения' : 'Списания'}</span>
-        </div>
-        <DebugJson value={historyDebugValue || { status: 'loading' }} />
       </Card>
     </AppFrame>
   );
