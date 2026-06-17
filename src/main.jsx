@@ -37,7 +37,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-import { api, ApiError, authenticateTelegram, getAdminSecret, saveAdminSecret } from './api.js';
+import { api, ApiError, authenticateTelegram, getUserRole } from './api.js';
 import { getDisplayName, initTelegramApp } from './telegram.js';
 import './styles.css';
 
@@ -764,6 +764,7 @@ function App() {
   const [screenHistory, setScreenHistory] = useState([]);
   const [telegramUser, setTelegramUser] = useState(null);
   const [mainData, setMainData] = useState(() => normalizeMainData(emptyMainData));
+  const [userRole, setUserRole] = useState(() => getUserRole());
   const [apiNotice, setApiNotice] = useState('');
   const [isInitialDataReady, setInitialDataReady] = useState(false);
   const [, setPricingVersion] = useState(0);
@@ -818,6 +819,7 @@ function App() {
       try {
         if (!didAuthenticate) {
           await authenticateTelegram(telegram.initData);
+          setUserRole(getUserRole());
           await loadPlanPricing();
           setPricingVersion((version) => version + 1);
           didAuthenticate = true;
@@ -922,7 +924,7 @@ function App() {
         {isInitialDataReady ? (
           <>
             <div className={activeScreen.startsWith('tariff-') ? 'page-transition no-page-animation' : 'page-transition'} key={activeScreen}>
-              <Screen navigate={navigate} activeScreen={activeScreen} mainData={mainData} telegramUser={telegramUser} apiNotice={apiNotice} />
+              <Screen navigate={navigate} activeScreen={activeScreen} mainData={mainData} telegramUser={telegramUser} userRole={userRole} apiNotice={apiNotice} />
             </div>
             <BottomNav navigate={navigate} activeScreen={activeScreen} mainData={mainData} />
           </>
@@ -2781,11 +2783,10 @@ function HeadphonesGlyph() {
   );
 }
 
-function TicketsScreen({ navigate, activeScreen }) {
+function TicketsScreen({ navigate, activeScreen, userRole }) {
+  const isAdmin = String(userRole || '').toLowerCase() === 'admin';
   const [selectedTab, setSelectedTab] = useState('all');
-  const [mode, setMode] = useState(() => (getAdminSecret() ? 'admin' : 'user'));
-  const [adminSecret, setAdminSecret] = useState(() => getAdminSecret());
-  const [adminSecretInput, setAdminSecretInput] = useState(() => getAdminSecret());
+  const [mode, setMode] = useState('user');
   const [tickets, setTickets] = useState([]);
   const [ticketsError, setTicketsError] = useState('');
   const [isLoadingTickets, setLoadingTickets] = useState(false);
@@ -2794,7 +2795,7 @@ function TicketsScreen({ navigate, activeScreen }) {
     try {
       setLoadingTickets(true);
       setTicketsError('');
-      const payload = mode === 'admin' ? await api.adminTickets(adminSecret) : await api.tickets();
+      const payload = mode === 'admin' ? await api.adminTickets() : await api.tickets();
       setTickets(Array.isArray(payload) ? payload : []);
     } catch (error) {
       setTickets([]);
@@ -2805,19 +2806,14 @@ function TicketsScreen({ navigate, activeScreen }) {
   };
 
   useEffect(() => {
-    if (mode === 'admin' && !adminSecret) {
-      setTickets([]);
-      setTicketsError('');
-      return;
+    if (mode === 'admin' && !isAdmin) {
+      setMode('user');
+      return undefined;
     }
 
     loadTickets();
-  }, [adminSecret, mode]);
+  }, [isAdmin, mode]);
 
-  const saveSecret = () => {
-    setAdminSecret(saveAdminSecret(adminSecretInput));
-    setMode('admin');
-  };
   const visibleTickets = tickets.filter((ticket) => selectedTab === 'all' || String(ticket.status || 'open').toLowerCase() === selectedTab);
   const counts = {
     all: tickets.length,
@@ -2833,19 +2829,10 @@ function TicketsScreen({ navigate, activeScreen }) {
   return (
     <AppFrame className="tickets-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Обращения" subtitle="Круглосуточно" />
-      <div className="ticket-mode">
+      <div className={isAdmin ? 'ticket-mode' : 'ticket-mode user-only'}>
         <button className={mode === 'user' ? 'active' : ''} onClick={() => setMode('user')}>Мои</button>
-        <button className={mode === 'admin' ? 'active' : ''} onClick={() => setMode('admin')}>Админ</button>
+        {isAdmin && <button className={mode === 'admin' ? 'active' : ''} onClick={() => setMode('admin')}>Админ</button>}
       </div>
-      {mode === 'admin' && (
-        <Card className="admin-secret-card">
-          <label htmlFor="admin-secret">X-Admin-Secret</label>
-          <div>
-            <input id="admin-secret" value={adminSecretInput} onChange={(event) => setAdminSecretInput(event.target.value)} placeholder="Введите admin secret" type="password" />
-            <button onClick={saveSecret}>OK</button>
-          </div>
-        </Card>
-      )}
       <div className="ticket-tabs">
         {[
           ['all', 'Все'],
@@ -2966,7 +2953,7 @@ function TicketThread({ navigate, activeScreen }) {
 
     try {
       setThreadError('');
-      setTicket(await api.ticket(selectedTicket.id, { admin: selectedTicket.isAdmin }));
+      setTicket(await api.ticket(selectedTicket.id));
     } catch (error) {
       setThreadError(getUiError(error));
     }
@@ -2988,7 +2975,6 @@ function TicketThread({ navigate, activeScreen }) {
       await api.sendTicketMessage(selectedTicket.id, {
         text: messageText.trim(),
         files: messageFiles,
-        admin: selectedTicket.isAdmin,
       });
       setMessageText('');
       setMessageFiles([]);

@@ -3677,6 +3677,10 @@ button svg,
   background: #f0f1f3;
 }
 
+.ticket-mode.user-only {
+  grid-template-columns: 1fr;
+}
+
 .ticket-mode button {
   border-radius: 12px;
   background: transparent;
@@ -3689,41 +3693,6 @@ button svg,
   background: #ffffff;
   color: #ff712d;
   box-shadow: 0 8px 20px rgba(6, 22, 44, 0.07);
-}
-
-.admin-secret-card {
-  margin-bottom: 12px;
-  padding: 14px;
-  text-align: left;
-}
-
-.admin-secret-card label {
-  display: block;
-  margin-bottom: 10px;
-  color: #596371;
-  font-size: 12px;
-}
-
-.admin-secret-card div {
-  display: grid;
-  grid-template-columns: 1fr 52px;
-  gap: 8px;
-}
-
-.admin-secret-card input {
-  min-width: 0;
-  height: 40px;
-  border: 0;
-  border-radius: 12px;
-  padding: 0 12px;
-  background: #f7f7f8;
-}
-
-.admin-secret-card button {
-  border-radius: 12px;
-  background: #ff712d;
-  color: #ffffff;
-  font-weight: 700;
 }
 
 .ticket-tabs button {

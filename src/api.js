@@ -2,7 +2,6 @@ const runtimeConfig = window.__VORA_CONFIG__ || {};
 const apiBaseUrl = (runtimeConfig.API_BASE_URL || import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
 const telegramAuthPath = runtimeConfig.TELEGRAM_AUTH_PATH || import.meta.env.VITE_TELEGRAM_AUTH_PATH || '/auth/auth/telegram';
 const tokenRefreshPath = runtimeConfig.TOKEN_REFRESH_PATH || import.meta.env.VITE_TOKEN_REFRESH_PATH || '/auth/refresh_accessToken';
-const configuredAdminSecret = runtimeConfig.ADMIN_SECRET || import.meta.env.VITE_ADMIN_SECRET || '';
 let telegramInitData = runtimeConfig.TELEGRAM_INIT_DATA || import.meta.env.VITE_TELEGRAM_INIT_DATA || '';
 let refreshPromise = null;
 const memoryStorage = new Map();
@@ -80,25 +79,10 @@ export function getRefreshToken() {
   return readStorage('refresh_token') || runtimeConfig.REFRESH_TOKEN || import.meta.env.VITE_REFRESH_TOKEN || '';
 }
 
-export function getAdminSecret() {
-  return readStorage('admin_secret') || configuredAdminSecret;
-}
-
-export function saveAdminSecret(secret) {
-  const value = String(secret || '').trim();
-
-  if (value) {
-    writeStorage('admin_secret', value);
-  } else {
-    removeStorage('admin_secret');
-  }
-
-  return value;
-}
-
 export function saveTokenPair(payload) {
   const accessToken = payload?.token_access || payload?.access_token || payload?.access || payload?.token;
   const refreshToken = payload?.token_refresh || payload?.refresh_token || payload?.refresh;
+  const role = payload?.role || payload?.user?.role || (payload?.is_admin || payload?.user?.is_admin ? 'admin' : '');
 
   if (accessToken) {
     writeStorage('access_token', accessToken);
@@ -108,7 +92,15 @@ export function saveTokenPair(payload) {
     writeStorage('refresh_token', refreshToken);
   }
 
+  if (role) {
+    writeStorage('user_role', String(role).toLowerCase());
+  }
+
   return accessToken || '';
+}
+
+export function getUserRole() {
+  return readStorage('user_role') || '';
 }
 
 function clearTokenPair() {
@@ -231,7 +223,7 @@ function telegramAuthMessage() {
   return 'Не удалось подтвердить Telegram. Закройте мини-приложение и откройте его через кнопку бота заново.';
 }
 
-async function rawRequest(path, { method = 'GET', query, body, token = getAccessToken(), initData, adminSecret } = {}) {
+async function rawRequest(path, { method = 'GET', query, body, token = getAccessToken(), initData } = {}) {
   if (!apiBaseUrl) {
     throw new ApiError('Сервис временно недоступен', 0);
   }
@@ -241,10 +233,6 @@ async function rawRequest(path, { method = 'GET', query, body, token = getAccess
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
-  }
-
-  if (adminSecret) {
-    headers['X-Admin-Secret'] = adminSecret;
   }
 
   if (initData) {
@@ -408,13 +396,12 @@ export const api = {
   upgradePrice: () => request('/users/upgrade_plan_price/'),
   downgradePlan: () => request('/users/downgrade_plan/', { method: 'POST' }),
   tickets: () => request('/tickets'),
-  adminTickets: (adminSecret = getAdminSecret()) => rawRequest('/tickets/admin/all', { adminSecret, token: '' }),
-  ticket: (id, { admin = false, adminSecret = getAdminSecret() } = {}) => request(`/tickets/${id}`, admin ? { adminSecret, token: '', retry: false } : {}),
+  adminTickets: () => request('/tickets/admin/all'),
+  ticket: (id) => request(`/tickets/${id}`),
   createTicket: ({ subject, text, files }) => request('/tickets', { method: 'POST', body: buildTicketForm({ subject, text, files }) }),
-  sendTicketMessage: (id, { text, files, admin = false, adminSecret = getAdminSecret() }) => request(`/tickets/${id}/messages`, {
+  sendTicketMessage: (id, { text, files }) => request(`/tickets/${id}/messages`, {
     method: 'POST',
     body: buildTicketForm({ text, files }),
-    ...(admin ? { adminSecret, token: '', retry: false } : {}),
   }),
   closeTicket: (id) => request(`/tickets/${id}/close`, { method: 'POST' }),
   createInvoice: createTypedInvoice,
