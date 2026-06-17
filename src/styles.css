@@ -660,7 +660,7 @@ button svg,
 
 .plan-card.selected {
   border-color: #ff712d;
-  background: #fef7f4;
+  background: #ffffff;
 }
 
 .plan-heading {
@@ -785,7 +785,7 @@ button svg,
 
 .home-plan-card.selected {
   border-color: #ff712d;
-  background: #fef7f4;
+  background: #ffffff;
 }
 
 .home-plan-card > img {
