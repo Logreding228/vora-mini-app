@@ -1455,6 +1455,7 @@ function TrialActive({ navigate, activeScreen, mainData }) {
         </div>
         <div className="progress"><i style={{ width: `${timerProgress}%` }} /></div>
       </Card>
+      <PrimaryButton onClick={() => navigate('home-popup')}>Подключить устройство</PrimaryButton>
       <SectionDivider>доступные тарифы</SectionDivider>
       <TrialPlanList navigate={navigate} />
     </AppFrame>
