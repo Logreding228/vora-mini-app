@@ -1494,6 +1494,7 @@ button svg,
 
 .sheet-close {
   position: absolute;
+  z-index: 3;
   right: 16px;
   top: 14px;
   width: 36px;
@@ -1543,6 +1544,7 @@ button svg,
 
 .bottom-sheet h2 {
   margin: 0 0 28px;
+  padding-right: 48px;
   font-size: 21px;
 }
 

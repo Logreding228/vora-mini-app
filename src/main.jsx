@@ -36,6 +36,7 @@ import {
   Trash2,
   Users,
   Wallet,
+  X,
 } from 'lucide-react';
 import { api, ApiError, authenticateTelegram, isAdminUser } from './api.js';
 import { getDisplayName, initTelegramApp } from './telegram.js';
@@ -46,6 +47,7 @@ const money = (value, fallback = '0') => `${Number(value ?? fallback).toLocaleSt
 let trialPrice = null;
 let devicePrice = 75;
 let planPricingDebug = {};
+let telegramVerticalSwipeLocks = 0;
 const compactMoney = (value) => `${Number(value).toLocaleString('ru-RU')}₽`;
 const trialPriceText = () => (trialPrice === null ? '...' : compactMoney(trialPrice));
 const trialMoneyText = () => (trialPrice === null ? 'Цена загружается' : money(trialPrice));
@@ -349,14 +351,14 @@ const buildClientDeepLink = (connection, url) => {
 
   return targetUrl;
 };
-const normalizeDeviceKind = (value) => {
-  const name = String(value || '').toLowerCase();
+const normalizeDeviceKind = (...values) => {
+  const name = values.map((value) => String(value || '').toLowerCase()).join(' ');
 
   if (name.includes('android')) {
     return name.includes('tv') ? 'androidtv' : 'android';
   }
 
-  if (name.includes('mac') || name.includes('ios') || name.includes('apple') || name.includes('tvos')) {
+  if (name.includes('mac') || name.includes('ios') || name.includes('iphone') || name.includes('ipad') || name.includes('apple') || name.includes('tvos')) {
     return 'apple';
   }
 
@@ -364,7 +366,7 @@ const normalizeDeviceKind = (value) => {
     return 'windows';
   }
 
-  return name || 'windows';
+  return 'generic';
 };
 const emptyMainData = {
   loaded: false,
@@ -387,6 +389,10 @@ const emptyMainData = {
 
 const booleanFromApi = (value) => value === true || value === 1 || String(value).toLowerCase() === 'true';
 const valueOrEmpty = (...values) => values.find((value) => value !== undefined && value !== null && String(value).trim() !== '') || '';
+const deviceValue = (...values) => values.find((value) => {
+  const text = String(value ?? '').trim();
+  return text && !['string', 'unknown', 'null', 'undefined'].includes(text.toLowerCase());
+}) || '';
 
 function normalizeMainData(data = emptyMainData) {
   const hwid = data.hwid || {};
@@ -406,13 +412,24 @@ function normalizeMainData(data = emptyMainData) {
   );
   const planDeviceLimit = tariffCatalog[plan]?.devices || (plan === 'trial' ? tariffCatalog.plus.devices : emptyMainData.hwid.limit);
   const rawDevices = Array.isArray(hwid.devices) ? hwid.devices : Array.isArray(hwidResponse.devices) ? hwidResponse.devices : Array.isArray(hwid) ? hwid : [];
-  const devices = rawDevices.length ? rawDevices.map((device, index) => ({
-    id: device.hwid || device.id || device.uuid || `device-${index}`,
-    kind: normalizeDeviceKind(device.kind || device.os || device.platform || device.type || 'windows'),
-    title: valueOrEmpty(device.title, device.device_name, device.name, device.os, device.platform, device.kind, 'Устройство'),
-    model: valueOrEmpty(device.model, device.brand, device.vendor, device.app, device.client),
-    lastSeen: device.last_seen || device.updated_at || device.online_at || '',
-  })) : [];
+  const devices = rawDevices.length ? rawDevices.map((device, index) => {
+    const platform = deviceValue(device.platform, device.os, device.kind, device.type);
+    const osVersion = deviceValue(device.osVersion, device.os_version);
+    const deviceModel = deviceValue(device.deviceModel, device.device_model, device.model);
+    const kind = normalizeDeviceKind(platform, deviceModel, device.userAgent, device.user_agent, osVersion);
+    const title = deviceValue(device.title, device.deviceName, device.device_name, device.name, deviceModel, platform) || 'Устройство';
+    const model = [deviceModel !== title ? deviceModel : '', platform !== title ? platform : '', osVersion]
+      .filter((value, itemIndex, items) => value && items.indexOf(value) === itemIndex)
+      .join(' • ');
+
+    return {
+      id: device.hwid || device.id || device.uuid || device.userUuid || `device-${index}`,
+      kind,
+      title,
+      model,
+      lastSeen: device.lastSeen || device.last_seen || device.updatedAt || device.updated_at || device.onlineAt || device.online_at || device.createdAt || device.created_at || '',
+    };
+  }) : [];
 
   return {
     loaded: Boolean(data && Object.keys(data).length),
@@ -1520,7 +1537,7 @@ function HomePopup({ navigate, activeScreen, mainData, telegramUser }) {
     <AppFrame className="home-screen has-sheet" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title={`Привет, ${displayName}!`} action={<button className="square-action" onClick={() => navigate('balance-history')} aria-label="Уведомления"><Bell size={28} /></button>} />
       <SubscriptionSummary muted navigate={navigate} mainData={mainData} />
-      <DeviceSheet navigate={navigate} limitReached={isDeviceLimitReached} mainData={mainData} />
+      <DeviceSheet navigate={navigate} limitReached={isDeviceLimitReached} mainData={mainData} closeRoute={getDefaultHomeScreen(mainData)} />
     </AppFrame>
   );
 }
@@ -1638,10 +1655,11 @@ function DevicesCard({ mainData }) {
   );
 }
 
-function DeviceSheet({ navigate, limitReached = false, mainData }) {
+function DeviceSheet({ navigate, limitReached = false, mainData, closeRoute = 'home-active' }) {
   useBodyScrollLock(true);
 
-  const swipeDismiss = useSwipeDismiss(() => navigate('home-active'));
+  const closeSheet = () => navigate(closeRoute);
+  const swipeDismiss = useSwipeDismiss(closeSheet);
   const [selectedSystem, setSelectedSystem] = useState('iOS');
   const [selectedConnection, setSelectedConnection] = useState('Happ');
   const [systemsExpanded, setSystemsExpanded] = useState(false);
@@ -1703,11 +1721,12 @@ function DeviceSheet({ navigate, limitReached = false, mainData }) {
 
   if (limitReached) {
     return (
-      <div className="modal-layer" onClick={() => navigate('home-active')}>
+      <div className="modal-layer" onClick={closeSheet}>
         <div className="bottom-sheet" ref={swipeDismiss.sheetRef} onClick={(event) => event.stopPropagation()}>
           <div className="sheet-drag-zone" {...swipeDismiss.handleProps}>
             <span className="sheet-grip" />
           </div>
+          <button className="sheet-close" onClick={closeSheet} aria-label="Закрыть"><X size={20} /></button>
           <h2>Лимит устройств набран</h2>
           <Card className="limit-sheet-card">
             <IconTile tone="soft-orange"><Monitor size={24} /></IconTile>
@@ -1772,11 +1791,12 @@ function DeviceSheet({ navigate, limitReached = false, mainData }) {
   };
 
   return (
-    <div className="modal-layer" onClick={() => navigate('home-active')}>
+    <div className="modal-layer" onClick={closeSheet}>
       <div className="bottom-sheet" ref={swipeDismiss.sheetRef} onClick={(event) => event.stopPropagation()}>
         <div className="sheet-drag-zone" {...swipeDismiss.handleProps}>
           <span className="sheet-grip" />
         </div>
+        <button className="sheet-close" onClick={closeSheet} aria-label="Закрыть"><X size={20} /></button>
         <h2>Подключить новое устройство</h2>
         <StepTitle number="1" title="Операционная система" />
         <Card className="option-list system-option-list">
@@ -2424,6 +2444,7 @@ function useBodyScrollLock(active) {
 
     const scrollY = window.scrollY;
     const { style } = document.body;
+    const webApp = window.Telegram?.WebApp;
     const previous = {
       position: style.position,
       top: style.top,
@@ -2433,6 +2454,11 @@ function useBodyScrollLock(active) {
       overflow: style.overflow,
     };
 
+    telegramVerticalSwipeLocks += 1;
+    if (telegramVerticalSwipeLocks === 1) {
+      webApp?.disableVerticalSwipes?.();
+    }
+
     style.position = 'fixed';
     style.top = `-${scrollY}px`;
     style.left = '0';
@@ -2441,6 +2467,10 @@ function useBodyScrollLock(active) {
     style.overflow = 'hidden';
 
     return () => {
+      telegramVerticalSwipeLocks = Math.max(0, telegramVerticalSwipeLocks - 1);
+      if (telegramVerticalSwipeLocks === 0) {
+        webApp?.enableVerticalSwipes?.();
+      }
       style.position = previous.position;
       style.top = previous.top;
       style.left = previous.left;
