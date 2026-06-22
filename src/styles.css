@@ -547,34 +547,18 @@ button svg,
   height: 28px;
 }
 
-.trial-plan-list .icon-tile.tariff-image {
+.trial-plan-list .icon-tile.tariff-image,
+.transaction-card .icon-tile.history-plan-icon {
   width: 38px;
   height: 38px;
   border-radius: 10px;
 }
 
 .trial-plan-list .icon-tile.tariff-image .asset-icon,
+.transaction-card .icon-tile.history-plan-icon .asset-icon,
 .payment-option .icon-tile.payment-image .asset-icon {
   width: 88%;
   height: 88%;
-}
-
-.icon-tile.tariff-feather {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  background: #f3f3f3;
-  color: #ff7a31;
-}
-
-.icon-tile.tariff-feather.plus {
-  background: #101013;
-}
-
-.tariff-feather-icon {
-  display: block;
-  width: 30px;
-  height: 30px;
 }
 
 .renew-card {
