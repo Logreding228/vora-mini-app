@@ -2770,6 +2770,7 @@ function BalanceHistory({ navigate, activeScreen }) {
     date: formatDateTime(item.data),
     amount: `${selectedType === 'income' ? '+' : '-'}${money(item.amount)}`,
     icon: selectedType === 'income' ? 'wallet' : 'feather',
+    plan: String(item.plan || item.tariff || item.subscription_plan || '').toLowerCase() === 'plus' ? 'plus' : 'lite',
     status: item.status || 'paid',
     index,
   }));
@@ -2782,9 +2783,11 @@ function BalanceHistory({ navigate, activeScreen }) {
         <button className={selectedType === 'outcome' ? 'active' : ''} onClick={() => setSelectedType('outcome')}><ArrowUp size={22} />Списания</button>
       </div>
       {historyError && <p className="inline-error">{historyError}</p>}
-      {renderedTransactions.map(({ title, date, amount, icon, status, index }) => (
+      {renderedTransactions.map(({ title, date, amount, icon, plan, status, index }) => (
         <Card className="transaction-card" key={`${title}-${index}`}>
-          <IconTile tone={icon === 'wallet' ? 'soft-green' : 'feather'}>{icon === 'wallet' ? <Wallet size={24} /> : <span className="feather-mark" />}</IconTile>
+          <IconTile tone={icon === 'wallet' ? 'soft-green' : `tariff-feather ${plan}`}>
+            {icon === 'wallet' ? <Wallet size={24} /> : <TariffFeatherIcon variant={plan} />}
+          </IconTile>
           <div>
             <strong>{title}</strong>
             <p>{date}</p>

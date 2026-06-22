@@ -2139,15 +2139,6 @@ button svg,
   white-space: nowrap;
 }
 
-.feather-mark {
-  width: 17px;
-  height: 26px;
-  border-radius: 70% 0 70% 0;
-  border: 1px solid #ff712d;
-  border-left: 0;
-  transform: rotate(35deg);
-}
-
 .input-box {
   height: 66px;
   border: 1px solid #eeeeef;
@@ -3475,6 +3466,10 @@ button svg,
   margin-top: 8px;
   color: #2bbb73;
   font-size: 11px;
+}
+
+.transaction-card > .icon-tile {
+  margin-top: 0;
 }
 
 .muted-heading {
