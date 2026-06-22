@@ -3187,27 +3187,59 @@ function TariffScreen({ selected, navigate, activeScreen }) {
   const [selectedMethod, setSelectedMethod] = useState('card');
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
+  const [promoTotals, setPromoTotals] = useState(null);
+  const [promoLoading, setPromoLoading] = useState(false);
   const [paymentError, setPaymentError] = useState('');
+  const getBasePlanTotal = (period) => Math.floor(tariff.monthPrice * periodDiscounts[period]) * Number(period);
+  const getDisplayedPlanTotal = (period) => promoApplied && Number.isFinite(promoTotals?.[period])
+    ? promoTotals[period]
+    : getBasePlanTotal(period);
   const periodMonths = Number(selectedPeriod);
-  const periodMonthlyPrice = Math.floor(tariff.monthPrice * periodDiscounts[selectedPeriod]);
-  const baseTotal = periodMonthlyPrice * periodMonths;
+  const planTotal = getDisplayedPlanTotal(selectedPeriod);
   const extraDevices = Math.max(0, deviceCount - tariff.devices);
   const extraDevicesTotal = extraDevices * devicePrice * periodMonths;
-  const discount = tariff.monthPrice * periodMonths - baseTotal;
-  const total = baseTotal + extraDevicesTotal;
+  const total = planTotal + extraDevicesTotal;
   const originalTotal = tariff.monthPrice * periodMonths + extraDevicesTotal;
   const savings = originalTotal - total;
   const maxDeviceCount = tariff.devices + tariff.extraDevices;
   const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
 
-  const applyPromo = () => {
+  const applyPromo = async () => {
     if (promoApplied) {
       setPromoCode('');
       setPromoApplied(false);
+      setPromoTotals(null);
       return;
     }
 
-    setPromoApplied(Boolean(promoCode.trim()));
+    const code = promoCode.trim();
+    if (!code) {
+      return;
+    }
+
+    try {
+      setPromoLoading(true);
+      setPaymentError('');
+      const entries = await Promise.all(['1', '6', '12'].map(async (period) => {
+        const response = await api.calculatePlan(selected, Number(period), code);
+        const calculatedTotal = Number(response?.total);
+
+        if (!Number.isFinite(calculatedTotal)) {
+          throw new Error('Сервис не вернул цену с учетом промокода');
+        }
+
+        return [period, calculatedTotal];
+      }));
+
+      setPromoTotals(Object.fromEntries(entries));
+      setPromoApplied(true);
+    } catch (error) {
+      setPromoTotals(null);
+      setPromoApplied(false);
+      setPaymentError(getPaymentUiError(error));
+    } finally {
+      setPromoLoading(false);
+    }
   };
 
   const submitPromoWithEnter = (event) => {
@@ -3233,6 +3265,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
           subscription_month: Number(selectedPeriod),
           hwid: deviceCount,
           currency: selectedMethod === 'crypto' ? 'USDT' : 'RUB',
+          promo_code: promoApplied ? promoCode.trim() : undefined,
         },
       });
       openPaymentUrl(url);
@@ -3252,8 +3285,8 @@ function TariffScreen({ selected, navigate, activeScreen }) {
             key={period}
             amount={period}
             unit={period === '1' ? 'месяц' : 'месяцев'}
-            price={Math.floor(tariff.monthPrice * periodDiscounts[period])}
-            discount={tariff.monthPrice * Number(period) - Math.floor(tariff.monthPrice * periodDiscounts[period]) * Number(period)}
+            price={Math.round(getDisplayedPlanTotal(period) / Number(period))}
+            discount={tariff.monthPrice * Number(period) - getDisplayedPlanTotal(period)}
             selected={selectedPeriod === period}
             onClick={() => setSelectedPeriod(period)}
           />
@@ -3282,8 +3315,8 @@ function TariffScreen({ selected, navigate, activeScreen }) {
       <div className="promo">
         <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
         <div>
-          <input value={promoCode} onFocus={keepFocusedFieldVisible} onKeyDown={submitPromoWithEnter} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); }} placeholder="Введите промокод" enterKeyHint="done" />
-          <button onClick={applyPromo} disabled={!promoApplied && !promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
+          <input value={promoCode} onFocus={keepFocusedFieldVisible} onKeyDown={submitPromoWithEnter} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); setPromoTotals(null); }} placeholder="Введите промокод" enterKeyHint="done" />
+          <button onClick={applyPromo} disabled={promoLoading || (!promoApplied && !promoCode.trim())}>{promoLoading ? 'Проверяем' : promoApplied ? 'Убрать' : 'Применить'}</button>
         </div>
       </div>
       <Card className="checkout-card">

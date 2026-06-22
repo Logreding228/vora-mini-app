@@ -406,6 +406,10 @@ export const api = {
   getHwid: () => request('/hwid/get_hwid/'),
   deleteDevice: (hwid) => request('/hwid/delete_devic/', { method: 'POST', query: { hwid } }),
   history: (type) => request('/users/history_pay_screen', { query: { type } }),
+  calculatePlan: (plan, months, promoCode) => request('/pay/calculate', {
+    method: 'POST',
+    body: { plan, months, promo_code: promoCode },
+  }),
   validatePromo: (code, amount) => request('/pay/promo/validate', { method: 'POST', query: { code, amount } }),
   upgradePrice: () => request('/users/upgrade_plan_price/'),
   downgradePlan: () => request('/users/downgrade_plan/', { method: 'POST' }),
