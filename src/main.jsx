@@ -1708,23 +1708,13 @@ function DeviceSheet({ navigate, limitReached = false, mainData, closeRoute = 'h
 
   const closeSheet = () => navigate(closeRoute);
   const swipeDismiss = useSwipeDismiss(closeSheet);
-  const [selectedSystem, setSelectedSystem] = useState('iOS');
   const [selectedConnection, setSelectedConnection] = useState('Happ');
-  const [systemsExpanded, setSystemsExpanded] = useState(false);
   const [connectError, setConnectError] = useState('');
   const [connectUrl, setConnectUrl] = useState('');
   const [connectLoading, setConnectLoading] = useState(false);
   const [qrImage, setQrImage] = useState('');
   const [qrLoading, setQrLoading] = useState(false);
   const [isQrOpen, setQrOpen] = useState(false);
-  const systems = [
-    ['iOS', 'apple'],
-    ['Android', 'android'],
-    ['Windows', 'windows'],
-    ['MacOS', 'apple'],
-    ['AndroidTV', 'androidtv'],
-    ['tvOS', 'apple'],
-  ];
   const client = mapClient(selectedConnection);
 
   useEffect(() => {
@@ -1844,20 +1834,7 @@ function DeviceSheet({ navigate, limitReached = false, mainData, closeRoute = 'h
           <span className="sheet-grip" />
         </div>
         <h2>Подключить новое устройство</h2>
-        <StepTitle number="1" title="Операционная система" />
-        <Card className="option-list system-option-list">
-          <div className={systemsExpanded ? 'collapsible-list expanded' : 'collapsible-list'}>
-            <div>
-              {systems.map(([name, icon]) => (
-                <RadioRow key={name} title={name} checked={selectedSystem === name} icon={icon} onClick={() => setSelectedSystem(name)} />
-              ))}
-            </div>
-          </div>
-          <button className="collapse-button" onClick={() => setSystemsExpanded((value) => !value)}>
-            {systemsExpanded ? 'Свернуть' : 'Показать все'} {systemsExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-          </button>
-        </Card>
-        <StepTitle number="2" title="Способ подключения" />
+        <StepTitle number="1" title="Клиент для подключения" />
         <Card className="option-list">
           <RadioRow title="Рекомендуемый - Happ" subtitle="Простая настройка в один клик" checked={selectedConnection === 'Happ'} icon="happ" onClick={() => setSelectedConnection('Happ')} />
           <RadioRow title="v2RayTun" subtitle="Ручная настройка" checked={selectedConnection === 'v2RayTun'} icon="v2ray" onClick={() => setSelectedConnection('v2RayTun')} />
@@ -2111,24 +2088,65 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
   const [customAmount, setCustomAmount] = useState('');
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
+  const [promoPrices, setPromoPrices] = useState(null);
+  const [promoLoading, setPromoLoading] = useState(false);
   const [paymentError, setPaymentError] = useState('');
   const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
   const planPayment = ['lite', 'home', 'plus'].includes(selectedPayment) ? selectedPayment : '';
   const paymentType = selectedPayment === 'device' ? 'HWID' : selectedPayment === 'balance' ? 'BALANCE' : 'SUBSCRIPTION';
+  const basePrices = {
+    device: devicePrice,
+    lite: tariffCatalog.lite.monthPrice,
+    home: tariffCatalog.home.monthPrice,
+    plus: tariffCatalog.plus.monthPrice,
+  };
+  const getPaymentPrice = (key) => promoApplied && Number.isFinite(promoPrices?.[key]) ? promoPrices[key] : basePrices[key];
   const selectedAmount = selectedPayment === 'device'
-    ? devicePrice
+    ? getPaymentPrice('device')
     : selectedPayment === 'balance'
-      ? Number(customAmount || 0)
-      : tariffCatalog[planPayment]?.monthPrice || 0;
+      ? promoApplied && Number.isFinite(promoPrices?.balance) ? promoPrices.balance : Number(customAmount || 0)
+      : getPaymentPrice(planPayment) || 0;
 
-  const applyPromo = () => {
+  const applyPromo = async () => {
     if (promoApplied) {
       setPromoCode('');
       setPromoApplied(false);
+      setPromoPrices(null);
       return;
     }
 
-    setPromoApplied(Boolean(promoCode.trim()));
+    const code = promoCode.trim();
+    if (!code) {
+      return;
+    }
+
+    try {
+      setPromoLoading(true);
+      setPaymentError('');
+      const entries = Object.entries({
+        ...basePrices,
+        ...(Number(customAmount || 0) > 0 ? { balance: Number(customAmount) } : {}),
+      });
+      const results = await Promise.all(entries.map(async ([key, amount]) => {
+        const response = await api.validatePromo(code, amount);
+        const total = Number(response?.total);
+
+        if (!Number.isFinite(total)) {
+          throw new Error('Сервис не вернул цену с учетом промокода');
+        }
+
+        return [key, total];
+      }));
+
+      setPromoPrices(Object.fromEntries(results));
+      setPromoApplied(true);
+    } catch (error) {
+      setPromoPrices(null);
+      setPromoApplied(false);
+      setPaymentError(getUiError(error));
+    } finally {
+      setPromoLoading(false);
+    }
   };
 
   const submitPromoWithEnter = (event) => {
@@ -2157,14 +2175,15 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
     }
 
     const payload = paymentType === 'BALANCE'
-      ? { amount: Number(customAmount || 0), currency: selectedMethod === 'crypto' ? 'USDT' : 'RUB' }
+      ? { amount: Number(customAmount || 0), currency: selectedMethod === 'crypto' ? 'USDT' : 'RUB', promo_code: promoApplied ? promoCode.trim() : undefined }
       : paymentType === 'HWID'
-        ? { hwid: hwidLimit, currency: selectedMethod === 'crypto' ? 'USDT' : 'RUB' }
+        ? { hwid: hwidLimit, currency: selectedMethod === 'crypto' ? 'USDT' : 'RUB', promo_code: promoApplied ? promoCode.trim() : undefined }
         : {
             plan: planPayment || 'plus',
             subscription_month: 1,
             hwid: tariffCatalog[planPayment]?.devices || 3,
             currency: selectedMethod === 'crypto' ? 'USDT' : 'RUB',
+            promo_code: promoApplied ? promoCode.trim() : undefined,
           };
 
     try {
@@ -2190,14 +2209,14 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
       </button>
       <Card className="payment-card">
         <h2>Выберите, что хотите оплатить</h2>
-        <PaymentOption iconName="device-add" title="Докупить устройство" subtitle="Активация 1 устройства" price={money(devicePrice)} checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} />
-        <PaymentOption iconName="plan-lite" title="Lite - 1 месяц" subtitle="Базовые возможности" price={money(tariffCatalog.lite.monthPrice)} checked={selectedPayment === 'lite'} onClick={() => setSelectedPayment('lite')} />
-        <PaymentOption iconName="plan-home" title="Home - 1 месяц" subtitle="Для тех, кто за границей" price={money(tariffCatalog.home.monthPrice)} checked={selectedPayment === 'home'} onClick={() => setSelectedPayment('home')} />
-        <PaymentOption iconName="plan-plus" title="Plus - 1 месяц" subtitle="Максимум возможностей" price={money(tariffCatalog.plus.monthPrice)} checked={selectedPayment === 'plus'} onClick={() => setSelectedPayment('plus')} divider={false} />
+        <PaymentOption iconName="device-add" title="Докупить устройство" subtitle="Активация 1 устройства" price={money(getPaymentPrice('device'))} checked={selectedPayment === 'device'} onClick={() => setSelectedPayment('device')} />
+        <PaymentOption iconName="plan-lite" title="Lite - 1 месяц" subtitle="Базовые возможности" price={money(getPaymentPrice('lite'))} checked={selectedPayment === 'lite'} onClick={() => setSelectedPayment('lite')} />
+        <PaymentOption iconName="plan-home" title="Home - 1 месяц" subtitle="Для тех, кто за границей" price={money(getPaymentPrice('home'))} checked={selectedPayment === 'home'} onClick={() => setSelectedPayment('home')} />
+        <PaymentOption iconName="plan-plus" title="Plus - 1 месяц" subtitle="Максимум возможностей" price={money(getPaymentPrice('plus'))} checked={selectedPayment === 'plus'} onClick={() => setSelectedPayment('plus')} divider={false} />
         <SectionDivider>или ввести сумму вручную</SectionDivider>
         <div className={selectedPayment === 'balance' ? 'input-box selected' : 'input-box'} onClick={() => setSelectedPayment('balance')}>
           <span>Сумма пополнения</span>
-          <input value={customAmount} onChange={(event) => setCustomAmount(event.target.value)} placeholder="Введите сумму" inputMode="decimal" />
+          <input value={customAmount} onChange={(event) => { setCustomAmount(event.target.value); setPromoApplied(false); setPromoPrices(null); }} placeholder="Введите сумму" inputMode="decimal" />
           <p>₽</p>
         </div>
       </Card>
@@ -2208,8 +2227,8 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
       <div className="promo">
         <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
         <div>
-          <input value={promoCode} onFocus={keepFocusedFieldVisible} onKeyDown={submitPromoWithEnter} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); }} placeholder="Введите промокод" enterKeyHint="done" />
-          <button onClick={applyPromo} disabled={!promoApplied && !promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
+          <input value={promoCode} onFocus={keepFocusedFieldVisible} onKeyDown={submitPromoWithEnter} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); setPromoPrices(null); }} placeholder="Введите промокод" enterKeyHint="done" />
+          <button onClick={applyPromo} disabled={promoLoading || (!promoApplied && !promoCode.trim())}>{promoLoading ? 'Проверяем' : promoApplied ? 'Убрать' : 'Применить'}</button>
         </div>
       </div>
       {paymentError && <p className="inline-error">{paymentError}</p>}

@@ -1614,14 +1614,6 @@ button svg,
   overflow: hidden;
 }
 
-.system-option-list .collapsible-list {
-  max-height: 151px;
-}
-
-.system-option-list .collapsible-list.expanded {
-  max-height: 430px;
-}
-
 .radio-row {
   width: 100%;
   min-height: 42px;
