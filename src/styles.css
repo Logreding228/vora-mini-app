@@ -1481,6 +1481,10 @@ button svg,
   overflow-wrap: anywhere;
 }
 
+.ticket-api-debug {
+  margin-bottom: 20px;
+}
+
 .delete-device {
   width: 34px;
   height: 34px;

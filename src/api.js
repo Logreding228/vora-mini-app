@@ -82,7 +82,8 @@ export function getRefreshToken() {
 export function saveTokenPair(payload) {
   const accessToken = payload?.token_access || payload?.access_token || payload?.access || payload?.token;
   const refreshToken = payload?.token_refresh || payload?.refresh_token || payload?.refresh;
-  const isAdmin = payload?.is_admin ?? payload?.user?.is_admin;
+  const role = String(payload?.role || payload?.user?.role || '').toLowerCase();
+  const isAdmin = payload?.is_admin ?? payload?.user?.is_admin ?? (role ? role === 'admin' : undefined);
 
   if (accessToken) {
     writeStorage('access_token', accessToken);
@@ -96,6 +97,16 @@ export function saveTokenPair(payload) {
     writeStorage('is_admin', isAdmin ? 'true' : 'false');
   }
 
+  if (role || isAdmin !== undefined) {
+    writeStorage('auth_role_debug', JSON.stringify({
+      role: role || null,
+      is_admin: payload?.is_admin ?? null,
+      user_role: payload?.user?.role ?? null,
+      user_is_admin: payload?.user?.is_admin ?? null,
+      resolved_is_admin: isAdmin ?? null,
+    }));
+  }
+
   return accessToken || '';
 }
 
@@ -103,9 +114,19 @@ export function isAdminUser() {
   return readStorage('is_admin') === 'true';
 }
 
+export function getAuthRoleDebug() {
+  try {
+    return JSON.parse(readStorage('auth_role_debug') || 'null');
+  } catch {
+    return null;
+  }
+}
+
 function clearTokenPair() {
   removeStorage('access_token');
   removeStorage('refresh_token');
+  removeStorage('is_admin');
+  removeStorage('auth_role_debug');
 }
 
 function getJwtPayload(token) {
