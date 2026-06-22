@@ -37,7 +37,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-import { api, ApiError, authenticateTelegram, getApiRequestUrl, getAuthRoleDebug, isAdminUser } from './api.js';
+import { api, ApiError, authenticateTelegram, isAdminUser } from './api.js';
 import { getDisplayName, initTelegramApp } from './telegram.js';
 import './styles.css';
 
@@ -2899,57 +2899,16 @@ function TicketsScreen({ navigate, activeScreen, isAdmin }) {
   const [tickets, setTickets] = useState([]);
   const [ticketsError, setTicketsError] = useState('');
   const [isLoadingTickets, setLoadingTickets] = useState(false);
-  const [ticketsDebug, setTicketsDebug] = useState(null);
 
   const loadTickets = async () => {
-    const requestDebug = {
-      method: 'GET',
-      endpoint: mode === 'admin' ? '/tickets/admin' : '/tickets',
-      url: getApiRequestUrl(mode === 'admin' ? '/tickets/admin' : '/tickets'),
-      headers: { Authorization: 'Bearer <access_token>' },
-    };
-
     try {
       setLoadingTickets(true);
       setTicketsError('');
-      setTicketsDebug({
-        auth: getAuthRoleDebug(),
-        resolved_is_admin: isAdmin,
-        mode,
-        request: requestDebug,
-        status: 'loading',
-        response: null,
-        error: null,
-      });
       const payload = mode === 'admin' ? await api.adminTickets() : await api.tickets();
       setTickets(Array.isArray(payload) ? payload : []);
-      setTicketsDebug({
-        auth: getAuthRoleDebug(),
-        resolved_is_admin: isAdmin,
-        mode,
-        request: requestDebug,
-        status: 'success',
-        response: payload,
-        error: null,
-      });
     } catch (error) {
       setTickets([]);
       setTicketsError(getUiError(error));
-      setTicketsDebug({
-        auth: getAuthRoleDebug(),
-        resolved_is_admin: isAdmin,
-        mode,
-        request: requestDebug,
-        status: 'error',
-        response: null,
-        error: {
-          message: getUiError(error),
-          raw_message: error?.message || String(error),
-          name: error?.name || null,
-          status: error instanceof ApiError ? error.status : null,
-          payload: error instanceof ApiError ? error.payload : null,
-        },
-      });
     } finally {
       setLoadingTickets(false);
     }
@@ -3013,15 +2972,6 @@ function TicketsScreen({ navigate, activeScreen, isAdmin }) {
       })}
       {!isLoadingTickets && !visibleTickets.length && !ticketsError && <p className="empty-state">Обращений пока нет</p>}
       <PrimaryButton onClick={() => navigate('ticket-create')}>Новое обращение</PrimaryButton>
-      <div className="device-debug ticket-api-debug">
-        <strong>Debug: tickets API</strong>
-        <pre>{JSON.stringify(ticketsDebug || {
-          auth: getAuthRoleDebug(),
-          resolved_is_admin: isAdmin,
-          mode,
-          status: 'waiting',
-        }, null, 2)}</pre>
-      </div>
     </AppFrame>
   );
 }

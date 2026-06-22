@@ -114,22 +114,6 @@ export function isAdminUser() {
   return readStorage('is_admin') === 'true';
 }
 
-export function getAuthRoleDebug() {
-  try {
-    return JSON.parse(readStorage('auth_role_debug') || 'null');
-  } catch {
-    return null;
-  }
-}
-
-export function getApiRequestUrl(path) {
-  try {
-    return buildUrl(path);
-  } catch {
-    return `${apiBaseUrl}${path}`;
-  }
-}
-
 function clearTokenPair() {
   removeStorage('access_token');
   removeStorage('refresh_token');
