@@ -2802,7 +2802,7 @@ function Stat({ icon: Icon, label, value, tone = 'orange' }) {
 }
 
 function SupportScreen({ navigate, activeScreen }) {
-  const [topicsExpanded, setTopicsExpanded] = useState(true);
+  const [topicsExpanded, setTopicsExpanded] = useState(false);
   const quick = [
     [AlertTriangle, 'VPN не работает - что делать?', 'Решение за 2 минуты', 'soft-orange'],
     [Download, 'Почему не скачивается приложение?', 'Доступ и установка', 'soft-blue'],
@@ -2830,11 +2830,13 @@ function SupportScreen({ navigate, activeScreen }) {
       <Card className="topic-list">
         <div className="topic-header">
           <h2>Все темы</h2>
-          <button onClick={() => setTopicsExpanded((value) => !value)}>
+          <button aria-expanded={topicsExpanded} onClick={() => setTopicsExpanded((value) => !value)}>
             {topicsExpanded ? 'Свернуть' : 'Развернуть'} {topicsExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
           </button>
         </div>
-        {topicsExpanded && topics.map(([Icon, title, tone]) => <TopicRow key={title} icon={Icon} title={title} tone={tone} onClick={() => navigate('tickets')} />)}
+        {(topicsExpanded ? topics : topics.slice(0, 3)).map(([Icon, title, tone]) => (
+          <TopicRow key={title} icon={Icon} title={title} tone={tone} onClick={() => navigate('tickets')} />
+        ))}
       </Card>
       <Card className="help-card">
         <IconTile><HeadphonesGlyph /></IconTile>
