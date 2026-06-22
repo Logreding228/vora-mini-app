@@ -174,7 +174,10 @@ async function parseResponse(response) {
 
 function getErrorMessage(payload) {
   if (Array.isArray(payload?.detail)) {
-    return payload.detail.map((item) => item.msg).filter(Boolean).join(', ') || 'Запрос не выполнен';
+    return payload.detail.map((item) => {
+      const field = Array.isArray(item.loc) ? item.loc.filter((part) => part !== 'body').join('.') : '';
+      return [field, item.msg].filter(Boolean).join(': ');
+    }).filter(Boolean).join(', ') || 'Запрос не выполнен';
   }
 
   return payload?.detail || payload?.message || (typeof payload === 'string' ? payload : 'Запрос не выполнен');
@@ -408,7 +411,12 @@ export const api = {
   history: (type) => request('/users/history_pay_screen', { query: { type } }),
   calculatePlan: (plan, months, promoCode) => request('/pay/calculate', {
     method: 'POST',
-    body: { plan, months, promo_code: promoCode },
+    body: {
+      currency: 'RUB',
+      plan: plan === 'home' ? 'home' : String(plan).toUpperCase(),
+      subscription_month: months,
+      promo_code: promoCode,
+    },
   }),
   validatePromo: (code, amount) => request('/pay/promo/validate', { method: 'POST', query: { code, amount } }),
   upgradePrice: () => request('/users/upgrade_plan_price/'),
