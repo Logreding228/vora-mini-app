@@ -37,7 +37,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-import { api, ApiError, authenticateTelegram, getAuthRoleDebug, isAdminUser } from './api.js';
+import { api, ApiError, authenticateTelegram, getApiRequestUrl, getAuthRoleDebug, isAdminUser } from './api.js';
 import { getDisplayName, initTelegramApp } from './telegram.js';
 import './styles.css';
 
@@ -690,11 +690,25 @@ function getUiError(error) {
     return 'Не удалось подтвердить Telegram. Закройте мини-приложение и откройте его через кнопку бота заново.';
   }
 
+  if (/internal server error/i.test(message)) {
+    return 'Сервер вернул внутреннюю ошибку. Попробуйте еще раз позже.';
+  }
+
+  if (/failed to fetch|networkerror|load failed/i.test(message)) {
+    return 'Не удалось связаться с сервером. Проверьте соединение и попробуйте еще раз.';
+  }
+
+  return message || 'Запрос не выполнен. Попробуйте еще раз.';
+}
+
+function getPaymentUiError(error) {
+  const message = error instanceof ApiError ? error.message : error?.message || '';
+
   if (/internal server error|failed to fetch|networkerror|load failed/i.test(message)) {
     return 'Платежный сервис не создал счет. Попробуйте позже или выберите другой способ оплаты.';
   }
 
-  return message || 'Запрос не выполнен. Попробуйте еще раз.';
+  return getUiError(error);
 }
 
 function getTicketStatusMeta(status) {
@@ -1377,7 +1391,7 @@ function TrialStart({ navigate, activeScreen }) {
       });
       openPaymentUrl(url);
     } catch (error) {
-      setPaymentError(getUiError(error));
+      setPaymentError(getPaymentUiError(error));
     }
   };
 
@@ -2143,7 +2157,7 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
     } catch (error) {
       setPromoPrices(null);
       setPromoApplied(false);
-      setPaymentError(getUiError(error));
+      setPaymentError(getPaymentUiError(error));
     } finally {
       setPromoLoading(false);
     }
@@ -2191,7 +2205,7 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
       const url = await api.createInvoice({ provider, type: paymentType, payload });
       openPaymentUrl(url);
     } catch (error) {
-      setPaymentError(getUiError(error));
+      setPaymentError(getPaymentUiError(error));
     }
   };
 
@@ -2891,6 +2905,7 @@ function TicketsScreen({ navigate, activeScreen, isAdmin }) {
     const requestDebug = {
       method: 'GET',
       endpoint: mode === 'admin' ? '/tickets/admin/all' : '/tickets',
+      url: getApiRequestUrl(mode === 'admin' ? '/tickets/admin/all' : '/tickets'),
       headers: { Authorization: 'Bearer <access_token>' },
     };
 
@@ -2929,6 +2944,8 @@ function TicketsScreen({ navigate, activeScreen, isAdmin }) {
         response: null,
         error: {
           message: getUiError(error),
+          raw_message: error?.message || String(error),
+          name: error?.name || null,
           status: error instanceof ApiError ? error.status : null,
           payload: error instanceof ApiError ? error.payload : null,
         },
@@ -3270,7 +3287,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
       });
       openPaymentUrl(url);
     } catch (error) {
-      setPaymentError(getUiError(error));
+      setPaymentError(getPaymentUiError(error));
     }
   };
 

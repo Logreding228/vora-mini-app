@@ -122,6 +122,14 @@ export function getAuthRoleDebug() {
   }
 }
 
+export function getApiRequestUrl(path) {
+  try {
+    return buildUrl(path);
+  } catch {
+    return `${apiBaseUrl}${path}`;
+  }
+}
+
 function clearTokenPair() {
   removeStorage('access_token');
   removeStorage('refresh_token');
