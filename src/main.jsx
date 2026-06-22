@@ -2904,8 +2904,8 @@ function TicketsScreen({ navigate, activeScreen, isAdmin }) {
   const loadTickets = async () => {
     const requestDebug = {
       method: 'GET',
-      endpoint: mode === 'admin' ? '/tickets/admin/all' : '/tickets',
-      url: getApiRequestUrl(mode === 'admin' ? '/tickets/admin/all' : '/tickets'),
+      endpoint: mode === 'admin' ? '/tickets/admin' : '/tickets',
+      url: getApiRequestUrl(mode === 'admin' ? '/tickets/admin' : '/tickets'),
       headers: { Authorization: 'Bearer <access_token>' },
     };
 
