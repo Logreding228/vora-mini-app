@@ -1450,6 +1450,37 @@ button svg,
   color: #2bbb73;
 }
 
+.device-debug {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #071426;
+  color: #f7f7f8;
+  text-align: left;
+}
+
+.device-debug > strong {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.device-debug pre {
+  max-height: 360px;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  border-radius: 10px;
+  background: #0d1d31;
+  color: #dbe7f7;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 10px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .delete-device {
   width: 34px;
   height: 34px;

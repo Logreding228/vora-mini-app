@@ -1607,10 +1607,53 @@ function DevicesCard({ mainData }) {
   const [expanded, setExpanded] = useState(true);
   const [devices, setDevices] = useState(mainData.devices);
   const [deviceError, setDeviceError] = useState('');
+  const [deviceDebug, setDeviceDebug] = useState({
+    request: { method: 'GET', endpoint: '/hwid/get_hwid/' },
+    status: 'loading',
+    response: null,
+    error: null,
+  });
 
   useEffect(() => {
     setDevices(mainData.devices);
   }, [mainData.devices]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadDeviceDebug = async () => {
+      try {
+        const response = await api.getHwid();
+
+        if (isMounted) {
+          setDeviceDebug({
+            request: { method: 'GET', endpoint: '/hwid/get_hwid/' },
+            status: 'success',
+            response,
+            error: null,
+          });
+        }
+      } catch (error) {
+        if (isMounted) {
+          setDeviceDebug({
+            request: { method: 'GET', endpoint: '/hwid/get_hwid/' },
+            status: 'error',
+            response: null,
+            error: {
+              message: getUiError(error),
+              status: error instanceof ApiError ? error.status : null,
+              payload: error instanceof ApiError ? error.payload : null,
+            },
+          });
+        }
+      }
+    };
+
+    loadDeviceDebug();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const deleteDevice = async (id) => {
     try {
@@ -1650,6 +1693,12 @@ function DevicesCard({ mainData }) {
           {devices.length === 0 && <p className="empty-state">Устройства не подключены</p>}
         </div>
       </div>
+      {expanded && (
+        <div className="device-debug">
+          <strong>Debug: устройства API</strong>
+          <pre>{JSON.stringify(deviceDebug, null, 2)}</pre>
+        </div>
+      )}
     </Card>
   );
 }
