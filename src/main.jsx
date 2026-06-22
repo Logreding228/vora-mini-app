@@ -36,7 +36,6 @@ import {
   Trash2,
   Users,
   Wallet,
-  X,
 } from 'lucide-react';
 import { api, ApiError, authenticateTelegram, isAdminUser } from './api.js';
 import { getDisplayName, initTelegramApp } from './telegram.js';
@@ -1726,7 +1725,6 @@ function DeviceSheet({ navigate, limitReached = false, mainData, closeRoute = 'h
           <div className="sheet-drag-zone" {...swipeDismiss.handleProps}>
             <span className="sheet-grip" />
           </div>
-          <button className="sheet-close" onClick={closeSheet} aria-label="Закрыть"><X size={20} /></button>
           <h2>Лимит устройств набран</h2>
           <Card className="limit-sheet-card">
             <IconTile tone="soft-orange"><Monitor size={24} /></IconTile>
@@ -1796,7 +1794,6 @@ function DeviceSheet({ navigate, limitReached = false, mainData, closeRoute = 'h
         <div className="sheet-drag-zone" {...swipeDismiss.handleProps}>
           <span className="sheet-grip" />
         </div>
-        <button className="sheet-close" onClick={closeSheet} aria-label="Закрыть"><X size={20} /></button>
         <h2>Подключить новое устройство</h2>
         <StepTitle number="1" title="Операционная система" />
         <Card className="option-list system-option-list">

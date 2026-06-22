@@ -1492,21 +1492,6 @@ button svg,
   box-shadow: 0 -10px 30px rgba(6, 22, 44, 0.16);
 }
 
-.sheet-close {
-  position: absolute;
-  z-index: 3;
-  right: 16px;
-  top: 14px;
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  background: #ffffff;
-  color: #4f5b68;
-  box-shadow: 0 12px 28px rgba(6, 22, 44, 0.08);
-}
-
 .sheet-grip {
   display: block;
   width: 62px;
@@ -1544,7 +1529,6 @@ button svg,
 
 .bottom-sheet h2 {
   margin: 0 0 28px;
-  padding-right: 48px;
   font-size: 21px;
 }
 
