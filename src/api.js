@@ -409,12 +409,13 @@ export const api = {
   getHwid: () => request('/hwid/get_hwid/'),
   deleteDevice: (hwid) => request('/hwid/delete_devic/', { method: 'POST', query: { hwid } }),
   history: (type) => request('/users/history_pay_screen', { query: { type } }),
-  calculatePlan: (plan, months, promoCode) => request('/pay/calculate', {
+  calculatePlan: (plan, months, promoCode, hwid) => request('/pay/calculate', {
     method: 'POST',
     body: {
       currency: 'RUB',
       plan: plan === 'home' ? 'home' : String(plan).toUpperCase(),
       subscription_month: months,
+      hwid,
       promo_code: promoCode,
     },
   }),

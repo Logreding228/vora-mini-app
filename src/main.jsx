@@ -3198,11 +3198,17 @@ function TariffScreen({ selected, navigate, activeScreen }) {
   const planTotal = getDisplayedPlanTotal(selectedPeriod);
   const extraDevices = Math.max(0, deviceCount - tariff.devices);
   const extraDevicesTotal = extraDevices * devicePrice * periodMonths;
-  const total = planTotal + extraDevicesTotal;
+  const total = promoApplied ? planTotal : planTotal + extraDevicesTotal;
   const originalTotal = tariff.monthPrice * periodMonths + extraDevicesTotal;
   const savings = originalTotal - total;
   const maxDeviceCount = tariff.devices + tariff.extraDevices;
   const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
+
+  const changeDeviceCount = (nextCount) => {
+    setDeviceCount(nextCount);
+    setPromoApplied(false);
+    setPromoTotals(null);
+  };
 
   const applyPromo = async () => {
     if (promoApplied) {
@@ -3221,7 +3227,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
       setPromoLoading(true);
       setPaymentError('');
       const entries = await Promise.all(['1', '6', '12'].map(async (period) => {
-        const response = await api.calculatePlan(selected, Number(period), code);
+        const response = await api.calculatePlan(selected, Number(period), code, deviceCount);
         const calculatedTotal = Number(response?.total);
 
         if (!Number.isFinite(calculatedTotal)) {
@@ -3299,11 +3305,11 @@ function TariffScreen({ selected, navigate, activeScreen }) {
           <span>+{money(devicePrice)} за дополнительное устройство</span>
         </div>
         <div className="stepper">
-          <button disabled={deviceCount <= tariff.devices} onClick={() => setDeviceCount((value) => Math.max(tariff.devices, value - 1))} aria-label="Уменьшить количество устройств">
+          <button disabled={deviceCount <= tariff.devices} onClick={() => changeDeviceCount(Math.max(tariff.devices, deviceCount - 1))} aria-label="Уменьшить количество устройств">
             <Minus size={18} strokeWidth={2.4} aria-hidden="true" />
           </button>
           <strong>{deviceCount}</strong>
-          <button disabled={deviceCount >= maxDeviceCount} onClick={() => setDeviceCount((value) => Math.min(maxDeviceCount, value + 1))} aria-label="Увеличить количество устройств">
+          <button disabled={deviceCount >= maxDeviceCount} onClick={() => changeDeviceCount(Math.min(maxDeviceCount, deviceCount + 1))} aria-label="Увеличить количество устройств">
             <Plus size={18} strokeWidth={2.4} aria-hidden="true" />
           </button>
         </div>
