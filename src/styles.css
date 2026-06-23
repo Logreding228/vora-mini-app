@@ -3665,10 +3665,6 @@ button svg,
   background: #f0f1f3;
 }
 
-.ticket-mode.user-only {
-  grid-template-columns: 1fr;
-}
-
 .ticket-mode button {
   border-radius: 12px;
   background: transparent;
@@ -3686,6 +3682,12 @@ button svg,
 .ticket-tabs button {
   font-size: 13px;
   gap: 5px;
+}
+
+.ticket-tabs.admin-tabs button {
+  padding-inline: 4px;
+  gap: 3px;
+  font-size: 11px;
 }
 
 .ticket-tabs span {
@@ -3743,11 +3745,11 @@ button svg,
   font-weight: 700;
 }
 
-.ticket-status.orange { background: #ffe8dc; color: #ff712d; }
-.ticket-status.blue { background: #eaf2ff; color: #3f80f4; }
-.ticket-status.purple { background: #eee5ff; color: #8058ff; }
-.ticket-status.green { background: #e2f5e9; color: #22b56c; }
-.ticket-status.gray { background: #f1f2f4; color: #6b7280; }
+.ticket-status.orange { background: #ffe7d6; color: #ff8a3d; }
+.ticket-status.blue { background: #e0ecff; color: #4d8cff; }
+.ticket-status.purple { background: #f0e7ff; color: #9b6bff; }
+.ticket-status.green { background: #e6f7ec; color: #22c55e; }
+.ticket-status.gray { background: #f2f3f5; color: #7b8794; }
 
 .tickets-screen .primary-button {
   margin-top: 14px;

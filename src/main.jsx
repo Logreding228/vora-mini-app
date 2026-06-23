@@ -115,6 +115,52 @@ const formatDateTime = (value) => {
     minute: '2-digit',
   }).format(new Date(value));
 };
+const formatTicketListTime = (value, now = Date.now()) => {
+  const date = parseApiDate(value);
+  const timestamp = date.getTime();
+
+  if (!Number.isFinite(timestamp)) {
+    return '';
+  }
+
+  const elapsedMs = Math.max(0, now - timestamp);
+  const minutes = Math.floor(elapsedMs / 60000);
+
+  if (minutes < 1) {
+    return 'Только что';
+  }
+
+  if (minutes < 60) {
+    return `${minutes} ${pluralRu(minutes, 'минуту', 'минуты', 'минут')} назад`;
+  }
+
+  const hours = Math.floor(elapsedMs / 3600000);
+  if (hours < 24) {
+    return `${hours} ${pluralRu(hours, 'час', 'часа', 'часов')} назад`;
+  }
+
+  const days = Math.floor(elapsedMs / 86400000);
+  if (days < 7) {
+    return `${days} ${pluralRu(days, 'день', 'дня', 'дней')} назад`;
+  }
+
+  return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' }).format(date);
+};
+const formatTicketMessageTime = (value) => {
+  const date = parseApiDate(value);
+
+  if (!Number.isFinite(date.getTime())) {
+    return '—';
+  }
+
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+};
 const valueDeepByKeys = (payload, keys, fallback = '') => {
   const queue = [payload];
   const seen = new Set();
@@ -712,14 +758,42 @@ function getPaymentUiError(error) {
 }
 
 function getTicketStatusMeta(status) {
-  const normalized = String(status || 'open').toLowerCase();
+  const normalized = getTicketStatusGroup(status);
   const values = {
-    open: ['Открыт', 'orange'],
-    answered: ['Отвечен', 'blue'],
+    open: ['Новый', 'orange'],
+    in_progress: ['В работе', 'blue'],
+    answered: ['Ждём вас', 'purple'],
+    resolved: ['Решён', 'green'],
     closed: ['Закрыт', 'gray'],
   };
 
-  return values[normalized] || [status || 'Открыт', 'purple'];
+  return values[normalized] || [status || 'Новый', 'purple'];
+}
+
+function getTicketStatusGroup(status) {
+  const normalized = String(status || 'open').toLowerCase();
+  const aliases = {
+    new: 'open',
+    processing: 'in_progress',
+    work: 'in_progress',
+    waiting_user: 'answered',
+    awaiting_user: 'answered',
+    waiting: 'answered',
+    solved: 'resolved',
+  };
+
+  return aliases[normalized] || normalized;
+}
+
+function getTicketDisplayId(ticket) {
+  const explicitId = ticket?.number || ticket?.ticket_number || ticket?.public_id;
+
+  if (explicitId !== undefined && explicitId !== null && explicitId !== '') {
+    return `#${String(explicitId).replace(/^#/, '')}`;
+  }
+
+  const compactId = String(ticket?.id || '').replace(/-/g, '').slice(0, 8);
+  return compactId ? `#${compactId}` : '#—';
 }
 
 function saveSelectedTicket(id, isAdmin = false) {
@@ -2738,15 +2812,27 @@ function BalanceHistory({ navigate, activeScreen }) {
     loadHistory();
   }, [selectedType]);
 
-  const renderedTransactions = (history.payments || []).map((item, index) => ({
-    title: selectedType === 'income' ? 'Пополнение баланса' : 'Оплата VORA',
-    date: formatDateTime(item.data),
-    amount: `${selectedType === 'income' ? '+' : '-'}${money(item.amount)}`,
-    icon: selectedType === 'income' ? 'wallet' : 'feather',
-    plan: String(item.plan || item.tariff || item.subscription_plan || '').toLowerCase() === 'plus' ? 'plus' : 'lite',
-    status: item.status || 'paid',
-    index,
-  }));
+  const renderedTransactions = (history.payments || []).map((item, index) => {
+    const backendDescription = String(item.description || '').trim();
+    const isTrial = /^пробный период(?:\s+plus)?$/i.test(backendDescription);
+    const title = selectedType === 'income'
+      ? backendDescription || 'Пополнение баланса'
+      : isTrial ? 'Пробный период Plus' : backendDescription || 'Оплата VORA';
+    const normalizedTitle = title.toLowerCase();
+    const plan = normalizedTitle.includes('plus') || isTrial
+      ? 'plus'
+      : normalizedTitle.includes('home') ? 'home' : 'lite';
+
+    return {
+      title,
+      date: formatDateTime(item.data),
+      amount: `${selectedType === 'income' ? '+' : '-'}${money(item.amount)}`,
+      icon: selectedType === 'income' ? 'wallet' : 'tariff',
+      plan,
+      status: item.status || 'paid',
+      index,
+    };
+  });
 
   return (
     <AppFrame className="history-screen" navigate={navigate} activeScreen={activeScreen}>
@@ -2767,7 +2853,7 @@ function BalanceHistory({ navigate, activeScreen }) {
           </div>
           <div>
             <b>{amount}</b>
-            <span>{status === 'paid' ? 'Успешно' : status}</span>
+            <span>{['paid', 'paid_over'].includes(status) ? 'Успешно' : status}</span>
           </div>
         </Card>
       ))}
@@ -2901,13 +2987,28 @@ function TicketsScreen({ navigate, activeScreen, isAdmin }) {
     loadTickets();
   }, [isAdmin, mode]);
 
-  const visibleTickets = tickets.filter((ticket) => selectedTab === 'all' || String(ticket.status || 'open').toLowerCase() === selectedTab);
-  const counts = {
-    all: tickets.length,
-    open: tickets.filter((ticket) => String(ticket.status || 'open').toLowerCase() === 'open').length,
-    answered: tickets.filter((ticket) => String(ticket.status || '').toLowerCase() === 'answered').length,
-    closed: tickets.filter((ticket) => String(ticket.status || '').toLowerCase() === 'closed').length,
-  };
+  useEffect(() => {
+    setSelectedTab('all');
+  }, [mode]);
+
+  const ticketTabs = mode === 'admin'
+    ? [
+        ['all', 'Все'],
+        ['open', 'Новые'],
+        ['in_progress', 'В работе'],
+        ['answered', 'Ждём вас'],
+      ]
+    : [
+        ['all', 'Все'],
+        ['open', 'Новые'],
+        ['answered', 'Ответ'],
+        ['closed', 'Закрыты'],
+      ];
+  const visibleTickets = tickets.filter((ticket) => selectedTab === 'all' || getTicketStatusGroup(ticket.status) === selectedTab);
+  const counts = Object.fromEntries(ticketTabs.map(([id]) => [
+    id,
+    id === 'all' ? tickets.length : tickets.filter((ticket) => getTicketStatusGroup(ticket.status) === id).length,
+  ]));
   const openTicket = (ticket) => {
     saveSelectedTicket(ticket.id, mode === 'admin');
     navigate('ticket-thread');
@@ -2916,17 +3017,14 @@ function TicketsScreen({ navigate, activeScreen, isAdmin }) {
   return (
     <AppFrame className="tickets-screen" navigate={navigate} activeScreen={activeScreen}>
       <PageTitle title="Обращения" subtitle="Круглосуточно" />
-      <div className={isAdmin ? 'ticket-mode' : 'ticket-mode user-only'}>
-        <button className={mode === 'user' ? 'active' : ''} onClick={() => setMode('user')}>Мои</button>
-        {isAdmin && <button className={mode === 'admin' ? 'active' : ''} onClick={() => setMode('admin')}>Админ</button>}
-      </div>
-      <div className="ticket-tabs">
-        {[
-          ['all', 'Все'],
-          ['open', 'Новые'],
-          ['answered', 'Ответ'],
-          ['closed', 'Закрыты'],
-        ].map(([id, label]) => (
+      {isAdmin && (
+        <div className="ticket-mode">
+          <button className={mode === 'user' ? 'active' : ''} onClick={() => setMode('user')}>Мои</button>
+          <button className={mode === 'admin' ? 'active' : ''} onClick={() => setMode('admin')}>Админ</button>
+        </div>
+      )}
+      <div className={mode === 'admin' ? 'ticket-tabs admin-tabs' : 'ticket-tabs'}>
+        {ticketTabs.map(([id, label]) => (
           <button key={id} className={selectedTab === id ? 'active' : ''} onClick={() => setSelectedTab(id)}>{label} <span>{counts[id]}</span></button>
         ))}
       </div>
@@ -2939,17 +3037,17 @@ function TicketsScreen({ navigate, activeScreen, isAdmin }) {
           <button className="ticket-card" key={ticket.id} onClick={() => openTicket(ticket)}>
             <div>
               <strong>{ticket.subject || 'Без темы'}</strong>
-              <p>{mode === 'admin' ? `TG ${ticket.tg_id || '-'}` : ticket.id}</p>
+              <p>{getTicketDisplayId(ticket)}</p>
             </div>
             <div>
               <span className={`ticket-status ${tone}`}>{statusLabel}</span>
-              <p>{formatDateTime(ticket.updated_at || ticket.created_at)}</p>
+              <p>{formatTicketListTime(ticket.last_message_at || ticket.updated_at || ticket.created_at)}</p>
             </div>
           </button>
         );
       })}
       {!isLoadingTickets && !visibleTickets.length && !ticketsError && <p className="empty-state">Обращений пока нет</p>}
-      <PrimaryButton onClick={() => navigate('ticket-create')}>Новое обращение</PrimaryButton>
+      {mode !== 'admin' && <PrimaryButton onClick={() => navigate('ticket-create')}>Новое обращение</PrimaryButton>}
     </AppFrame>
   );
 }
@@ -3092,7 +3190,7 @@ function TicketThread({ navigate, activeScreen }) {
         <MessageBubble
           key={message.id || `${message.created_at}-${message.text}`}
           author={message.is_admin ? 'Поддержка' : `Пользователь ${message.tg_id || ticket?.tg_id || ''}`}
-          time={formatDateTime(message.created_at)}
+          time={formatTicketMessageTime(message.created_at)}
           text={message.text}
           files={message.files || []}
           support={message.is_admin}
