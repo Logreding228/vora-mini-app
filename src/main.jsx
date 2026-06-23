@@ -154,12 +154,37 @@ const formatTicketMessageTime = (value) => {
   }
 
   return new Intl.DateTimeFormat('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   }).format(date);
+};
+const formatTicketDay = (value) => {
+  const date = parseApiDate(value);
+
+  if (!Number.isFinite(date.getTime())) {
+    return '—';
+  }
+
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date);
+};
+const getTicketDayKey = (value) => {
+  const date = parseApiDate(value);
+  return Number.isFinite(date.getTime()) ? `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}` : '';
+};
+const formatFileSize = (value) => {
+  const bytes = Number(value);
+
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return '';
+  }
+
+  return bytes >= 1048576
+    ? `${(bytes / 1048576).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} МБ`
+    : `${Math.ceil(bytes / 1024)} КБ`;
 };
 const valueDeepByKeys = (payload, keys, fallback = '') => {
   const queue = [payload];
@@ -794,6 +819,14 @@ function getTicketDisplayId(ticket) {
 
   const compactId = String(ticket?.id || '').replace(/-/g, '').slice(0, 8);
   return compactId ? `#${compactId}` : '#—';
+}
+
+function getTicketFileError(error, files) {
+  if (files?.length && /text or files required|field required/i.test(error?.message || '')) {
+    return 'Сервер не принял вложение. Отправка файлов временно недоступна.';
+  }
+
+  return getUiError(error);
 }
 
 function saveSelectedTicket(id, isAdmin = false) {
@@ -3085,7 +3118,7 @@ function CreateTicket({ navigate, activeScreen }) {
       await api.createTicket({ subject: subject.trim(), text: description.trim(), files });
       navigate('tickets');
     } catch (error) {
-      setTicketError(getUiError(error));
+      setTicketError(getTicketFileError(error, files));
     } finally {
       setSubmitting(false);
     }
@@ -3157,15 +3190,19 @@ function TicketThread({ navigate, activeScreen }) {
     try {
       setSending(true);
       setThreadError('');
-      await api.sendTicketMessage(selectedTicket.id, {
+      const sentMessage = await api.sendTicketMessage(selectedTicket.id, {
         text: messageText.trim(),
         files: messageFiles,
       });
+      const attachmentWasDropped = messageFiles.length > 0 && !sentMessage?.files?.length;
       setMessageText('');
       setMessageFiles([]);
       await loadTicket();
+      if (attachmentWasDropped) {
+        setThreadError('Сообщение отправлено, но сервер не сохранил вложение.');
+      }
     } catch (error) {
-      setThreadError(getUiError(error));
+      setThreadError(getTicketFileError(error, messageFiles));
     } finally {
       setSending(false);
     }
@@ -3173,29 +3210,40 @@ function TicketThread({ navigate, activeScreen }) {
 
   const [statusLabel, statusTone] = getTicketStatusMeta(ticket?.status);
   const messages = ticket?.messages || [];
+  const createdDayKey = getTicketDayKey(ticket?.created_at);
+  let renderedDayKey = createdDayKey;
 
   return (
     <AppFrame className="thread-screen" navigate={navigate} activeScreen={activeScreen}>
-      <PageTitle title={ticket?.subject || 'Обращение'} subtitle={<><span>{ticket?.id || selectedTicket.id || 'Не выбрано'}</span><Copy size={12} /></>} />
+      <PageTitle title={ticket?.subject || 'Обращение'} subtitle={<><span>{getTicketDisplayId(ticket || { id: selectedTicket.id })}</span><Copy size={12} /></>} />
       {selectedTicket.isAdmin && <p className="admin-thread-note">Админ-режим: ответ уйдет от поддержки</p>}
       {threadError && <p className="inline-error">{threadError}</p>}
       <Card className="ticket-info">
-        <InfoLine icon={Headphones} title="Статус" value={statusLabel} tone={statusTone === 'orange' ? 'orange' : statusTone === 'green' ? 'green' : ''} />
+        <InfoLine icon={Headphones} title="Статус" value={statusLabel} tone={statusTone} />
         <InfoLine icon={MoreVertical} title="Пользователь" value={ticket?.tg_id ? String(ticket.tg_id) : 'Недоступно'} />
         <InfoLine icon={CalendarDays} title="Обновлен" value={formatDateTime(ticket?.updated_at || ticket?.created_at)} />
       </Card>
-      <div className="date-pill">{ticket?.created_at ? dateRu(ticket.created_at) : 'Нет данных'}</div>
+      {ticket?.created_at && <div className="date-pill">{formatTicketDay(ticket.created_at)}</div>}
+      {ticket?.created_at && <ThreadMarker>Создано • {formatTicketDay(ticket.created_at)}, {formatTicketMessageTime(ticket.created_at)}</ThreadMarker>}
       {!messages.length && <ThreadMarker>Переписка пока пуста</ThreadMarker>}
-      {messages.map((message) => (
-        <MessageBubble
-          key={message.id || `${message.created_at}-${message.text}`}
-          author={message.is_admin ? 'Поддержка' : `Пользователь ${message.tg_id || ticket?.tg_id || ''}`}
-          time={formatTicketMessageTime(message.created_at)}
-          text={message.text}
-          files={message.files || []}
-          support={message.is_admin}
-        />
-      ))}
+      {messages.map((message) => {
+        const messageDayKey = getTicketDayKey(message.created_at);
+        const showDate = Boolean(messageDayKey && messageDayKey !== renderedDayKey);
+        renderedDayKey = messageDayKey || renderedDayKey;
+
+        return (
+          <React.Fragment key={message.id || `${message.created_at}-${message.text}`}>
+            {showDate && <div className="date-pill">{formatTicketDay(message.created_at)}</div>}
+            <MessageBubble
+              author={message.is_admin ? 'Поддержка' : selectedTicket.isAdmin ? `Пользователь ${message.tg_id || ticket?.tg_id || ''}` : 'Вы'}
+              time={formatTicketMessageTime(message.created_at)}
+              text={message.text}
+              files={message.files || []}
+              support={message.is_admin}
+            />
+          </React.Fragment>
+        );
+      })}
       <div className="message-input">
         <label aria-label="Прикрепить файл">
           <input type="file" multiple onChange={(event) => setMessageFiles(Array.from(event.target.files || []))} />
@@ -3228,17 +3276,49 @@ function ThreadMarker({ children }) {
   );
 }
 
+function getAttachmentMeta(file, index) {
+  const url = typeof file === 'string' ? file : file?.url || file?.href || '';
+  const rawName = typeof file === 'object' ? file?.name || file?.filename : '';
+  let urlName = '';
+
+  if (url) {
+    try {
+      urlName = decodeURIComponent(new URL(url, window.location.origin).pathname.split('/').pop() || '');
+    } catch {
+      urlName = String(url).split('/').pop() || '';
+    }
+  }
+
+  return {
+    url,
+    name: rawName || urlName || `Файл ${index + 1}`,
+    size: formatFileSize(typeof file === 'object' ? file?.size || file?.size_bytes : 0),
+  };
+}
+
 function MessageBubble({ author, time, text, files = [], support }) {
   return (
     <div className={support ? 'message-bubble support' : 'message-bubble'}>
       <p><span>{author}</span> • {time}</p>
-      <div>{text || 'Файл без текста'}</div>
-      {files.map((file, index) => (
-        <div className="attachment" key={`${file}-${index}`}>
-          <Paperclip size={24} />
-          <span><strong>{typeof file === 'string' ? file.split('/').pop() || `file-${index + 1}` : `file-${index + 1}`}</strong><small>{typeof file === 'string' ? file : 'Вложение'}</small></span>
-        </div>
-      ))}
+      {text && <div className="message-text">{text}</div>}
+      {files.map((file, index) => {
+        const attachment = getAttachmentMeta(file, index);
+        const content = (
+          <>
+            <Paperclip size={24} />
+            <span>
+              <strong>{attachment.name}</strong>
+              {attachment.size && <small>{attachment.size}</small>}
+            </span>
+          </>
+        );
+
+        return attachment.url ? (
+          <a className="attachment" href={attachment.url} target="_blank" rel="noreferrer" key={`${attachment.url}-${index}`}>{content}</a>
+        ) : (
+          <div className="attachment" key={`${attachment.name}-${index}`}>{content}</div>
+        );
+      })}
     </div>
   );
 }

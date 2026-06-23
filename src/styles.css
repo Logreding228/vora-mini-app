@@ -3916,6 +3916,9 @@ button svg,
 
 .info-line span.green { color: #2bbb73; }
 .info-line span.orange { color: #ff712d; }
+.info-line span.blue { color: #4d8cff; }
+.info-line span.purple { color: #9b6bff; }
+.info-line span.gray { color: #7b8794; }
 
 .date-pill {
   width: 69px;
@@ -3981,7 +3984,7 @@ button svg,
   color: #3f80f4;
 }
 
-.message-bubble div {
+.message-text {
   color: #596371;
   font-size: 11px;
   line-height: 1.28;
@@ -3989,7 +3992,7 @@ button svg,
 
 .attachment {
   margin-top: 14px;
-  min-height: 34px;
+  min-height: 54px;
   border: 1px solid #ffe0d2;
   border-radius: 10px;
   display: grid;
@@ -3997,6 +4000,9 @@ button svg,
   align-items: center;
   gap: 10px;
   padding: 8px;
+  background: #fff8f4;
+  color: #596371;
+  text-decoration: none;
 }
 
 .message-input label {
@@ -4028,6 +4034,20 @@ button svg,
 .attachment strong,
 .attachment small {
   display: block;
+}
+
+.attachment strong {
+  overflow: hidden;
+  color: #596371;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment small {
+  margin-top: 4px;
+  color: #9ca3ad;
+  font-size: 10px;
 }
 
 .reopen-box {
