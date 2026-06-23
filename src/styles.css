@@ -3881,6 +3881,27 @@ button svg,
   font-size: 24px;
 }
 
+.ticket-id-copy {
+  max-width: 100%;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.ticket-id-copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ticket-id-copy svg {
+  flex: 0 0 auto;
+}
+
 .admin-thread-note {
   margin: -8px 0 12px;
   color: #ff712d;

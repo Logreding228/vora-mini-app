@@ -186,6 +186,32 @@ const formatFileSize = (value) => {
     ? `${(bytes / 1048576).toLocaleString('ru-RU', { maximumFractionDigits: 1 })} МБ`
     : `${Math.ceil(bytes / 1024)} КБ`;
 };
+const copyTextToClipboard = async (value) => {
+  if (!value) {
+    return false;
+  }
+
+  try {
+    await navigator.clipboard.writeText(value);
+    return true;
+  } catch {
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = value;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      textarea.setSelectionRange(0, value.length);
+      const copied = document.execCommand('copy');
+      textarea.remove();
+      return copied;
+    } catch {
+      return false;
+    }
+  }
+};
 const valueDeepByKeys = (payload, keys, fallback = '') => {
   const queue = [payload];
   const seen = new Set();
@@ -3162,6 +3188,7 @@ function TicketThread({ navigate, activeScreen }) {
   const [messageText, setMessageText] = useState('');
   const [messageFiles, setMessageFiles] = useState([]);
   const [isSending, setSending] = useState(false);
+  const [copyNotice, setCopyNotice] = useState('');
 
   const loadTicket = async () => {
     if (!selectedTicket.id) {
@@ -3213,9 +3240,25 @@ function TicketThread({ navigate, activeScreen }) {
   const createdDayKey = getTicketDayKey(ticket?.created_at);
   let renderedDayKey = createdDayKey;
 
+  const copyTicketId = async () => {
+    const ticketId = ticket?.id || selectedTicket.id;
+    const copied = await copyTextToClipboard(ticketId);
+
+    setCopyNotice(copied ? 'Скопировано' : 'Не удалось скопировать');
+    window.setTimeout(() => setCopyNotice(''), 1800);
+  };
+
   return (
     <AppFrame className="thread-screen" navigate={navigate} activeScreen={activeScreen}>
-      <PageTitle title={ticket?.subject || 'Обращение'} subtitle={<><span>{getTicketDisplayId(ticket || { id: selectedTicket.id })}</span><Copy size={12} /></>} />
+      <PageTitle
+        title={ticket?.subject || 'Обращение'}
+        subtitle={(
+          <button className="ticket-id-copy" onClick={copyTicketId} aria-label="Скопировать номер обращения">
+            <span>{copyNotice || getTicketDisplayId(ticket || { id: selectedTicket.id })}</span>
+            <Copy size={14} />
+          </button>
+        )}
+      />
       {selectedTicket.isAdmin && <p className="admin-thread-note">Админ-режим: ответ уйдет от поддержки</p>}
       {threadError && <p className="inline-error">{threadError}</p>}
       <Card className="ticket-info">
