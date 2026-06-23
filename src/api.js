@@ -402,6 +402,7 @@ export async function authenticateTelegram(initData) {
 
 export const api = {
   mainScreen: () => request('/users/main_screen/'),
+  userByTelegramId: (tgId) => request(`/users/get_user/${tgId}/`, { query: { tg_id: tgId } }),
   referralData: () => request('/users/referral_data'),
   plan: (plan) => request('/pay/plans', { query: { plan } }),
   subscriptionUrl: (client) => request('/hwid/get_subscription_url/', { query: { client } }),

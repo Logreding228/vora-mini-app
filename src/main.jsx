@@ -847,6 +847,34 @@ function getTicketDisplayId(ticket) {
   return compactId ? `#${compactId}` : '#—';
 }
 
+function getTicketUserLabel(ticket, user = ticket?._user) {
+  const username = user?.username || ticket?.username || ticket?.user?.username;
+  if (username) {
+    return `@${String(username).replace(/^@/, '')}`;
+  }
+
+  const firstName = user?.first_name || ticket?.first_name || ticket?.user?.first_name || '';
+  const lastName = user?.last_name || ticket?.last_name || ticket?.user?.last_name || '';
+  return [firstName, lastName].filter(Boolean).join(' ') || 'Пользователь';
+}
+
+async function enrichTicketsWithUsers(tickets) {
+  const telegramIds = [...new Set(tickets.map((ticket) => ticket?.tg_id).filter(Boolean))];
+  const users = await Promise.all(telegramIds.map(async (tgId) => {
+    try {
+      return [String(tgId), await api.userByTelegramId(tgId)];
+    } catch {
+      return [String(tgId), null];
+    }
+  }));
+  const usersByTelegramId = Object.fromEntries(users);
+
+  return tickets.map((ticket) => ({
+    ...ticket,
+    _user: usersByTelegramId[String(ticket.tg_id)] || null,
+  }));
+}
+
 function getTicketFileError(error, files) {
   if (files?.length && /text or files required|field required/i.test(error?.message || '')) {
     return 'Сервер не принял вложение. Отправка файлов временно недоступна.';
@@ -2871,7 +2899,9 @@ function BalanceHistory({ navigate, activeScreen }) {
     loadHistory();
   }, [selectedType]);
 
-  const renderedTransactions = (history.payments || []).map((item, index) => {
+  const renderedTransactions = [...(history.payments || [])]
+    .sort((left, right) => parseApiDate(right.data).getTime() - parseApiDate(left.data).getTime())
+    .map((item, index) => {
     const backendDescription = String(item.description || '').trim();
     const isTrial = /^пробный период(?:\s+plus)?$/i.test(backendDescription);
     const title = selectedType === 'income'
@@ -2882,16 +2912,16 @@ function BalanceHistory({ navigate, activeScreen }) {
       ? 'plus'
       : normalizedTitle.includes('home') ? 'home' : 'lite';
 
-    return {
-      title,
-      date: formatDateTime(item.data),
-      amount: `${selectedType === 'income' ? '+' : '-'}${money(item.amount)}`,
-      icon: selectedType === 'income' ? 'wallet' : 'tariff',
-      plan,
-      status: item.status || 'paid',
-      index,
-    };
-  });
+      return {
+        title,
+        date: formatDateTime(item.data),
+        amount: `${selectedType === 'income' ? '+' : '-'}${money(item.amount)}`,
+        icon: selectedType === 'income' ? 'wallet' : 'tariff',
+        plan,
+        status: item.status || 'paid',
+        index,
+      };
+    });
 
   return (
     <AppFrame className="history-screen" navigate={navigate} activeScreen={activeScreen}>
@@ -3028,7 +3058,8 @@ function TicketsScreen({ navigate, activeScreen, isAdmin }) {
       setLoadingTickets(true);
       setTicketsError('');
       const payload = mode === 'admin' ? await api.adminTickets() : await api.tickets();
-      setTickets(Array.isArray(payload) ? payload : []);
+      const loadedTickets = Array.isArray(payload) ? payload : [];
+      setTickets(mode === 'admin' ? await enrichTicketsWithUsers(loadedTickets) : loadedTickets);
     } catch (error) {
       setTickets([]);
       setTicketsError(getUiError(error));
@@ -3096,7 +3127,7 @@ function TicketsScreen({ navigate, activeScreen, isAdmin }) {
           <button className="ticket-card" key={ticket.id} onClick={() => openTicket(ticket)}>
             <div>
               <strong>{ticket.subject || 'Без темы'}</strong>
-              <p>{getTicketDisplayId(ticket)}</p>
+              <p>{mode === 'admin' ? getTicketUserLabel(ticket) : getTicketDisplayId(ticket)}</p>
             </div>
             <div>
               <span className={`ticket-status ${tone}`}>{statusLabel}</span>
@@ -3184,6 +3215,7 @@ function CreateTicket({ navigate, activeScreen }) {
 function TicketThread({ navigate, activeScreen }) {
   const selectedTicket = useMemo(() => readSelectedTicket(), []);
   const [ticket, setTicket] = useState(null);
+  const [ticketUser, setTicketUser] = useState(null);
   const [threadError, setThreadError] = useState('');
   const [messageText, setMessageText] = useState('');
   const [messageFiles, setMessageFiles] = useState([]);
@@ -3198,7 +3230,18 @@ function TicketThread({ navigate, activeScreen }) {
 
     try {
       setThreadError('');
-      setTicket(await api.ticket(selectedTicket.id));
+      const loadedTicket = await api.ticket(selectedTicket.id);
+      setTicket(loadedTicket);
+
+      if (loadedTicket?.tg_id) {
+        try {
+          setTicketUser(await api.userByTelegramId(loadedTicket.tg_id));
+        } catch {
+          setTicketUser(null);
+        }
+      } else {
+        setTicketUser(null);
+      }
     } catch (error) {
       setThreadError(getUiError(error));
     }
@@ -3263,7 +3306,7 @@ function TicketThread({ navigate, activeScreen }) {
       {threadError && <p className="inline-error">{threadError}</p>}
       <Card className="ticket-info">
         <InfoLine icon={Headphones} title="Статус" value={statusLabel} tone={statusTone} />
-        <InfoLine icon={MoreVertical} title="Пользователь" value={ticket?.tg_id ? String(ticket.tg_id) : 'Недоступно'} />
+        <InfoLine icon={MoreVertical} title="Пользователь" value={getTicketUserLabel(ticket, ticketUser)} />
         <InfoLine icon={CalendarDays} title="Обновлен" value={formatDateTime(ticket?.updated_at || ticket?.created_at)} />
       </Card>
       {ticket?.created_at && <div className="date-pill">{formatTicketDay(ticket.created_at)}</div>}
@@ -3278,7 +3321,7 @@ function TicketThread({ navigate, activeScreen }) {
           <React.Fragment key={message.id || `${message.created_at}-${message.text}`}>
             {showDate && <div className="date-pill">{formatTicketDay(message.created_at)}</div>}
             <MessageBubble
-              author={message.is_admin ? 'Поддержка' : selectedTicket.isAdmin ? `Пользователь ${message.tg_id || ticket?.tg_id || ''}` : 'Вы'}
+              author={message.is_admin ? 'Поддержка' : selectedTicket.isAdmin ? getTicketUserLabel(ticket, ticketUser) : 'Вы'}
               time={formatTicketMessageTime(message.created_at)}
               text={message.text}
               files={message.files || []}
@@ -3319,22 +3362,12 @@ function ThreadMarker({ children }) {
   );
 }
 
-function getAttachmentMeta(file, index) {
+function getAttachmentMeta(file) {
   const url = typeof file === 'string' ? file : file?.url || file?.href || '';
-  const rawName = typeof file === 'object' ? file?.name || file?.filename : '';
-  let urlName = '';
-
-  if (url) {
-    try {
-      urlName = decodeURIComponent(new URL(url, window.location.origin).pathname.split('/').pop() || '');
-    } catch {
-      urlName = String(url).split('/').pop() || '';
-    }
-  }
 
   return {
     url,
-    name: rawName || urlName || `Файл ${index + 1}`,
+    name: 'file',
     size: formatFileSize(typeof file === 'object' ? file?.size || file?.size_bytes : 0),
   };
 }
@@ -3345,7 +3378,7 @@ function MessageBubble({ author, time, text, files = [], support }) {
       <p><span>{author}</span> • {time}</p>
       {text && <div className="message-text">{text}</div>}
       {files.map((file, index) => {
-        const attachment = getAttachmentMeta(file, index);
+        const attachment = getAttachmentMeta(file);
         const content = (
           <>
             <Paperclip size={24} />
