@@ -14,6 +14,7 @@ function readStorage(key) {
   }
 }
 
+
 function writeStorage(key, value) {
   memoryStorage.set(key, value);
 
