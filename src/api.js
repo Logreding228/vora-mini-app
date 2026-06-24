@@ -309,17 +309,23 @@ async function runRefreshTokens() {
   return refreshPromise;
 }
 
+function getRefFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('ref') || '';
+}
+
 async function authenticateWithInitData() {
   if (!apiBaseUrl || !telegramInitData) {
     return '';
   }
 
+  const ref = getRefFromUrl();
   let payload;
 
   try {
     payload = await rawRequest(telegramAuthPath, {
       method: 'POST',
-      body: { initData: telegramInitData },
+      body: ref ? { initData: telegramInitData, ref } : { initData: telegramInitData },
       token: '',
     });
   } catch (error) {
