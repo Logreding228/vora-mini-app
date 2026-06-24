@@ -45,7 +45,6 @@ const asset = (name) => `${import.meta.env.BASE_URL}assets/${name}.png`;
 const money = (value, fallback = '0') => `${Number(value ?? fallback).toLocaleString('ru-RU')} ₽`;
 let trialPrice = null;
 let devicePrice = 75;
-let planPricingDebug = {};
 let telegramVerticalSwipeLocks = 0;
 const compactMoney = (value) => `${Number(value).toLocaleString('ru-RU')}₽`;
 const trialPriceText = () => (trialPrice === null ? '...' : compactMoney(trialPrice));
@@ -280,28 +279,14 @@ const applyPlanPricing = (plan, payload) => {
 const loadPlanPricing = async () => {
   const plans = ['trial', 'lite', 'home', 'plus'];
   const results = await Promise.allSettled(plans.map((plan) => api.plan(plan)));
-  const debug = {};
 
   results.forEach((result, index) => {
     const plan = plans[index];
 
     if (result.status === 'fulfilled') {
-      debug[plan] = {
-        status: 'fulfilled',
-        payload: result.value,
-      };
       applyPlanPricing(plan, result.value);
-    } else {
-      debug[plan] = {
-        status: 'rejected',
-        error: result.reason instanceof ApiError
-          ? { status: result.reason.status, message: result.reason.message, payload: result.reason.payload }
-          : { message: result.reason?.message || String(result.reason) },
-      };
     }
   });
-
-  planPricingDebug = debug;
 };
 const extractUrl = (payload) => {
   if (typeof payload === 'string') {
@@ -1755,53 +1740,10 @@ function DevicesCard({ mainData }) {
   const [expanded, setExpanded] = useState(true);
   const [devices, setDevices] = useState(mainData.devices);
   const [deviceError, setDeviceError] = useState('');
-  const [deviceDebug, setDeviceDebug] = useState({
-    request: { method: 'GET', endpoint: '/hwid/get_hwid/' },
-    status: 'loading',
-    response: null,
-    error: null,
-  });
 
   useEffect(() => {
     setDevices(mainData.devices);
   }, [mainData.devices]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadDeviceDebug = async () => {
-      try {
-        const response = await api.getHwid();
-
-        if (isMounted) {
-          setDeviceDebug({
-            request: { method: 'GET', endpoint: '/hwid/get_hwid/' },
-            status: 'success',
-            response,
-            error: null,
-          });
-        }
-      } catch (error) {
-        if (isMounted) {
-          setDeviceDebug({
-            request: { method: 'GET', endpoint: '/hwid/get_hwid/' },
-            status: 'error',
-            response: null,
-            error: {
-              message: getUiError(error),
-              status: error instanceof ApiError ? error.status : null,
-              payload: error instanceof ApiError ? error.payload : null,
-            },
-          });
-        }
-      }
-    };
-
-    loadDeviceDebug();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const deleteDevice = async (id) => {
     try {
@@ -1841,12 +1783,6 @@ function DevicesCard({ mainData }) {
           {devices.length === 0 && <p className="empty-state">Устройства не подключены</p>}
         </div>
       </div>
-      {expanded && (
-        <div className="device-debug">
-          <strong>Debug: устройства API</strong>
-          <pre>{JSON.stringify(deviceDebug, null, 2)}</pre>
-        </div>
-      )}
     </Card>
   );
 }
@@ -1941,6 +1877,8 @@ function DeviceSheet({ navigate, limitReached = false, mainData, closeRoute = 'h
       if (!openExternalUrl(connectUrl)) {
         throw new Error('Не удалось открыть приложение клиента');
       }
+
+      closeSheet();
     } catch (error) {
       setConnectError(getUiError(error));
     }

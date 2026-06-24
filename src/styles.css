@@ -1434,37 +1434,6 @@ button svg,
   color: #2bbb73;
 }
 
-.device-debug {
-  margin-top: 12px;
-  padding: 14px;
-  border-radius: 12px;
-  background: #071426;
-  color: #f7f7f8;
-  text-align: left;
-}
-
-.device-debug > strong {
-  display: block;
-  margin-bottom: 10px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.device-debug pre {
-  max-height: 360px;
-  margin: 0;
-  padding: 12px;
-  overflow: auto;
-  border-radius: 10px;
-  background: #0d1d31;
-  color: #dbe7f7;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 10px;
-  line-height: 1.45;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
 .delete-device {
   width: 34px;
   height: 34px;
@@ -4497,100 +4466,6 @@ button svg,
 
 .promo {
   scroll-margin-bottom: 180px;
-}
-
-.main-debug-panel {
-  margin: 18px 16px 104px;
-  padding: 12px;
-  border: 1px dashed rgba(255, 113, 45, 0.55);
-  border-radius: 12px;
-  background: rgba(255, 248, 244, 0.96);
-  color: #06162c;
-  text-align: left;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 10px;
-  line-height: 1.35;
-  overflow: hidden;
-}
-
-.debug-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
-
-.debug-title-row strong {
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.debug-title-row span {
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: #ff712d;
-  color: #ffffff;
-  font-size: 10px;
-}
-
-.debug-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.debug-grid p {
-  min-width: 0;
-  margin: 0;
-  padding: 7px;
-  border-radius: 8px;
-  background: #ffffff;
-}
-
-.debug-grid span {
-  display: block;
-  color: #8b95a1;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 9px;
-}
-
-.debug-grid strong {
-  display: block;
-  margin-top: 3px;
-  overflow-wrap: anywhere;
-  font-size: 10px;
-  font-weight: 600;
-}
-
-.main-debug-panel pre {
-  max-height: 180px;
-  margin: 0;
-  padding: 9px;
-  border-radius: 8px;
-  overflow: auto;
-  background: #06162c;
-  color: #ffffff;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.main-debug-panel details {
-  margin-top: 10px;
-}
-
-.main-debug-panel summary {
-  cursor: pointer;
-  color: #ff712d;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.main-debug-panel details pre {
-  margin-top: 8px;
 }
 
 @media (max-width: 720px) {

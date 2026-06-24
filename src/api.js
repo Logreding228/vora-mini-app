@@ -96,16 +96,6 @@ export function saveTokenPair(payload) {
     writeStorage('is_admin', isAdmin ? 'true' : 'false');
   }
 
-  if (role || isAdmin !== undefined) {
-    writeStorage('auth_role_debug', JSON.stringify({
-      role: role || null,
-      is_admin: payload?.is_admin ?? null,
-      user_role: payload?.user?.role ?? null,
-      user_is_admin: payload?.user?.is_admin ?? null,
-      resolved_is_admin: isAdmin ?? null,
-    }));
-  }
-
   return accessToken || '';
 }
 
@@ -117,7 +107,6 @@ function clearTokenPair() {
   removeStorage('access_token');
   removeStorage('refresh_token');
   removeStorage('is_admin');
-  removeStorage('auth_role_debug');
 }
 
 function getJwtPayload(token) {
