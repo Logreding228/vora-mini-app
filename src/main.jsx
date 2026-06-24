@@ -1533,7 +1533,7 @@ function TrialStart({ navigate, activeScreen }) {
     <AppFrame className="trial-screen" navigate={navigate} activeScreen={activeScreen}>
       <HeroOffer
         title="Попробуйте VORA"
-        accent={`24 часа за ${trialPriceText()}`}
+        accent={`72 часа за ${trialPriceText()}`}
         subtitle="Полный доступ ко всем возможностям тарифа"
         image="trial-check"
       />
@@ -1599,7 +1599,7 @@ function TrialActive({ navigate, activeScreen, mainData }) {
     <AppFrame className="trial-screen compact trial-active-screen" navigate={navigate} activeScreen={activeScreen}>
       <HeroOffer
         title="Доступ активен"
-        accent={`24 часа за ${trialPriceText()}`}
+        accent={`72 часа за ${trialPriceText()}`}
         subtitle="Полный доступ ко всем возможностям тарифа"
         image="trial-clock"
       />
