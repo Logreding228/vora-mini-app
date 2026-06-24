@@ -1975,6 +1975,7 @@ function DeviceSheet({ navigate, limitReached = false, mainData, closeRoute = 'h
     }
   };
 
+
   return (
     <div className="modal-layer" onClick={closeSheet}>
       <div className="bottom-sheet" ref={swipeDismiss.sheetRef} onClick={(event) => event.stopPropagation()}>
