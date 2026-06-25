@@ -431,7 +431,14 @@ const openExternalUrl = (url) => {
   if (/^https?:\/\//i.test(targetUrl) && tgWebApp?.openLink) {
     tgWebApp.openLink(targetUrl, { try_instant_view: false });
   } else {
-    window.location.href = targetUrl;
+    const link = document.createElement('a');
+    link.href = targetUrl;
+    link.target = '_blank';
+    link.rel = 'noreferrer';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    window.setTimeout(() => link.remove(), 250);
   }
 
   return true;
