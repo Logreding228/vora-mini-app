@@ -45,7 +45,6 @@ const asset = (name) => `${import.meta.env.BASE_URL}assets/${name}.png`;
 const money = (value, fallback = '0') => `${Number(value ?? fallback).toLocaleString('ru-RU')} ₽`;
 let trialPrice = null;
 let devicePrice = 75;
-let planPricingDebug = {};
 let telegramVerticalSwipeLocks = 0;
 const compactMoney = (value) => `${Number(value).toLocaleString('ru-RU')}₽`;
 const trialPriceText = () => (trialPrice === null ? '...' : compactMoney(trialPrice));
@@ -280,28 +279,14 @@ const applyPlanPricing = (plan, payload) => {
 const loadPlanPricing = async () => {
   const plans = ['trial', 'lite', 'home', 'plus'];
   const results = await Promise.allSettled(plans.map((plan) => api.plan(plan)));
-  const debug = {};
 
   results.forEach((result, index) => {
     const plan = plans[index];
 
     if (result.status === 'fulfilled') {
-      debug[plan] = {
-        status: 'fulfilled',
-        payload: result.value,
-      };
       applyPlanPricing(plan, result.value);
-    } else {
-      debug[plan] = {
-        status: 'rejected',
-        error: result.reason instanceof ApiError
-          ? { status: result.reason.status, message: result.reason.message, payload: result.reason.payload }
-          : { message: result.reason?.message || String(result.reason) },
-      };
     }
   });
-
-  planPricingDebug = debug;
 };
 const extractUrl = (payload) => {
   if (typeof payload === 'string') {
@@ -398,6 +383,41 @@ const openPaymentUrl = (url) => {
     window.location.href = targetUrl;
     return;
   }
+};
+const invoiceIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const wait = (milliseconds) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+const handleInvoiceResult = async (result) => {
+  const rawResult = typeof result === 'string' ? result.trim() : extractUrl(result);
+
+  if (!rawResult) {
+    throw new Error('Сервис не вернул ссылку или номер платежа');
+  }
+
+  if (!invoiceIdPattern.test(rawResult)) {
+    openPaymentUrl(rawResult);
+    return { activated: false };
+  }
+
+  let invoice = null;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    invoice = await api.invoice(rawResult);
+    const status = String(invoice?.status || '').toLowerCase();
+
+    if (['paid', 'paid_over'].includes(status) && Number(invoice?.amount) === 0) {
+      window.dispatchEvent(new CustomEvent('vora:payment-complete', { detail: { invoice } }));
+      return { activated: true, invoice };
+    }
+
+    if (['fail', 'wrong_amount', 'cancel', 'system_fail'].includes(status)) {
+      break;
+    }
+
+    await wait(500);
+  }
+
+  throw new Error(invoice?.status
+    ? `Бесплатная активация не подтверждена: ${invoice.status}`
+    : 'Бесплатная активация не подтверждена');
 };
 const openExternalUrl = (url) => {
   const targetUrl = extractUrl(url);
@@ -1037,6 +1057,7 @@ function App() {
         loadData({ silent: true });
       }
     };
+    const refreshAfterPayment = () => loadData({ forceScreenSync: true });
     const listenTelegramEvent = (eventName) => {
       try {
         window.Telegram?.WebApp?.onEvent?.(eventName, refreshVisibleData);
@@ -1052,6 +1073,7 @@ function App() {
     refreshTimer = window.setInterval(refreshVisibleData, 15000);
     window.addEventListener('focus', refreshVisibleData);
     window.addEventListener('pageshow', refreshVisibleData);
+    window.addEventListener('vora:payment-complete', refreshAfterPayment);
     document.addEventListener('visibilitychange', refreshVisibleData);
 
     return () => {
@@ -1059,6 +1081,7 @@ function App() {
       window.clearInterval(refreshTimer);
       window.removeEventListener('focus', refreshVisibleData);
       window.removeEventListener('pageshow', refreshVisibleData);
+      window.removeEventListener('vora:payment-complete', refreshAfterPayment);
       document.removeEventListener('visibilitychange', refreshVisibleData);
       removeViewportListener();
       removeActivatedListener();
@@ -1471,17 +1494,44 @@ function TrialStart({ navigate, activeScreen }) {
   const [selectedMethod, setSelectedMethod] = useState('card');
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
+  const [promoPrice, setPromoPrice] = useState(null);
+  const [promoLoading, setPromoLoading] = useState(false);
   const [paymentError, setPaymentError] = useState('');
   const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
+  const displayedTrialPrice = promoApplied && Number.isFinite(promoPrice) ? promoPrice : trialPrice;
 
-  const applyPromo = () => {
+  const applyPromo = async () => {
     if (promoApplied) {
       setPromoCode('');
       setPromoApplied(false);
+      setPromoPrice(null);
       return;
     }
 
-    setPromoApplied(Boolean(promoCode.trim()));
+    const code = promoCode.trim();
+    if (!code || trialPrice === null) {
+      return;
+    }
+
+    try {
+      setPromoLoading(true);
+      setPaymentError('');
+      const response = await api.validatePromo(code, trialPrice);
+      const total = Number(response?.total);
+
+      if (!Number.isFinite(total)) {
+        throw new Error('Сервис не вернул цену с учетом промокода');
+      }
+
+      setPromoPrice(total);
+      setPromoApplied(true);
+    } catch (error) {
+      setPromoPrice(null);
+      setPromoApplied(false);
+      setPaymentError(getPaymentUiError(error));
+    } finally {
+      setPromoLoading(false);
+    }
   };
 
   const submitPromoWithEnter = (event) => {
@@ -1501,12 +1551,13 @@ function TrialStart({ navigate, activeScreen }) {
         return;
       }
 
-      const url = await api.createTrialInvoice({
+      const invoiceResult = await api.createTrialInvoice({
         provider,
         currency: selectedMethod === 'crypto' ? 'USDT' : undefined,
         amount: trialPrice,
+        promoCode: promoApplied ? promoCode.trim() : undefined,
       });
-      openPaymentUrl(url);
+      await handleInvoiceResult(invoiceResult);
     } catch (error) {
       setPaymentError(getPaymentUiError(error));
     }
@@ -1516,7 +1567,7 @@ function TrialStart({ navigate, activeScreen }) {
     <AppFrame className="trial-screen" navigate={navigate} activeScreen={activeScreen}>
       <HeroOffer
         title="Попробуйте VORA"
-        accent={`72 часа за ${trialPriceText()}`}
+        accent={`72 часа за ${displayedTrialPrice === null ? '...' : compactMoney(displayedTrialPrice)}`}
         subtitle="Полный доступ ко всем возможностям тарифа"
         image="trial-check"
       />
@@ -1535,12 +1586,12 @@ function TrialStart({ navigate, activeScreen }) {
       <div className="promo trial-promo">
         <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
         <div>
-          <input value={promoCode} onFocus={keepFocusedFieldVisible} onKeyDown={submitPromoWithEnter} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); }} placeholder="Введите промокод" enterKeyHint="done" />
-          <button onClick={applyPromo} disabled={!promoApplied && !promoCode.trim()}>{promoApplied ? 'Убрать' : 'Применить'}</button>
+          <input value={promoCode} onFocus={keepFocusedFieldVisible} onKeyDown={submitPromoWithEnter} onChange={(event) => { setPromoCode(event.target.value); setPromoApplied(false); setPromoPrice(null); }} placeholder="Введите промокод" enterKeyHint="done" />
+          <button onClick={applyPromo} disabled={promoLoading || (!promoApplied && !promoCode.trim())}>{promoLoading ? 'Проверяем' : promoApplied ? 'Убрать' : 'Применить'}</button>
         </div>
       </div>
       {paymentError && <p className="inline-error">{paymentError}</p>}
-      <PrimaryButton onClick={startTrial}>Начать за <span>{trialMoneyText()}</span></PrimaryButton>
+      <PrimaryButton onClick={startTrial}>Начать за <span>{displayedTrialPrice === null ? 'Цена загружается' : money(displayedTrialPrice)}</span></PrimaryButton>
       <SectionDivider>или оформите подписку сразу</SectionDivider>
       <TrialPlanList navigate={navigate} />
     </AppFrame>
@@ -1738,53 +1789,10 @@ function DevicesCard({ mainData }) {
   const [expanded, setExpanded] = useState(true);
   const [devices, setDevices] = useState(mainData.devices);
   const [deviceError, setDeviceError] = useState('');
-  const [deviceDebug, setDeviceDebug] = useState({
-    request: { method: 'GET', endpoint: '/hwid/get_hwid/' },
-    status: 'loading',
-    response: null,
-    error: null,
-  });
 
   useEffect(() => {
     setDevices(mainData.devices);
   }, [mainData.devices]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadDeviceDebug = async () => {
-      try {
-        const response = await api.getHwid();
-
-        if (isMounted) {
-          setDeviceDebug({
-            request: { method: 'GET', endpoint: '/hwid/get_hwid/' },
-            status: 'success',
-            response,
-            error: null,
-          });
-        }
-      } catch (error) {
-        if (isMounted) {
-          setDeviceDebug({
-            request: { method: 'GET', endpoint: '/hwid/get_hwid/' },
-            status: 'error',
-            response: null,
-            error: {
-              message: getUiError(error),
-              status: error instanceof ApiError ? error.status : null,
-              payload: error instanceof ApiError ? error.payload : null,
-            },
-          });
-        }
-      }
-    };
-
-    loadDeviceDebug();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const deleteDevice = async (id) => {
     try {
@@ -1824,12 +1832,6 @@ function DevicesCard({ mainData }) {
           {devices.length === 0 && <p className="empty-state">Устройства не подключены</p>}
         </div>
       </div>
-      {expanded && (
-        <div className="device-debug">
-          <strong>Debug: устройства API</strong>
-          <pre>{JSON.stringify(deviceDebug, null, 2)}</pre>
-        </div>
-      )}
     </Card>
   );
 }
@@ -1924,6 +1926,8 @@ function DeviceSheet({ navigate, limitReached = false, mainData, closeRoute = 'h
       if (!openExternalUrl(connectUrl)) {
         throw new Error('Не удалось открыть приложение клиента');
       }
+
+      closeSheet();
     } catch (error) {
       setConnectError(getUiError(error));
     }
@@ -2124,8 +2128,8 @@ function ChangePlan({ navigate, activeScreen, mainData }) {
 
     try {
       setChangeError('');
-      const url = await api.createUpgradeInvoice({ provider: 'platega' });
-      openPaymentUrl(url);
+      const invoiceResult = await api.createUpgradeInvoice({ provider: 'platega' });
+      await handleInvoiceResult(invoiceResult);
     } catch (error) {
       setChangeError(getUiError(error));
     }
@@ -2320,8 +2324,8 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
 
     try {
       setPaymentError('');
-      const url = await api.createInvoice({ provider, type: paymentType, payload });
-      openPaymentUrl(url);
+      const invoiceResult = await api.createInvoice({ provider, type: paymentType, payload });
+      await handleInvoiceResult(invoiceResult);
     } catch (error) {
       setPaymentError(getPaymentUiError(error));
     }
@@ -3479,7 +3483,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
   const buySubscription = async () => {
     try {
       setPaymentError('');
-      const url = await api.createInvoice({
+      const invoiceResult = await api.createInvoice({
         provider,
         type: 'SUBSCRIPTION',
         payload: {
@@ -3490,7 +3494,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
           promo_code: promoApplied ? promoCode.trim() : undefined,
         },
       });
-      openPaymentUrl(url);
+      await handleInvoiceResult(invoiceResult);
     } catch (error) {
       setPaymentError(getPaymentUiError(error));
     }

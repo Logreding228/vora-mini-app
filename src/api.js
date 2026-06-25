@@ -96,16 +96,6 @@ export function saveTokenPair(payload) {
     writeStorage('is_admin', isAdmin ? 'true' : 'false');
   }
 
-  if (role || isAdmin !== undefined) {
-    writeStorage('auth_role_debug', JSON.stringify({
-      role: role || null,
-      is_admin: payload?.is_admin ?? null,
-      user_role: payload?.user?.role ?? null,
-      user_is_admin: payload?.user?.is_admin ?? null,
-      resolved_is_admin: isAdmin ?? null,
-    }));
-  }
-
   return accessToken || '';
 }
 
@@ -117,7 +107,6 @@ function clearTokenPair() {
   removeStorage('access_token');
   removeStorage('refresh_token');
   removeStorage('is_admin');
-  removeStorage('auth_role_debug');
 }
 
 function getJwtPayload(token) {
@@ -410,6 +399,7 @@ export const api = {
   userByTelegramId: (tgId) => request(`/users/get_user/${tgId}/`, { query: { tg_id: tgId } }),
   referralData: () => request('/users/referral_data'),
   plan: (plan) => request('/pay/plans', { query: { plan } }),
+  invoice: (invoiceId) => request(`/pay/invoice/${invoiceId}`),
   subscriptionUrl: (client) => request('/hwid/get_subscription_url/', { query: { client } }),
   subscriptionQr: (client) => request('/hwid/get_subscription_qr/', { query: { client } }),
   getHwid: () => request('/hwid/get_hwid/'),
@@ -438,10 +428,10 @@ export const api = {
   }),
   closeTicket: (id) => request(`/tickets/${id}/close`, { method: 'POST' }),
   createInvoice: createTypedInvoice,
-  createTrialInvoice: ({ provider, currency, amount }) => createTypedInvoice({
+  createTrialInvoice: ({ provider, currency, amount, promoCode }) => createTypedInvoice({
     provider,
     type: 'trial',
-    payload: { plan: 'trial', amount, currency: currency || 'RUB' },
+    payload: { plan: 'trial', amount, currency: currency || 'RUB', promo_code: promoCode || undefined },
   }),
   createUpgradeInvoice: ({ provider, currency }) => request(`/pay/create_invoice/upgrade/${provider}`, {
     method: 'POST',
