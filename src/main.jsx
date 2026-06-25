@@ -14,7 +14,6 @@ import {
   ChevronRight,
   ChevronUp,
   CircleHelp,
-  Coins,
   Copy,
   CreditCard,
   Download,
@@ -91,10 +90,21 @@ const tariffCatalog = {
     route: 'tariff-home',
   },
 };
+function BitcoinIcon({ className = '', size = 16 }) {
+  return (
+    <span
+      className={className}
+      aria-hidden="true"
+      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: size + 2, fontWeight: 500, lineHeight: 1 }}
+    >
+      ₿
+    </span>
+  );
+}
 const paymentMethods = [
-  { id: 'card', provider: 'platega', paymentMethod: 11, icon: CreditCard, tone: 'method-plain', title: 'Карта', subtitle: 'Visa, Mastercard, Мир' },
-  { id: 'crypto', provider: 'heleket', icon: Coins, tone: 'method-crypto', title: 'Криптовалюта', subtitle: 'USDT, BTC, ETH и др.' },
-  { id: 'sbp', provider: 'platega', paymentMethod: 2, icon: QrCode, tone: 'method-plain', title: 'Оплата по QR', subtitle: 'Через приложение банка' },
+  { id: 'card', provider: 'platega', paymentMethod: 11, icon: CreditCard, title: 'Карта', subtitle: 'Visa, Mastercard, Мир' },
+  { id: 'crypto', provider: 'heleket', icon: BitcoinIcon, title: 'Криптовалюта', subtitle: 'USDT, BTC, ETH и др.' },
+  { id: 'sbp', provider: 'platega', paymentMethod: 2, icon: QrCode, title: 'Оплата по QR', subtitle: 'Через приложение банка' },
 ];
 const getPaymentMethod = (id) => paymentMethods.find((method) => method.id === id) || paymentMethods[0];
 const periodDiscounts = {
@@ -2402,11 +2412,11 @@ function PaymentMethods({ selected, onSelect, className = '' }) {
     <div className={`payment-methods-block ${className}`.trim()}>
       <p className="payment-methods-label">Способ оплаты</p>
       <div className="payment-method-list">
-        {paymentMethods.map(({ id, title, subtitle, icon: Icon, tone }) => {
+        {paymentMethods.map(({ id, title, subtitle, icon: Icon }) => {
           const checked = selected === id;
           return (
             <button key={id} type="button" className={checked ? 'payment-method-row checked' : 'payment-method-row'} onClick={() => onSelect(id)}>
-              <span className={`payment-method-icon ${tone}`}><Icon size={18} strokeWidth={2} aria-hidden="true" /></span>
+              <Icon className="payment-method-icon" size={16} strokeWidth={2} aria-hidden="true" />
               <div>
                 <strong>{title}</strong>
                 <p>{subtitle}</p>
