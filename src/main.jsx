@@ -948,7 +948,9 @@ const screens = [
   { id: 'balance-topup', label: 'Пополнение', component: BalanceTopup },
   { id: 'balance-history', label: 'История баланса', component: BalanceHistory },
   { id: 'referral', label: 'Реферальная', component: ReferralScreen },
-  { id: 'support', label: 'Поддержка', component: SupportScreen },
+  // Экран поддержки временно не готов — открываем сразу тикеты.
+  // { id: 'support', label: 'Поддержка', component: SupportScreen },
+  { id: 'support', label: 'Поддержка', component: TicketsScreen },
   { id: 'tickets', label: 'Обращения', component: TicketsScreen },
   { id: 'ticket-create', label: 'Создать обращение', component: CreateTicket },
   { id: 'ticket-thread', label: 'Переписка', component: TicketThread },
@@ -2994,6 +2996,7 @@ function Stat({ icon: Icon, label, value, tone = 'orange' }) {
   );
 }
 
+/* Экран поддержки временно отключён — переходы на 'support' открывают TicketsScreen (см. реестр screens).
 function SupportScreen({ navigate, activeScreen }) {
   const [topicsExpanded, setTopicsExpanded] = useState(false);
   const quick = [
@@ -3055,6 +3058,7 @@ function TopicRow({ icon: Icon, title, subtitle, tone, onClick }) {
     </button>
   );
 }
+*/
 
 function HeadphonesGlyph() {
   return (
