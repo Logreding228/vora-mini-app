@@ -1930,11 +1930,11 @@ function DeviceSheet({ navigate, limitReached = false, mainData, closeRoute = 'h
         throw new Error('Ссылка для подключения не пришла от сервера');
       }
 
+      closeSheet();
+
       if (!openExternalUrl(connectUrl)) {
         throw new Error('Не удалось открыть приложение клиента');
       }
-
-      closeSheet();
     } catch (error) {
       setConnectError(getUiError(error));
     }
