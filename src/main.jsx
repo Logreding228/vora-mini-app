@@ -406,30 +406,13 @@ const openExternalUrl = (url) => {
     return false;
   }
 
-  const link = document.createElement('a');
-  link.href = targetUrl;
-  link.target = '_blank';
-  link.rel = 'noreferrer';
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
+  const tgWebApp = window.Telegram?.WebApp;
 
-  try {
-    window.open(targetUrl, '_blank', 'noopener,noreferrer');
-  } catch {
+  if (/^https?:\/\//i.test(targetUrl) && tgWebApp?.openLink) {
+    tgWebApp.openLink(targetUrl, { try_instant_view: false });
+  } else {
+    window.location.href = targetUrl;
   }
-
-  window.setTimeout(() => {
-    try {
-      window.location.assign(targetUrl);
-    } catch {
-      window.location.href = targetUrl;
-    }
-  }, 50);
-
-  window.setTimeout(() => {
-    link.remove();
-  }, 250);
 
   return true;
 };
