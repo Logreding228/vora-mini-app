@@ -104,7 +104,7 @@ function BitcoinIcon({ className = '', size = 16 }) {
 const paymentMethods = [
   { id: 'card', provider: 'platega', paymentMethod: 11, icon: CreditCard, title: 'Карта', subtitle: 'Visa, Mastercard, Мир' },
   { id: 'crypto', provider: 'heleket', icon: BitcoinIcon, title: 'Криптовалюта', subtitle: 'USDT, BTC, ETH и др.' },
-  { id: 'sbp', provider: 'platega', paymentMethod: 2, icon: QrCode, title: 'Оплата по QR', subtitle: 'В приложение банка' },
+  { id: 'sbp', provider: 'platega', paymentMethod: 2, icon: QrCode, title: 'Оплата по QR', subtitle: 'В приложении банка' },
 ];
 const getPaymentMethod = (id) => paymentMethods.find((method) => method.id === id) || paymentMethods[0];
 const periodDiscounts = {
