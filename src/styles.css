@@ -1430,8 +1430,9 @@ button svg,
   font-size: 12px;
 }
 
-.device-row small::first-letter {
+.device-row small b {
   color: #2bbb73;
+  font-weight: inherit;
 }
 
 .delete-device {

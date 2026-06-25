@@ -1833,7 +1833,7 @@ function DevicesCard({ mainData }) {
                 <strong>{title}</strong>
                 {model && <span>•</span>}
                 {model && <p>{model}</p>}
-                <small>Онлайн • {formatDateTime(lastSeen)}</small>
+                <small><b>Онлайн</b> • {formatDateTime(lastSeen)}</small>
               </div>
               <button className="delete-device" onClick={() => deleteDevice(id)} aria-label={`Удалить ${title}`}>
                 <Trash2 size={24} />
