@@ -14,7 +14,9 @@ import {
   ChevronRight,
   ChevronUp,
   CircleHelp,
+  Coins,
   Copy,
+  CreditCard,
   Download,
   Headphones,
   Home,
@@ -90,9 +92,9 @@ const tariffCatalog = {
   },
 };
 const paymentMethods = [
-  { id: 'crypto', provider: 'heleket', title: 'Криптовалюта', subtitle: 'USDT, BTC, ETH и др.' },
-  { id: 'card', provider: 'platega', paymentMethod: 11, title: 'Банковская карта', subtitle: 'Visa, Mastercard, Мир' },
-  { id: 'sbp', provider: 'platega', paymentMethod: 2, title: 'СБП', subtitle: 'Оплата через приложение банка' },
+  { id: 'card', provider: 'platega', paymentMethod: 11, icon: CreditCard, tone: 'method-plain', title: 'Карта', subtitle: 'Visa, Mastercard, Мир' },
+  { id: 'crypto', provider: 'heleket', icon: Coins, tone: 'method-crypto', title: 'Криптовалюта', subtitle: 'USDT, BTC, ETH и др.' },
+  { id: 'sbp', provider: 'platega', paymentMethod: 2, icon: QrCode, tone: 'method-plain', title: 'Оплата по QR', subtitle: 'Через приложение банка' },
 ];
 const getPaymentMethod = (id) => paymentMethods.find((method) => method.id === id) || paymentMethods[0];
 const periodDiscounts = {
@@ -2397,19 +2399,22 @@ function PaymentOption({ iconName, title, subtitle, price, checked, onClick, div
 
 function PaymentMethods({ selected, onSelect, className = '' }) {
   return (
-    <div className={`payment-method-list ${className}`.trim()}>
-      {paymentMethods.map(({ id, title, subtitle }) => {
-        const checked = selected === id;
-        return (
-          <button key={id} type="button" className={checked ? 'payment-method-row checked' : 'payment-method-row'} onClick={() => onSelect(id)}>
-            <div>
-              <strong>{title}</strong>
-              <p>{subtitle}</p>
-            </div>
-            <span className={checked ? 'radio checked' : 'radio'} />
-          </button>
-        );
-      })}
+    <div className={`payment-methods-block ${className}`.trim()}>
+      <p className="payment-methods-label">Способ оплаты</p>
+      <div className="payment-method-list">
+        {paymentMethods.map(({ id, title, subtitle, icon: Icon, tone }) => {
+          const checked = selected === id;
+          return (
+            <button key={id} type="button" className={checked ? 'payment-method-row checked' : 'payment-method-row'} onClick={() => onSelect(id)}>
+              <span className={`payment-method-icon ${tone}`}><Icon size={18} strokeWidth={2} aria-hidden="true" /></span>
+              <div>
+                <strong>{title}</strong>
+                <p>{subtitle}</p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -2138,22 +2138,34 @@ button svg,
   font-size: 9px;
 }
 
-.payment-method-list {
+.payment-methods-block {
   margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+}
+
+.payment-methods-label {
+  margin: 0 0 10px;
+  color: #8b929d;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
+  line-height: 100%;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.payment-method-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
 }
 
 .payment-method-row {
   position: relative;
-  width: 100%;
-  min-height: 64px;
-  display: grid;
-  grid-template-columns: 1fr 20px;
-  gap: 14px;
+  min-width: 0;
+  min-height: 56px;
+  display: flex;
   align-items: center;
-  padding: 12px 14px;
+  gap: 8px;
+  padding: 10px;
   border: 1px solid #f0f0f1;
   border-radius: 14px;
   background: #ffffff;
@@ -2174,21 +2186,38 @@ button svg,
   justify-content: center;
 }
 
+.payment-method-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: #06162c;
+}
+
+.payment-method-icon.method-crypto {
+  border-radius: 50%;
+  background: #2bbb73;
+  color: #ffffff;
+}
+
 .payment-method-row strong {
+  display: block;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 14px;
-  line-height: 100%;
+  font-size: 12px;
+  line-height: 110%;
   font-weight: 600;
   letter-spacing: -0.02em;
   text-align: left;
 }
 
 .payment-method-row p {
-  margin: 5px 0 0;
+  margin: 3px 0 0;
   color: #9ca3ad;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 12px;
-  line-height: 100%;
+  font-size: 9px;
+  line-height: 110%;
   font-weight: 500;
   letter-spacing: 0;
   text-align: left;
@@ -4110,7 +4139,7 @@ button svg,
   margin: 18px 0;
 }
 
-.tariff-screen .payment-method-list,
+.tariff-screen .payment-methods-block,
 .tariff-screen .promo {
   margin-top: 18px;
 }
