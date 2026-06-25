@@ -1036,9 +1036,9 @@ button svg,
   gap: 8px;
 }
 
-.trial-active-screen .trial-methods .method-card {
-  min-height: 55px;
-  padding: 10px 10px;
+.trial-active-screen .trial-methods .payment-method-row {
+  min-height: 56px;
+  padding: 10px 12px;
 }
 
 .trial-active-screen .trial-promo {
@@ -2137,21 +2137,22 @@ button svg,
   font-size: 9px;
 }
 
-.payment-methods {
+.payment-method-list {
   margin-top: 20px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.method-card {
+.payment-method-row {
+  position: relative;
   width: 100%;
-  min-height: 55px;
-  padding: 12px 12px;
-  display: flex;
+  min-height: 64px;
+  display: grid;
+  grid-template-columns: 1fr 20px;
+  gap: 14px;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  padding: 12px 14px;
   border: 1px solid #f0f0f1;
   border-radius: 14px;
   background: #ffffff;
@@ -2160,38 +2161,38 @@ button svg,
   box-shadow: 0 10px 28px rgba(7, 20, 38, 0.035);
 }
 
-.method-card > div {
+.payment-method-row.checked {
+  border-color: #ff8b53;
+  background: #fef7f4;
+}
+
+.payment-method-row > div {
   min-width: 0;
-  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
-.method-card.checked {
-  border-color: #f47a3d;
-  background: #fef7f4;
-}
-
-.method-card strong {
+.payment-method-row strong {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 10px;
+  font-size: 14px;
   line-height: 100%;
   font-weight: 600;
-  letter-spacing: 0;
+  letter-spacing: -0.02em;
   text-align: left;
 }
 
-.method-card p {
-  margin: 4px 0 0;
-  color: #596371;
+.payment-method-row p {
+  margin: 5px 0 0;
+  color: #9ca3ad;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 8px;
+  font-size: 12px;
   line-height: 100%;
   font-weight: 500;
   letter-spacing: 0;
   text-align: left;
 }
+
 
 .promo {
   margin: 21px 0 18px;
@@ -2255,8 +2256,8 @@ button svg,
   margin-top: 20px;
 }
 
-.trial-methods .method-card {
-  min-height: 55px;
+.trial-methods .payment-method-row {
+  min-height: 60px;
 }
 
 .trial-promo {
@@ -4108,7 +4109,7 @@ button svg,
   margin: 18px 0;
 }
 
-.tariff-screen .payment-methods,
+.tariff-screen .payment-method-list,
 .tariff-screen .promo {
   margin-top: 18px;
 }
@@ -4459,7 +4460,7 @@ button svg,
 .plan-card,
 .period-card,
 .payment-option,
-.method-card,
+.payment-method-row,
 .radio {
   transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }

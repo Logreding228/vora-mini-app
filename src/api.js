@@ -196,20 +196,21 @@ function uppercasePaymentType(type) {
   return values[normalizedType] || String(type || '').toUpperCase();
 }
 
-async function createTypedInvoice({ provider, type, payload }) {
+async function createTypedInvoice({ provider, type, payload, paymentMethod }) {
   const path = `/pay/create_invoice/${provider}`;
+  const methodQuery = provider === 'platega' && paymentMethod != null ? { payment_method: paymentMethod } : {};
 
   try {
     return await request(path, {
       method: 'POST',
-      query: { type: normalizePaymentType(type) },
+      query: { ...methodQuery, type: normalizePaymentType(type) },
       body: payload,
     });
   } catch (error) {
     if (error instanceof ApiError && [400, 422, 500].includes(error.status)) {
       return request(path, {
         method: 'POST',
-        query: { type: uppercasePaymentType(type) },
+        query: { ...methodQuery, type: uppercasePaymentType(type) },
         body: payload,
         retry: false,
       });
@@ -428,8 +429,9 @@ export const api = {
   }),
   closeTicket: (id) => request(`/tickets/${id}/close`, { method: 'POST' }),
   createInvoice: createTypedInvoice,
-  createTrialInvoice: ({ provider, currency, amount, promoCode }) => createTypedInvoice({
+  createTrialInvoice: ({ provider, currency, amount, promoCode, paymentMethod }) => createTypedInvoice({
     provider,
+    paymentMethod,
     type: 'trial',
     payload: { plan: 'trial', amount, currency: currency || 'RUB', promo_code: promoCode || undefined },
   }),

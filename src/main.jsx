@@ -89,6 +89,12 @@ const tariffCatalog = {
     route: 'tariff-home',
   },
 };
+const paymentMethods = [
+  { id: 'crypto', provider: 'heleket', title: 'Криптовалюта', subtitle: 'USDT, BTC, ETH и др.' },
+  { id: 'card', provider: 'platega', paymentMethod: 11, title: 'Банковская карта', subtitle: 'Visa, Mastercard, Мир' },
+  { id: 'sbp', provider: 'platega', paymentMethod: 2, title: 'СБП', subtitle: 'Оплата через приложение банка' },
+];
+const getPaymentMethod = (id) => paymentMethods.find((method) => method.id === id) || paymentMethods[0];
 const periodDiscounts = {
   1: 1,
   6: 0.9,
@@ -1504,7 +1510,7 @@ function TrialStart({ navigate, activeScreen }) {
   const [promoPrice, setPromoPrice] = useState(null);
   const [promoLoading, setPromoLoading] = useState(false);
   const [paymentError, setPaymentError] = useState('');
-  const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
+  const { provider, paymentMethod } = getPaymentMethod(selectedMethod);
   const displayedTrialPrice = promoApplied && Number.isFinite(promoPrice) ? promoPrice : trialPrice;
 
   const applyPromo = async () => {
@@ -1560,6 +1566,7 @@ function TrialStart({ navigate, activeScreen }) {
 
       const invoiceResult = await api.createTrialInvoice({
         provider,
+        paymentMethod,
         currency: selectedMethod === 'crypto' ? 'USDT' : undefined,
         amount: trialPrice,
         promoCode: promoApplied ? promoCode.trim() : undefined,
@@ -1586,10 +1593,7 @@ function TrialStart({ navigate, activeScreen }) {
           <p>После окончания доступа списаний не будет</p>
         </div>
       </Card>
-      <div className="payment-methods trial-methods">
-        <MethodCard title="Банковская карта" subtitle="Visa, Mastercard, Мир" checked={selectedMethod === 'card'} onClick={() => setSelectedMethod('card')} />
-        <MethodCard title="Криптовалюта" subtitle="USDT, BTC, ETH и др." checked={selectedMethod === 'crypto'} onClick={() => setSelectedMethod('crypto')} />
-      </div>
+      <PaymentMethods className="trial-methods" selected={selectedMethod} onSelect={setSelectedMethod} />
       <div className="promo trial-promo">
         <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
         <div>
@@ -2234,7 +2238,7 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
   const [promoPrices, setPromoPrices] = useState(null);
   const [promoLoading, setPromoLoading] = useState(false);
   const [paymentError, setPaymentError] = useState('');
-  const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
+  const { provider, paymentMethod } = getPaymentMethod(selectedMethod);
   const planPayment = ['lite', 'home', 'plus'].includes(selectedPayment) ? selectedPayment : '';
   const paymentType = selectedPayment === 'device' ? 'HWID' : selectedPayment === 'balance' ? 'BALANCE' : 'SUBSCRIPTION';
   const basePrices = {
@@ -2331,7 +2335,7 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
 
     try {
       setPaymentError('');
-      const invoiceResult = await api.createInvoice({ provider, type: paymentType, payload });
+      const invoiceResult = await api.createInvoice({ provider, paymentMethod, type: paymentType, payload });
       await handleInvoiceResult(invoiceResult);
     } catch (error) {
       setPaymentError(getPaymentUiError(error));
@@ -2363,10 +2367,7 @@ function BalanceTopup({ navigate, activeScreen, mainData }) {
           <p>₽</p>
         </div>
       </Card>
-      <div className="payment-methods">
-        <MethodCard title="Банковская карта" subtitle="Visa, Mastercard, Мир" checked={selectedMethod === 'card'} onClick={() => setSelectedMethod('card')} />
-        <MethodCard title="Криптовалюта" subtitle="USDT, BTC, ETH и др." checked={selectedMethod === 'crypto'} onClick={() => setSelectedMethod('crypto')} />
-      </div>
+      <PaymentMethods selected={selectedMethod} onSelect={setSelectedMethod} />
       <div className="promo">
         <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
         <div>
@@ -2394,15 +2395,22 @@ function PaymentOption({ iconName, title, subtitle, price, checked, onClick, div
   );
 }
 
-function MethodCard({ title, subtitle, checked, onClick }) {
+function PaymentMethods({ selected, onSelect, className = '' }) {
   return (
-    <button className={checked ? 'method-card checked' : 'method-card'} onClick={onClick}>
-      <div>
-        <strong>{title}</strong>
-        <p>{subtitle}</p>
-      </div>
-      <span className={checked ? 'radio checked' : 'radio'} />
-    </button>
+    <div className={`payment-method-list ${className}`.trim()}>
+      {paymentMethods.map(({ id, title, subtitle }) => {
+        const checked = selected === id;
+        return (
+          <button key={id} type="button" className={checked ? 'payment-method-row checked' : 'payment-method-row'} onClick={() => onSelect(id)}>
+            <div>
+              <strong>{title}</strong>
+              <p>{subtitle}</p>
+            </div>
+            <span className={checked ? 'radio checked' : 'radio'} />
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -3429,7 +3437,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
   const originalTotal = tariff.monthPrice * periodMonths + extraDevicesTotal;
   const savings = originalTotal - total;
   const maxDeviceCount = tariff.devices + tariff.extraDevices;
-  const provider = selectedMethod === 'crypto' ? 'heleket' : 'platega';
+  const { provider, paymentMethod } = getPaymentMethod(selectedMethod);
 
   const changeDeviceCount = (nextCount) => {
     setDeviceCount(nextCount);
@@ -3492,6 +3500,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
       setPaymentError('');
       const invoiceResult = await api.createInvoice({
         provider,
+        paymentMethod,
         type: 'SUBSCRIPTION',
         payload: {
           plan: selected,
@@ -3541,10 +3550,7 @@ function TariffScreen({ selected, navigate, activeScreen }) {
           </button>
         </div>
       </Card>
-      <div className="payment-methods tariff-methods">
-        <MethodCard title="Банковская карта" subtitle="Visa, Mastercard, Мир" checked={selectedMethod === 'card'} onClick={() => setSelectedMethod('card')} />
-        <MethodCard title="Криптовалюта" subtitle="USDT" checked={selectedMethod === 'crypto'} onClick={() => setSelectedMethod('crypto')} />
-      </div>
+      <PaymentMethods className="tariff-methods" selected={selectedMethod} onSelect={setSelectedMethod} />
       <div className="promo">
         <p>{promoApplied ? 'Промокод применен' : 'Есть промокод?'}</p>
         <div>
