@@ -451,10 +451,16 @@ const openExternalUrl = (url) => {
   }
 
   const tgWebApp = window.Telegram?.WebApp;
+  const isHttp = /^https?:\/\//i.test(targetUrl);
 
-  if (/^https?:\/\//i.test(targetUrl) && tgWebApp?.openLink) {
+  if (isHttp && tgWebApp?.openLink) {
     tgWebApp.openLink(targetUrl, { try_instant_view: false });
+  } else if (!isHttp) {
+    // Кастомная схема (incy://, happ://, v2raytun://) — открываем прямой навигацией.
+    // <a target="_blank"> на iOS (WKWebView) вызывает двойной запрос «Открыть в приложении».
+    window.location.href = targetUrl;
   } else {
+    // https вне Telegram (например, в обычном браузере) — открываем новой вкладкой.
     const link = document.createElement('a');
     link.href = targetUrl;
     link.target = '_blank';
