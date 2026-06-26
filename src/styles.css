@@ -888,7 +888,7 @@ button svg,
 
 .timer-card strong {
   display: grid;
-  grid-template-columns: 2ch 0.4ch 2ch 0.4ch 2ch;
+  grid-template-columns: minmax(2ch, auto) 0.4ch minmax(2ch, auto) 0.4ch minmax(2ch, auto);
   column-gap: 0.28em;
   justify-content: center;
   align-items: baseline;
