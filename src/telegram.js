@@ -12,6 +12,7 @@ export function initTelegramApp() {
 
   webApp.ready();
   webApp.expand();
+  requestFullscreenSafe(webApp);
   syncSafeArea(webApp);
 
   const initData = webApp.initData || initDataFromUrl;
@@ -21,6 +22,28 @@ export function initTelegramApp() {
     user: webApp.initDataUnsafe?.user || getUserFromInitData(initData) || null,
     initData,
   };
+}
+
+function requestFullscreenSafe(webApp) {
+  // Фиксируем фуллскрин принудительно: настройка в BotFather срабатывает
+  // не для всех точек входа (поиск/кнопка бота), поэтому форсим программно.
+  if (typeof webApp.requestFullscreen !== 'function') {
+    return; // старый клиент или платформа без поддержки (метода нет)
+  }
+
+  if (typeof webApp.isVersionAtLeast === 'function' && !webApp.isVersionAtLeast('8.0')) {
+    return; // requestFullscreen появился в Bot API 8.0
+  }
+
+  if (webApp.isFullscreen) {
+    return; // уже в фуллскрине — повторно не вызываем
+  }
+
+  try {
+    webApp.requestFullscreen();
+  } catch {
+    // на неподдерживаемых платформах (например, десктоп) молча игнорируем
+  }
 }
 
 function syncSafeArea(webApp) {
