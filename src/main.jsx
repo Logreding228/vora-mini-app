@@ -116,21 +116,27 @@ const dateRu = (value, fallback = '—') => {
   if (!value) {
     return fallback;
   }
-
-  return new Intl.DateTimeFormat('ru-RU').format(new Date(value));
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) {
+    return fallback;
+  }
+  return new Intl.DateTimeFormat('ru-RU').format(date);
 };
 const formatDateTime = (value) => {
   if (!value) {
     return '—';
   }
-
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) {
+    return '—';
+  }
   return new Intl.DateTimeFormat('ru-RU', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(value));
+  }).format(date);
 };
 const formatTicketListTime = (value, now = Date.now()) => {
   const date = parseApiDate(value);
