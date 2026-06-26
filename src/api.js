@@ -13,6 +13,7 @@ function readStorage(key) {
     return memoryStorage.get(key) || '';
   }
 }
+
 function writeStorage(key, value) {
   memoryStorage.set(key, value);
 
