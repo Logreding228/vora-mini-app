@@ -540,7 +540,12 @@ function normalizeMainData(data = emptyMainData) {
     subscriptionKind === 'trial' ||
     (trialUsed && !['lite', 'plus', 'home'].includes(plan))
   );
-  const planDeviceLimit = tariffCatalog[plan]?.devices || (plan === 'trial' ? tariffCatalog.plus.devices : emptyMainData.hwid.limit);
+  // Бэкенд (hwid) не отдаёт лимит устройств, поэтому считаем максимум плана сами:
+  // база + доп. устройства (для Plus это 3 + 3 = 6).
+  const planTariff = tariffCatalog[plan] || (plan === 'trial' ? tariffCatalog.plus : null);
+  const planDeviceLimit = planTariff
+    ? planTariff.devices + planTariff.extraDevices
+    : emptyMainData.hwid.limit;
   const rawDevices = Array.isArray(hwid.devices) ? hwid.devices : Array.isArray(hwidResponse.devices) ? hwidResponse.devices : Array.isArray(hwid) ? hwid : [];
   const devices = rawDevices.length ? rawDevices.map((device, index) => {
     const platform = deviceValue(device.platform, device.os, device.kind, device.type);
@@ -574,7 +579,8 @@ function normalizeMainData(data = emptyMainData) {
     trialUsed,
     subscriptionMonth: data.subscription_month || data.last_subscription_month || 1,
     usedDevices: Number(hwid.used ?? hwid.current ?? hwid.count ?? hwidResponse.used ?? hwidResponse.count ?? devices.length ?? 0),
-    maxDevices: Number(data.device_limit ?? data.hwid_limit ?? hwid.limit ?? hwid.max ?? hwid.device_limit ?? hwidResponse.limit ?? hwidResponse.max ?? planDeviceLimit),
+    // Лимит берём с бэка (max из панели и БД); если не пришёл — фолбэк на максимум плана.
+    maxDevices: Number(data.device_limit ?? data.hwid_limit ?? hwid.limit ?? hwid.max ?? hwid.device_limit ?? hwidResponse.limit ?? hwidResponse.max ?? 0) || planDeviceLimit,
     devices,
   };
 }
