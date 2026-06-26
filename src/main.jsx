@@ -2007,7 +2007,7 @@ function DeviceSheet({ navigate, limitReached = false, mainData, closeRoute = 'h
           <span className="sheet-grip" />
         </div>
         <h2>Подключить новое устройство</h2>
-        <StepTitle number="1" title="Клиент для подключения" />
+        <StepTitle title="Клиент для подключения" />
         <Card className="option-list">
           <RadioRow title="Рекомендуемый - Happ" subtitle="Простая настройка в один клик" checked={selectedConnection === 'Happ'} icon="happ" onClick={() => setSelectedConnection('Happ')} />
           <RadioRow title="v2RayTun" subtitle="Ручная настройка" checked={selectedConnection === 'v2RayTun'} icon="v2ray" onClick={() => setSelectedConnection('v2RayTun')} />
@@ -2037,7 +2037,7 @@ function DeviceSheet({ navigate, limitReached = false, mainData, closeRoute = 'h
 function StepTitle({ number, title }) {
   return (
     <div className="step-title">
-      <span>{number}</span>
+      {number != null && <span>{number}</span>}
       <strong>{title}</strong>
     </div>
   );
