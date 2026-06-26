@@ -8,6 +8,14 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      window.onerror = function(msg, src, line, col, err) {
+        document.body.innerHTML = '<pre style="color:red;padding:16px;font-size:12px;white-space:pre-wrap">' + msg + '\n' + src + ':' + line + '\n' + (err && err.stack || '') + '</pre>';
+      };
+      window.addEventListener('unhandledrejection', function(e) {
+        document.body.innerHTML = '<pre style="color:red;padding:16px;font-size:12px;white-space:pre-wrap">Unhandled: ' + (e.reason && (e.reason.stack || e.reason.message || e.reason)) + '</pre>';
+      });
+    </script>
     <script src="%BASE_URL%config.js"></script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
