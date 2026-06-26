@@ -2443,7 +2443,9 @@ function ReferralScreen({ navigate, activeScreen, mainData, telegramUser }) {
   const [isBonusInfoOpen, setBonusInfoOpen] = useState(false);
   const [isBonusInfoClosing, setBonusInfoClosing] = useState(false);
   const days = Math.max(0, Math.floor(Number(amount || 0) / 10));
-  const displayedLink = referralInfo.link || (referralLoaded ? referralError || 'Ссылка недоступна' : 'Загружаем ссылку');
+  const displayedLink = referralInfo.link
+    ? referralInfo.link.replace(/^https?:\/\//i, '')
+    : (referralLoaded ? referralError || 'Ссылка недоступна' : 'Загружаем ссылку');
 
   useEffect(() => {
     setAmount(earned ? String(Math.floor(earned)) : '');

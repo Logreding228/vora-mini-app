@@ -2633,29 +2633,6 @@ button svg,
   place-items: center;
 }
 
-.referral-stats-card > div {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.referral-stats-card .stat {
-  min-width: 0;
-  padding: 0;
-  border: 0;
-}
-
-.referral-stats-card .stat strong {
-  font-size: 24px;
-}
-
-.referral-stats-card .summary-line {
-  grid-template-columns: 1fr auto;
-  padding-top: 16px;
-  border-top: 1px solid #eeeeef;
-}
-
 .partner-card {
   width: 100%;
   min-height: 86px;
@@ -2899,7 +2876,7 @@ button svg,
 
 .referral-link-box {
   min-height: 47px;
-  margin: 24px 0 22px;
+  margin: 18px 0 8px;
   border-radius: 12px;
   background: #f5f6f8;
   position: relative;
@@ -2935,7 +2912,7 @@ button svg,
 
 .recurring-box {
   min-height: 58px;
-  margin-top: 18px;
+  margin-top: 19px;
   padding: 13px 14px;
   border: 1px solid #ffd8c8;
   border-radius: 12px;
@@ -2982,7 +2959,7 @@ button svg,
   grid-template-columns: 42px 1fr auto;
   align-items: center;
   column-gap: 8px;
-  padding-left: 8px;
+  padding: 0 15px 0 8px;
   border-top: 1px solid #eeeeef;
   color: #06162c;
 }
@@ -2993,17 +2970,17 @@ button svg,
 
 .referral-stats-card > .referral-stat-row svg {
   color: #ff712d;
+  justify-self: center;
 }
 
 .referral-stats-card > .referral-stat-row.active-friends svg {
   color: #22b56c;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
 }
 
-.referral-stats-card > .referral-stat-row.earned-total svg,
-.referral-stats-card > .referral-stat-row.earned-total strong {
-  color: #22b56c;
+.referral-stats-card > .referral-stat-row.earned-total svg {
+  color: #3b6fe0;
 }
 
 .referral-stats-card > .referral-stat-row span {
