@@ -467,7 +467,11 @@ const openExternalUrl = (url) => {
 
   return true;
 };
-const mapClient = (connection) => (connection === 'v2RayTun' ? 'v2ray' : 'happ');
+const mapClient = (connection) => {
+  if (connection === 'v2RayTun') return 'v2ray';
+  if (connection === 'INCY') return 'incy';
+  return 'happ';
+};
 const buildClientDeepLink = (connection, url) => {
   const targetUrl = extractUrl(url);
 
@@ -475,6 +479,7 @@ const buildClientDeepLink = (connection, url) => {
     return '';
   }
 
+  // Для INCY бэкенд уже отдаёт готовый incy://crypt1/<payload>, используем как есть.
   if (connection === 'v2RayTun' && !/^v2raytun:\/\//i.test(targetUrl)) {
     return `v2raytun://import/${encodeURIComponent(targetUrl)}`;
   }
@@ -2010,6 +2015,7 @@ function DeviceSheet({ navigate, limitReached = false, mainData, closeRoute = 'h
         <StepTitle title="Клиент для подключения" />
         <Card className="option-list">
           <RadioRow title="Рекомендуемый - Happ" subtitle="Простая настройка в один клик" checked={selectedConnection === 'Happ'} icon="happ" onClick={() => setSelectedConnection('Happ')} />
+          <RadioRow title="INCY" subtitle="Простая настройка в один клик" checked={selectedConnection === 'INCY'} icon="incy" onClick={() => setSelectedConnection('INCY')} />
           <RadioRow title="v2RayTun" subtitle="Ручная настройка" checked={selectedConnection === 'v2RayTun'} icon="v2ray" onClick={() => setSelectedConnection('v2RayTun')} />
         </Card>
         {connectError && <p className="inline-error">{connectError}</p>}
@@ -2099,6 +2105,25 @@ function PlatformIcon({ type }) {
         <rect x="3" y="3" width="18" height="18" rx="5.2" />
         <path d="M6.2 9.7h3.2l2.6 4.8 2.6-4.8h3.2l-4.4 7.3h-2.8L6.2 9.7Z" fill="#fff" />
         <path d="M16.8 6.7h-3.7v2.1h1.7v1.3h-1.7v2.1h4v-2.1h-1.7V8.8h1.4V6.7Z" fill="#fff" />
+      </svg>
+    );
+  }
+
+  if (type === 'incy') {
+    return (
+      <svg className="os-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <defs>
+          <linearGradient id="incy-bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#0d3a1f" />
+            <stop offset="1" stopColor="#021a0c" />
+          </linearGradient>
+          <linearGradient id="incy-fg" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" stopColor="#37c85a" />
+            <stop offset="1" stopColor="#b9f24c" />
+          </linearGradient>
+        </defs>
+        <rect x="2" y="2" width="20" height="20" rx="5.5" fill="url(#incy-bg)" />
+        <text x="12" y="15" textAnchor="middle" fontSize="6.4" fontWeight="800" letterSpacing="-0.3" fontFamily="Inter, sans-serif" fill="url(#incy-fg)">INCY</text>
       </svg>
     );
   }
