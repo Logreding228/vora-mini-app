@@ -455,16 +455,16 @@ const openExternalUrl = (url) => {
 
   if (isHttp && tgWebApp?.openLink) {
     tgWebApp.openLink(targetUrl, { try_instant_view: false });
-  } else if (!isHttp) {
-    // Кастомная схема (incy://, happ://, v2raytun://) — открываем прямой навигацией.
-    // <a target="_blank"> на iOS (WKWebView) вызывает двойной запрос «Открыть в приложении».
-    window.location.href = targetUrl;
   } else {
-    // https вне Telegram (например, в обычном браузере) — открываем новой вкладкой.
+    // Открываем кликом по ссылке (надёжно для кастомных схем incy://, happ://, v2raytun://
+    // в WKWebView). target="_blank" задаём только для http — на iOS он вызывает двойной
+    // запрос «Открыть в приложении» при кастомной схеме.
     const link = document.createElement('a');
     link.href = targetUrl;
-    link.target = '_blank';
-    link.rel = 'noreferrer';
+    if (isHttp) {
+      link.target = '_blank';
+      link.rel = 'noreferrer';
+    }
     link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
