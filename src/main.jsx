@@ -451,20 +451,14 @@ const openExternalUrl = (url) => {
   }
 
   const tgWebApp = window.Telegram?.WebApp;
-  const isHttp = /^https?:\/\//i.test(targetUrl);
 
-  if (isHttp && tgWebApp?.openLink) {
+  if (/^https?:\/\//i.test(targetUrl) && tgWebApp?.openLink) {
     tgWebApp.openLink(targetUrl, { try_instant_view: false });
   } else {
-    // Открываем кликом по ссылке (надёжно для кастомных схем incy://, happ://, v2raytun://
-    // в WKWebView). target="_blank" задаём только для http — на iOS он вызывает двойной
-    // запрос «Открыть в приложении» при кастомной схеме.
     const link = document.createElement('a');
     link.href = targetUrl;
-    if (isHttp) {
-      link.target = '_blank';
-      link.rel = 'noreferrer';
-    }
+    link.target = '_blank';
+    link.rel = 'noreferrer';
     link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
